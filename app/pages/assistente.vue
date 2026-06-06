@@ -20,6 +20,7 @@ const messages = ref<UiMessage[]>([])
 const input = ref('')
 const sending = ref(false)
 const scroller = ref<HTMLElement | null>(null)
+const convDrawer = ref(false) // mobile slide-over for the conversation list
 
 const suggestions = [
   'Quanto gastámos este mês?',
@@ -39,6 +40,7 @@ async function loadConversations() {
 
 async function openConversation(id: string) {
   activeId.value = id
+  convDrawer.value = false
   const data = await $fetch<{ messages: any[] }>(`/api/chat/conversations/${id}`)
   messages.value = data.messages.map(m => ({
     id: m.id, role: m.role, content: m.content,
@@ -50,6 +52,7 @@ async function openConversation(id: string) {
 function newConversation() {
   activeId.value = null
   messages.value = []
+  convDrawer.value = false
 }
 
 async function removeConversation(id: string) {
@@ -112,22 +115,18 @@ async function confirmCard(cs: UiCardState) {
 </script>
 
 <template>
-  <div class="assistant-wrap" style="display: flex; gap: 16px; height: calc(100dvh - 150px); min-height: 420px">
-    <!-- Conversation list -->
-    <aside class="conv-list" style="width: 240px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px">
+  <div class="asst" :class="{ 'drawer-open': convDrawer }">
+    <!-- Conversation list (slide-over on mobile) -->
+    <div class="asst-scrim" @click="convDrawer = false" />
+    <aside class="asst-convs">
       <UiButton icon="plus" full @click="newConversation">Nova conversa</UiButton>
-      <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; margin-top: 4px">
-        <div v-for="c in conversations" :key="c.id"
-          :style="{
-            display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 10px', borderRadius: 'var(--radius-sm)',
-            cursor: 'pointer', fontSize: '13.5px', background: activeId === c.id ? 'var(--accent-soft)' : 'transparent',
-            color: activeId === c.id ? 'var(--accent)' : 'var(--ink-2)',
-          }"
+      <div class="asst-convs-list">
+        <div v-for="c in conversations" :key="c.id" class="asst-conv"
+          :class="{ active: activeId === c.id }"
           @click="openConversation(c.id)">
           <UiIcon name="chat" :size="15" style="flex-shrink: 0; opacity: 0.7" />
-          <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ c.title }}</span>
-          <button class="conv-del" style="background: none; border: none; color: var(--muted); display: grid; place-items: center; padding: 2px"
-            title="Apagar" @click.stop="removeConversation(c.id)">
+          <span class="asst-conv-title">{{ c.title }}</span>
+          <button class="conv-del" title="Apagar" @click.stop="removeConversation(c.id)">
             <UiIcon name="trash" :size="14" />
           </button>
         </div>
@@ -135,8 +134,13 @@ async function confirmCard(cs: UiCardState) {
     </aside>
 
     <!-- Thread -->
-    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); overflow: hidden">
-      <div ref="scroller" style="flex: 1; overflow-y: auto; padding: 22px">
+    <div class="asst-thread">
+      <!-- Mobile-only bar: access conversation list + new chat -->
+      <div class="asst-mobile-bar">
+        <UiButton variant="outline" size="sm" icon="chat" @click="convDrawer = true">Conversas</UiButton>
+        <UiButton size="sm" icon="plus" @click="newConversation">Nova</UiButton>
+      </div>
+      <div ref="scroller" class="asst-scroll">
         <!-- Empty / welcome -->
         <div v-if="!messages.length" style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 14px">
           <div style="width: 56px; height: 56px; border-radius: 16px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center">
@@ -186,9 +190,8 @@ async function confirmCard(cs: UiCardState) {
       </div>
 
       <!-- Composer -->
-      <div style="border-top: 1px solid var(--border); padding: 12px; display: flex; gap: 8px; align-items: flex-end">
+      <div class="asst-composer">
         <textarea v-model="input" rows="1" placeholder="Escreve uma mensagem…"
-          style="flex: 1; resize: none; max-height: 120px; padding: 11px 13px; border-radius: var(--radius-sm); border: 1px solid var(--border-2); background: var(--surface); color: var(--ink); font-size: 14.5px; outline: none; font-family: inherit"
           @keydown.enter.exact.prevent="send()" />
         <UiButton icon="send" :disabled="sending || !input.trim()" @click="send()">Enviar</UiButton>
       </div>
@@ -197,11 +200,125 @@ async function confirmCard(cs: UiCardState) {
 </template>
 
 <style scoped>
-.conv-del { opacity: 0; transition: opacity 0.15s; }
-.conv-list .conv-del:hover { color: var(--neg); }
-div:hover > .conv-del { opacity: 1; }
+/* Fill the main content area; inner panes scroll, not the page. */
+.asst {
+  display: flex;
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+}
+
+.asst-convs {
+  width: 240px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+.asst-scrim { display: none; }
+.asst-mobile-bar { display: none; }
+.asst-convs-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 4px;
+}
+.asst-conv {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+.asst-conv:hover { background: var(--surface-2); }
+.asst-conv.active { background: var(--accent-soft); color: var(--accent); }
+.asst-conv-title { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.conv-del { background: none; border: none; color: var(--muted); display: grid; place-items: center; padding: 2px; opacity: 0; transition: opacity 0.15s; }
+.asst-conv:hover .conv-del { opacity: 1; }
+.conv-del:hover { color: var(--neg); }
+
+.asst-thread {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+.asst-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 22px;
+}
+.asst-composer {
+  border-top: 1px solid var(--border);
+  padding: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+.asst-composer textarea {
+  flex: 1;
+  resize: none;
+  max-height: 120px;
+  padding: 11px 13px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-2);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 14.5px;
+  outline: none;
+  font-family: inherit;
+}
+
 @media (max-width: 760px) {
-  .conv-list { display: none; }
-  .assistant-wrap { height: calc(100dvh - 120px); }
+  .asst { gap: 0; position: relative; }
+  .asst-scroll { padding: 16px; }
+  .asst-mobile-bar {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Conversation list becomes a left slide-over. */
+  .asst-convs {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 130;
+    width: 280px;
+    max-width: 84vw;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    padding: 16px 14px;
+    transform: translateX(-100%);
+    transition: transform 0.26s cubic-bezier(.4, 0, .2, 1);
+  }
+  .asst.drawer-open .asst-convs { transform: none; }
+  .asst-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    background: oklch(0.15 0.01 80 / 0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.26s;
+  }
+  .asst.drawer-open .asst-scrim { display: block; opacity: 1; pointer-events: auto; }
 }
 </style>
