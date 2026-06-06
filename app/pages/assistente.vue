@@ -236,6 +236,7 @@ async function confirmCard(cs: UiCardState) {
   position: absolute;
   inset: 0;
   z-index: 20;
+  border-radius: var(--radius);
   background: oklch(0.15 0.01 80 / 0.4);
   opacity: 0;
   pointer-events: none;
