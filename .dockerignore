@@ -1,0 +1,11 @@
+node_modules/
+.nuxt/
+.output/
+.git/
+.design-ref/
+data/
+server/db/*.sqlite
+server/db/*.sqlite-*
+.env
+.env.*
+*.log

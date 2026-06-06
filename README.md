@@ -49,6 +49,25 @@ Cria a família "Casa Silva" (Abr–Jun 2026). Todos entram com a password `demo
 - `maria@casa.pt` — Administrador
 - `joao@casa.pt`, `rita@casa.pt` — Membros
 
+## Docker
+
+Imagem multi-stage (Node 24, build do Nuxt + `better-sqlite3` nativo). A base de dados
+SQLite vive num volume (`lar_data` → `/app/data/lar.sqlite`), persistente entre reinícios.
+
+```bash
+cp .env.production .env      # define NUXT_SESSION_PASSWORD (mín. 32 caracteres)
+docker compose up -d --build # http://localhost:3000
+```
+
+Primeiro arranque → BD vazia → a app mostra o form de registo do administrador.
+
+Build/run sem compose:
+
+```bash
+docker build -t lar-contas .
+docker run -p 3000:3000 -e NUXT_SESSION_PASSWORD=<segredo-32+> -v lar_data:/app/data lar-contas
+```
+
 ## Ecrãs
 
 Login · Configuração inicial · Resumo · Gastos (lista, filtros, criar/editar) ·

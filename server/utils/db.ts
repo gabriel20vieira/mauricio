@@ -6,9 +6,11 @@ import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { sql } from 'drizzle-orm'
 import * as schema from '../db/schema'
 
-const dbDir = dirname(fileURLToPath(import.meta.url)).replace(/utils$/, 'db')
-mkdirSync(dbDir, { recursive: true })
-const dbFile = join(dbDir, 'lar.sqlite')
+// In a built/bundled server (.output) the source path no longer exists, so the
+// DB location is configurable via LAR_DB_PATH (set in Docker to a mounted volume).
+const dbFile = process.env.LAR_DB_PATH
+  || join(dirname(fileURLToPath(import.meta.url)).replace(/utils$/, 'db'), 'lar.sqlite')
+mkdirSync(dirname(dbFile), { recursive: true })
 
 const sqlite = new Database(dbFile)
 sqlite.pragma('journal_mode = WAL')

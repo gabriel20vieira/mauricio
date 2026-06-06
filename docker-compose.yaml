@@ -1,0 +1,15 @@
+services:
+    app:
+        build: .
+        ports:
+            - "3000:3000"
+        environment:
+            - NUXT_SESSION_PASSWORD=${NUXT_SESSION_PASSWORD}
+            - LAR_DB_PATH=/app/data/lar.sqlite
+        volumes:
+            # Persist the SQLite database across container restarts.
+            - lar_data:/app/data
+        restart: unless-stopped
+
+volumes:
+    lar_data:
