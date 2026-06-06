@@ -6,7 +6,13 @@ export interface ConfirmCard {
 }
 export interface ChartCard {
   kind: 'chart'
-  chart: { type: 'donut' | 'bar' | 'line', title: string, data: { label: string, value: number, color?: string }[] }
+  chart: {
+    type: 'line' | 'area' | 'column' | 'bar' | 'stacked' | 'donut' | 'radar' | 'table'
+    title: string
+    categories: string[]
+    series: { name: string, data: number[] }[]
+    measureLabel: string
+  }
 }
 export type Card = ConfirmCard | ChartCard
 

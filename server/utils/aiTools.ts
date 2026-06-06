@@ -8,6 +8,7 @@ import { db, schema } from './db'
 import type { Expense, User } from '../db/schema'
 import { CATEGORIES, CAT_BY_ID, monthKey, euro, MONTHS_PT_LONG } from '../../shared/config'
 import type { OllamaTool } from './ollama'
+import { aggregate, type AggQuery, type Dimension } from './aggregate'
 
 // ---- card descriptors sent to the client ----
 export interface ConfirmCard {
@@ -18,7 +19,13 @@ export interface ConfirmCard {
 }
 export interface ChartCard {
   kind: 'chart'
-  chart: { type: 'donut' | 'bar' | 'line', title: string, data: { label: string, value: number, color?: string }[] }
+  chart: {
+    type: 'line' | 'area' | 'column' | 'bar' | 'stacked' | 'donut' | 'radar' | 'table'
+    title: string
+    categories: string[]
+    series: { name: string, data: number[] }[]
+    measureLabel: string
+  }
 }
 export type Card = ConfirmCard | ChartCard
 
@@ -30,6 +37,22 @@ export interface ToolOutcome {
 
 // ---------------------------------------------------------------- definitions
 const catIds = CATEGORIES.map(c => c.id)
+const DIMS = ['pessoa', 'categoria', 'subcategoria', 'dia', 'mes', 'ano', 'metodo']
+const AGG_FILTERS = {
+  type: 'object',
+  description: 'Filtros opcionais sobre os gastos antes de agregar.',
+  properties: {
+    day: { type: 'string', description: 'Dia exato yyyy-mm-dd' },
+    month: { type: 'string', description: 'Mês yyyy-mm' },
+    year: { type: 'string', description: 'Ano yyyy' },
+    dateFrom: { type: 'string', description: 'Desde yyyy-mm-dd (inclusive)' },
+    dateTo: { type: 'string', description: 'Até yyyy-mm-dd (inclusive)' },
+    cat: { type: 'string', enum: catIds, description: 'ID da categoria' },
+    sub: { type: 'string' },
+    who: { type: 'string', description: 'Nome ou ID do membro' },
+    method: { type: 'string' },
+  },
+}
 export const TOOLS: OllamaTool[] = [
   fn('search_expenses', 'Procura gastos por filtros. Devolve lista de gastos.', {
     month: { type: 'string', description: 'Mês no formato yyyy-mm (ex. 2026-06)' },
@@ -70,19 +93,46 @@ export const TOOLS: OllamaTool[] = [
   fn('propose_delete_expense', 'Propõe eliminar um gasto. NUNCA elimina — mostra cartão para o utilizador confirmar.', {
     id: { type: 'string', description: 'ID do gasto' },
   }, ['id']),
-  fn('render_chart', 'Mostra um gráfico ao utilizador a partir de dados que já obtiveste.', {
-    type: { type: 'string', enum: ['donut', 'bar', 'line'] },
+  fn('aggregate', 'Agrega gastos na base de dados (contas exatas — NÃO somes à mão). Ex.: quem gastou mais num dia, total por categoria, evolução por mês.', {
+    groupBy: { type: 'string', enum: DIMS, description: 'Dimensão do eixo (o que comparar)' },
+    series: { type: 'string', enum: DIMS, description: 'Opcional: 2ª dimensão → multi-série (ex. groupBy=mes, series=categoria)' },
+    measure: { type: 'string', enum: ['soma', 'contagem', 'media'], description: 'soma de valores, contagem de movimentos ou média (def. soma)' },
+    filters: AGG_FILTERS,
+    sort: { type: 'string', enum: ['asc', 'desc'], description: 'Ordenar (não-temporal: por valor; def. desc)' },
+    limit: { type: 'number', description: 'Máx. de categorias (top N)' },
+  }, ['groupBy']),
+  fn('make_chart', 'Gera um gráfico a partir de dados agregados na BD. Escolhe o tipo e as dimensões; o servidor faz as contas (sem inventar números).', {
+    chartType: { type: 'string', enum: ['linha', 'area', 'colunas', 'barras', 'empilhado', 'donut', 'radar', 'tabela'], description: 'linha/area=evolução temporal; colunas/barras=comparar; empilhado=multi-série; donut=repartição; radar=perfil multi-eixo; tabela=valores' },
     title: { type: 'string' },
-    data: {
-      type: 'array',
-      description: 'Pontos [{label, value}]',
-      items: { type: 'object', properties: { label: { type: 'string' }, value: { type: 'number' } } },
-    },
-  }, ['type', 'data']),
+    groupBy: { type: 'string', enum: DIMS, description: 'Dimensão principal (eixo/segmentos)' },
+    series: { type: 'string', enum: DIMS, description: 'Opcional: 2ª dimensão (multi-série / multi-linha / empilhado / radar)' },
+    measure: { type: 'string', enum: ['soma', 'contagem', 'media'] },
+    filters: AGG_FILTERS,
+    sort: { type: 'string', enum: ['asc', 'desc'] },
+    limit: { type: 'number' },
+  }, ['chartType', 'groupBy']),
 ]
 
 function fn(name: string, description: string, props: Record<string, any>, required: string[] = []): OllamaTool {
   return { type: 'function', function: { name, description, parameters: { type: 'object', properties: props, required } } }
+}
+
+const CHART_TYPE_MAP: Record<string, ChartCard['chart']['type']> = {
+  linha: 'line', area: 'area', colunas: 'column', barras: 'bar',
+  empilhado: 'stacked', donut: 'donut', radar: 'radar', tabela: 'table',
+}
+const VALID_DIMS: Dimension[] = ['pessoa', 'categoria', 'subcategoria', 'dia', 'mes', 'ano', 'metodo']
+
+function buildQuery(args: Record<string, any>): AggQuery {
+  const dim = (d: any): Dimension | undefined => VALID_DIMS.includes(d) ? d : undefined
+  return {
+    groupBy: dim(args.groupBy) || 'categoria',
+    series: dim(args.series),
+    measure: ['soma', 'contagem', 'media'].includes(args.measure) ? args.measure : 'soma',
+    filters: args.filters || {},
+    sort: args.sort === 'asc' ? 'asc' : args.sort === 'desc' ? 'desc' : undefined,
+    limit: typeof args.limit === 'number' ? args.limit : undefined,
+  }
 }
 
 // ---------------------------------------------------------------- helpers
@@ -249,12 +299,23 @@ export async function runTool(name: string, args: Record<string, any>, user: Use
       return { label: 'Propôs eliminar gasto', result: { proposto: true, aguardaConfirmacao: true, resumo: summary }, card: { kind: 'confirm', action: 'delete', payload: { id: target.id }, summary } }
     }
 
-    case 'render_chart': {
-      const data = Array.isArray(args.data) ? args.data.map((d: any) => ({ label: String(d.label ?? ''), value: Number(d.value) || 0 })) : []
+    case 'aggregate': {
+      const agg = aggregate(buildQuery(args))
+      // Compact view for the model to read/reason about (e.g. who spent most).
+      const ranking = agg.categories.map((label, i) => ({
+        label,
+        ...Object.fromEntries(agg.series.map(s => [s.name, s.data[i]])),
+      }))
+      return { label: `Agregou por ${args.groupBy}${args.series ? ` × ${args.series}` : ''}`, result: { medida: agg.measure, unidade: agg.measureLabel, total: agg.total, dados: ranking } }
+    }
+
+    case 'make_chart': {
+      const agg = aggregate(buildQuery(args))
+      const type = CHART_TYPE_MAP[args.chartType] || 'column'
       return {
-        label: 'Gerou gráfico',
-        result: { renderizado: true, pontos: data.length },
-        card: { kind: 'chart', chart: { type: ['donut', 'bar', 'line'].includes(args.type) ? args.type : 'bar', title: args.title || 'Gráfico', data } },
+        label: `Gerou gráfico (${args.chartType})`,
+        result: { renderizado: true, tipo: args.chartType, categorias: agg.categories.length, series: agg.series.length },
+        card: { kind: 'chart', chart: { type, title: args.title || 'Gráfico', categories: agg.categories, series: agg.series, measureLabel: agg.measureLabel } },
       }
     }
 
@@ -277,10 +338,11 @@ export function systemPrompt(user: User): string {
     `Estás a falar com ${user.name} (papel: ${user.role}).`,
     '',
     'Regras importantes:',
-    '- Para obter dados usa as tools de leitura (search_expenses, get_summary, get_balance, monthly_totals, list_members, get_categories). Nunca inventes números — consulta sempre.',
-    '- NÃO consegues gravar, editar nem eliminar diretamente. Para qualquer alteração usa propose_add_expense / propose_update_expense / propose_delete_expense: isto mostra um cartão de confirmação ao utilizador. Só depois de ele confirmar é que a ação acontece.',
-    '- Nunca digas que gravaste/eliminaste algo. Diz que apresentaste a proposta e que aguarda confirmação.',
-    '- Para mostrar um gráfico, obtém primeiro os dados com uma tool de leitura e depois chama render_chart.',
+    '- Nunca inventes nem somes números à mão. Para QUALQUER cálculo (totais, rankings, comparações, evoluções) usa a tool "aggregate" — a base de dados faz as contas. Ex.: "quem gastou mais a 2026-06-03" → aggregate(groupBy:"pessoa", filters:{day:"2026-06-03"}, sort:"desc").',
+    '- Dimensões disponíveis (groupBy e series): pessoa, categoria, subcategoria, dia, mes, ano, metodo. Medidas: soma, contagem, media.',
+    '- Para gráficos usa "make_chart" (mesmos parâmetros + chartType + title). O servidor agrega e desenha — escolhe o tipo certo: linha/area para evolução no tempo (dia/mes/ano), colunas/barras para comparar, empilhado/radar para multi-série (com "series"), donut para repartição, tabela para listar. Não precisas de obter os dados antes — o make_chart trata de tudo.',
+    '- Outras tools de leitura: search_expenses (listar gastos individuais), get_summary, get_balance, monthly_totals, list_members, get_categories.',
+    '- NÃO consegues gravar, editar nem eliminar diretamente. Para qualquer alteração usa propose_add_expense / propose_update_expense / propose_delete_expense: mostra um cartão de confirmação. Só depois de o utilizador confirmar é que a ação acontece. Nunca digas que já gravaste/eliminaste.',
     '- Sê conciso. Mostra valores em euros.',
   ].join('\n')
 }
