@@ -22,5 +22,27 @@ export const expenses = sqliteTable('expenses', {
   createdAt: integer('created_at').notNull(),
 })
 
+export const chatConversations = sqliteTable('chat_conversations', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: text('title').notNull().default('Nova conversa'),
+  createdAt: integer('created_at').notNull(),
+  updatedAt: integer('updated_at').notNull(),
+})
+
+export const chatMessages = sqliteTable('chat_messages', {
+  id: text('id').primaryKey(),
+  conversationId: text('conversation_id').notNull().references(() => chatConversations.id, { onDelete: 'cascade' }),
+  role: text('role', { enum: ['user', 'assistant', 'tool'] }).notNull(),
+  content: text('content').notNull().default(''),
+  toolCalls: text('tool_calls'), // JSON string | null  (assistant tool_calls)
+  toolCallId: text('tool_call_id'), // for role:tool — which call it answers
+  toolName: text('tool_name'), // for role:tool / convenience
+  cards: text('cards'), // JSON string | null — confirm/chart descriptors attached to an assistant turn
+  createdAt: integer('created_at').notNull(),
+})
+
 export type User = typeof users.$inferSelect
 export type Expense = typeof expenses.$inferSelect
+export type ChatConversation = typeof chatConversations.$inferSelect
+export type ChatMessage = typeof chatMessages.$inferSelect

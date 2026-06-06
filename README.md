@@ -36,6 +36,28 @@ A base de dados (`server/db/lar.sqlite`) é criada automaticamente no primeiro a
   função, repor password, remover) e categorias.
 - **Membro**: vê tudo, mas só edita os seus próprios gastos; não acede a *Administração*.
 
+## Assistente (chat com Ollama)
+
+Página `/assistente` — chat ligado a um Ollama local que usa **tool calling** para
+consultar dados, propor escritas e gerar gráficos. O modelo **nunca** muta a base de
+dados: add/editar/eliminar passam por um **cartão de confirmação** no chat → o clique
+chama o endpoint REST existente (com as permissões atuais).
+
+- **Tools de leitura** (auto): `search_expenses`, `get_summary`, `get_balance`,
+  `monthly_totals`, `list_members`, `get_categories`.
+- **Tools de proposta** (mostram cartão, não gravam): `propose_add_expense`,
+  `propose_update_expense`, `propose_delete_expense`.
+- **Gráficos**: `render_chart` (donut/barras/linha), renderizado inline.
+
+Configuração (env / `runtimeConfig`):
+
+```bash
+OLLAMA_BASE_URL=http://192.168.1.203:11434   # máquina onde o Ollama corre
+OLLAMA_MODEL=minimax-m3:cloud                # modelo com suporte a tools
+```
+
+O histórico de conversas é persistido (tabelas `chat_conversations`, `chat_messages`).
+
 ## Dados de demonstração (opcional)
 
 Com a base de dados vazia:

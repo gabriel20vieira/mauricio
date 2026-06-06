@@ -38,6 +38,10 @@ const ICONS: Record<string, string> = {
   trend: 'M3 17l6-6 4 4 8-8|M21 7h-5M21 7v5',
   card: 'M2 6h20v12H2z|M2 10h20',
   home: 'M3 11l9-8 9 8|M5 9v11h5v-6h4v6h5V9',
+  chat: 'M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.6-.8L3 21l1.8-5.9A8.5 8.5 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5z',
+  sparkles: 'M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z|M19 15l.7 1.8L21.5 17.5l-1.8.7L19 20l-.7-1.8L16.5 17.5l1.8-.7L19 15z',
+  send: 'M22 2L11 13|M22 2l-7 20-4-9-9-4 20-7z',
+  plusCircle: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20|M12 8v8M8 12h8',
 }
 const paths = computed(() => (ICONS[props.name] || '').split('|'))
 </script>

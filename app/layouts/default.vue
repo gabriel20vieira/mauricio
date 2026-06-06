@@ -11,6 +11,7 @@ const nav = [
   { to: '/gastos', label: 'Gastos', icon: 'receipt', group: 'nav' },
   { to: '/relatorios', label: 'Relatórios', icon: 'chart', group: 'nav' },
   { to: '/balanco', label: 'Balanço', icon: 'scale', group: 'nav' },
+  { to: '/assistente', label: 'Assistente', icon: 'sparkles', group: 'nav' },
   { to: '/pessoas', label: 'Pessoas', icon: 'users', group: 'nav' },
   { to: '/administracao', label: 'Administração', icon: 'shield', group: 'mgmt', adminOnly: true },
 ]

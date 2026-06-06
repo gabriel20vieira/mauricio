@@ -6,6 +6,9 @@ services:
         environment:
             - NUXT_SESSION_PASSWORD=${NUXT_SESSION_PASSWORD}
             - LAR_DB_PATH=/app/data/lar.sqlite
+            # Assistente de chat (Ollama). Aponta para a máquina onde o Ollama corre.
+            - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://192.168.1.203:11434}
+            - OLLAMA_MODEL=${OLLAMA_MODEL:-minimax-m3:cloud}
         volumes:
             # Persist the SQLite database across container restarts.
             - lar_data:/app/data
