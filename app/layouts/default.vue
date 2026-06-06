@@ -44,7 +44,7 @@ function navLinkStyle(active: boolean) {
     <!-- Sidebar -->
     <div class="nav-wrap" :class="{ open: navOpen }">
       <div class="nav-scrim" @click="navOpen = false" />
-      <aside class="sidebar" style="width: 250px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 16px 14px; gap: 6px">
+      <aside class="sidebar" style="width: 250px; flex-shrink: 0; height: 100dvh; overflow-y: auto; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 16px 14px; gap: 6px">
         <!-- Brand -->
         <div style="display: flex; align-items: center; gap: 11px; padding: 6px 8px 14px">
           <div style="width: 36px; height: 36px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center">
