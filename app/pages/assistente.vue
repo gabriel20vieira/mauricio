@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { streamChat, type Card, type ConversationMeta } from '~/composables/useChat'
 
-usePageHeader('Assistente', 'Pergunta sobre as contas da casa')
+definePageMeta({ title: 'Assistente', subtitle: 'Pergunta sobre as contas da casa' })
 
 interface UiCardState { card: Card, status?: 'pending' | 'done' | 'error', error?: string }
 interface UiMessage {

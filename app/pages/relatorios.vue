@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { CATEGORIES, catColor, euro, euro0, MONTHS_PT, monthKey, firstName } from '~~/shared/config'
 
-usePageHeader('Relatórios', 'Evolução e repartição dos gastos')
+definePageMeta({ title: 'Relatórios', subtitle: 'Evolução e repartição dos gastos' })
 const store = useStore()
 const { isDark } = useTweaks()
 onMounted(() => store.ensure())

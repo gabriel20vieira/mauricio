@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { CATEGORIES, monthKey, euro } from '~~/shared/config'
 
-usePageHeader('Gastos', 'Todos os movimentos da casa')
+definePageMeta({ title: 'Gastos', subtitle: 'Todos os movimentos da casa' })
 const store = useStore()
 const { openNewExpense } = useAppUi()
 onMounted(() => store.ensure())

@@ -8,8 +8,14 @@ async function logout() {
   await clear()
   await navigateTo('/login')
 }
-const header = usePageHeader()
 const route = useRoute()
+// Page title/subtitle come from route meta (definePageMeta) so they are identical
+// on server and client — avoids the child→parent hydration mismatch a shared
+// useState set during page setup would cause.
+const header = computed(() => ({
+  title: (route.meta.title as string) ?? '',
+  sub: (route.meta.subtitle as string) ?? '',
+}))
 const router = useRouter()
 
 const nav = [

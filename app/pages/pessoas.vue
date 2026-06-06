@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { catColor, euro, firstName } from '~~/shared/config'
 
-usePageHeader('Pessoas', 'Membros da casa')
+definePageMeta({ title: 'Pessoas', subtitle: 'Membros da casa' })
 const store = useStore()
 const { user } = useUserSession()
 const { isDark } = useTweaks()

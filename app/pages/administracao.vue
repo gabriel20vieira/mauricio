@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { CATEGORIES, catColor, catSoft } from '~~/shared/config'
 
-usePageHeader('Administração', 'Gestão de membros e categorias')
+definePageMeta({ title: 'Administração', subtitle: 'Gestão de membros e categorias' })
 const store = useStore()
 const { user } = useUserSession()
 const { isDark } = useTweaks()

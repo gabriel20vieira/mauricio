@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { catColor, euro, MONTHS_PT_LONG, monthKey, firstName } from '~~/shared/config'
 
-usePageHeader('Balanço', 'Quem pagou quanto este mês')
+definePageMeta({ title: 'Balanço', subtitle: 'Quem pagou quanto este mês' })
 const store = useStore()
 const selected = useMonth()
 const { isDark } = useTweaks()

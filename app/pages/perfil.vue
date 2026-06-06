@@ -1,5 +1,5 @@
 <script setup lang="ts">
-usePageHeader('Perfil', 'A sua conta e preferências')
+definePageMeta({ title: 'Perfil', subtitle: 'A sua conta e preferências' })
 const { user, fetch: refreshSession, clear } = useUserSession()
 const { theme, setTheme } = useTweaks()
 

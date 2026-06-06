@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { CAT_BY_ID, CATEGORIES, catColor, euro, euro0, MONTHS_PT_LONG, monthKey, firstName } from '~~/shared/config'
 
-usePageHeader('Resumo', 'Visão geral das contas da casa')
+definePageMeta({ title: 'Resumo', subtitle: 'Visão geral das contas da casa' })
 const store = useStore()
 const selected = useMonth()
 const { isDark } = useTweaks()
