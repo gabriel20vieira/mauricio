@@ -135,10 +135,10 @@ async function confirmCard(cs: UiCardState) {
 
     <!-- Thread -->
     <div class="asst-thread">
-      <!-- Mobile-only bar: access conversation list + new chat -->
-      <div class="asst-mobile-bar">
+      <!-- Top bar: open conversation list (drawer) + start a new chat -->
+      <div class="asst-bar">
         <UiButton variant="outline" size="sm" icon="chat" @click="convDrawer = true">Conversas</UiButton>
-        <UiButton size="sm" icon="plus" @click="newConversation">Nova</UiButton>
+        <UiButton size="sm" icon="plus" @click="newConversation">Nova conversa</UiButton>
       </div>
       <div ref="scroller" class="asst-scroll">
         <!-- Empty / welcome -->
@@ -200,24 +200,49 @@ async function confirmCard(cs: UiCardState) {
 </template>
 
 <style scoped>
-/* Fill the main content area; inner panes scroll, not the page. */
+/* Single-column thread with a slide-over conversation list on every size.
+   Fills the main content area; inner panes scroll, not the page. */
 .asst {
-  display: flex;
-  gap: 16px;
+  position: relative;
   height: 100%;
   min-height: 0;
+  overflow: hidden; /* clips the drawer when closed */
+  display: flex;
 }
 
+/* Conversation list — left slide-over, anchored to the assistant area
+   (absolute, not fixed) so it never covers the app's main sidebar. */
 .asst-convs {
-  width: 240px;
-  flex-shrink: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 30;
+  width: 280px;
+  max-width: 84vw;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  min-height: 0;
+  padding: 16px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transform: translateX(calc(-100% - 24px));
+  transition: transform 0.26s cubic-bezier(.4, 0, .2, 1);
 }
-.asst-scrim { display: none; }
-.asst-mobile-bar { display: none; }
+.asst.drawer-open .asst-convs { transform: none; }
+.asst-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: oklch(0.15 0.01 80 / 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.26s;
+}
+.asst.drawer-open .asst-scrim { opacity: 1; pointer-events: auto; }
+
 .asst-convs-list {
   flex: 1;
   min-height: 0;
@@ -255,6 +280,13 @@ async function confirmCard(cs: UiCardState) {
   background: var(--surface);
   overflow: hidden;
 }
+.asst-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
 .asst-scroll {
   flex: 1;
   min-height: 0;
@@ -283,42 +315,6 @@ async function confirmCard(cs: UiCardState) {
 }
 
 @media (max-width: 760px) {
-  .asst { gap: 0; position: relative; }
   .asst-scroll { padding: 16px; }
-  .asst-mobile-bar {
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  /* Conversation list becomes a left slide-over. */
-  .asst-convs {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    z-index: 130;
-    width: 280px;
-    max-width: 84vw;
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    box-shadow: var(--shadow);
-    padding: 16px 14px;
-    transform: translateX(-100%);
-    transition: transform 0.26s cubic-bezier(.4, 0, .2, 1);
-  }
-  .asst.drawer-open .asst-convs { transform: none; }
-  .asst-scrim {
-    position: fixed;
-    inset: 0;
-    z-index: 120;
-    background: oklch(0.15 0.01 80 / 0.45);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.26s;
-  }
-  .asst.drawer-open .asst-scrim { display: block; opacity: 1; pointer-events: auto; }
 }
 </style>
