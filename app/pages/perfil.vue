@@ -1,7 +1,7 @@
 <script setup lang="ts">
 usePageHeader('Perfil', 'A sua conta e preferências')
 const { user, fetch: refreshSession, clear } = useUserSession()
-const { tweaks, set } = useTweaks()
+const { theme, setTheme } = useTweaks()
 
 const name = ref(user.value?.name ?? '')
 const pw = ref('')
@@ -35,8 +35,6 @@ async function logout() {
   await clear()
   await navigateTo('/login')
 }
-
-const accents = [165, 245, 295, 65, 350, 195]
 </script>
 
 <template>
@@ -70,16 +68,9 @@ const accents = [165, 245, 295, 65, 350, 195]
 
     <UiCard :pad="22">
       <UiSectionTitle>Aparência</UiSectionTitle>
-      <UiField label="Tema" style="margin-bottom: 16px">
-        <UiSegmented :model-value="tweaks.theme" :options="[{ value: 'light', label: 'Claro' }, { value: 'dark', label: 'Escuro' }]"
-          @update:model-value="set({ theme: $event as any })" />
-      </UiField>
-      <UiField label="Cor de destaque">
-        <div style="display: flex; gap: 8px">
-          <button v-for="h in accents" :key="h" type="button"
-            :style="{ width: '30px', height: '30px', borderRadius: '50%', cursor: 'pointer', background: `oklch(0.6 0.13 ${h})`, border: tweaks.accent === h ? '2px solid var(--ink)' : '2px solid transparent', outline: '1px solid var(--border)' }"
-            @click="set({ accent: h })" />
-        </div>
+      <UiField label="Tema" hint="A escolha fica guardada neste dispositivo.">
+        <UiSegmented :model-value="theme" :options="[{ value: 'light', label: 'Claro' }, { value: 'dark', label: 'Escuro' }]"
+          @update:model-value="setTheme($event as any)" />
       </UiField>
     </UiCard>
 

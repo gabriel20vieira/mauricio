@@ -22,8 +22,8 @@ export default defineNuxtConfig({
       ],
       script: [
         {
-          // No-flash theme/tweaks init — runs before first paint.
-          innerHTML: `(function(){try{var t=JSON.parse(localStorage.getItem('lar.tweaks')||'{}');var e=document.documentElement;if(t.theme)e.setAttribute('data-theme',t.theme);if(t.density)e.setAttribute('data-density',t.density);if(t.accent)e.style.setProperty('--accent-h',t.accent);if(t.radius){e.style.setProperty('--radius',t.radius+'px');e.style.setProperty('--radius-sm',Math.max(4,t.radius-5)+'px');}}catch(_){}})();`,
+          // No-flash theme init — applies the persisted light/dark choice before first paint.
+          innerHTML: `(function(){try{var t=localStorage.getItem('lar.theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);}catch(_){}})();`,
           tagPosition: 'head',
         },
       ],

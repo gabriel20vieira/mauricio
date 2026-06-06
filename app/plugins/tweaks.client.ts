@@ -1,6 +1,6 @@
-// Re-apply persisted tweaks to the DOM after hydration so reactive state and
-// the document attributes stay in sync.
+// Reconcile the theme with localStorage after hydration so the persisted choice
+// (light/dark) survives a refresh. useState hydrates from the server payload, so
+// the saved value must be read from localStorage here on the client.
 export default defineNuxtPlugin(() => {
-  const { tweaks, apply } = useTweaks()
-  apply(tweaks.value)
+  useTweaks().hydrate()
 })

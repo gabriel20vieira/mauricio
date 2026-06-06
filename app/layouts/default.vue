@@ -1,7 +1,13 @@
 <script setup lang="ts">
-const { user } = useUserSession()
-const { navOpen, tweaksOpen, openNewExpense } = useAppUi()
+const { user, clear } = useUserSession()
+const { navOpen, openNewExpense } = useAppUi()
 const { toggleTheme, isDark } = useTweaks()
+
+async function logout() {
+  await $fetch('/api/auth/logout', { method: 'POST' })
+  await clear()
+  await navigateTo('/login')
+}
 const header = usePageHeader()
 const route = useRoute()
 const router = useRouter()
@@ -63,16 +69,18 @@ function navLinkStyle(active: boolean) {
 
         <div style="flex: 1" />
 
-        <!-- User card -->
-        <button style="display: flex; align-items: center; gap: 11px; padding: 9px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); width: 100%; text-align: left"
-          @click="router.push('/perfil')">
-          <UiAvatar :member="user ? { name: user.name, hue: user.hue } : null" :size="34" />
-          <div style="flex: 1; min-width: 0">
-            <div style="font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ user?.name }}</div>
-            <div style="font-size: 12px; color: var(--muted)">{{ user?.role === 'admin' ? 'Administrador' : 'Membro' }}</div>
-          </div>
-          <UiIcon name="chevRight" :size="16" style="color: var(--muted)" />
-        </button>
+        <!-- User card + logout -->
+        <div style="display: flex; align-items: center; gap: 6px">
+          <button style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 11px; padding: 9px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); text-align: left"
+            @click="router.push('/perfil')">
+            <UiAvatar :member="user ? { name: user.name, hue: user.hue } : null" :size="34" />
+            <div style="flex: 1; min-width: 0">
+              <div style="font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ user?.name }}</div>
+              <div style="font-size: 12px; color: var(--muted)">{{ user?.role === 'admin' ? 'Administrador' : 'Membro' }}</div>
+            </div>
+          </button>
+          <UiIconButton name="logout" label="Terminar sessão" @click="logout" />
+        </div>
       </aside>
     </div>
 
@@ -88,7 +96,6 @@ function navLinkStyle(active: boolean) {
           <div class="topbar-sub" style="font-size: 13px; color: var(--muted)">{{ header.sub }}</div>
         </div>
         <UiIconButton :name="isDark ? 'sun' : 'moon'" label="Alternar tema" @click="toggleTheme" />
-        <UiIconButton name="more" label="Ajustes" @click="tweaksOpen = true" />
         <div class="add-btn-top"><UiButton icon="plus" @click="openNewExpense">Novo gasto</UiButton></div>
       </header>
 
@@ -110,6 +117,5 @@ function navLinkStyle(active: boolean) {
     </div>
 
     <AppExpenseModal />
-    <AppTweaksPanel />
   </div>
 </template>

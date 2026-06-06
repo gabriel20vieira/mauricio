@@ -1,49 +1,40 @@
 import { computed } from 'vue'
 
-export interface Tweaks {
-  theme: 'light' | 'dark'
-  density: 'compact' | 'regular' | 'comfy'
-  accent: number // hue
-  radius: number // px
-}
+export type Theme = 'light' | 'dark'
 
-const DEFAULTS: Tweaks = { theme: 'light', density: 'regular', accent: 165, radius: 14 }
-const KEY = 'lar.tweaks'
+const KEY = 'lar.theme'
 
-function load(): Tweaks {
-  if (import.meta.client) {
-    try {
-      const raw = localStorage.getItem(KEY)
-      if (raw) return { ...DEFAULTS, ...JSON.parse(raw) }
-    } catch { /* ignore */ }
-  }
-  return { ...DEFAULTS }
-}
-
+// Density, accent and corners are fixed by design (regular / green hue 165 / 14px),
+// set via CSS defaults + htmlAttrs. Only the light/dark theme is user-choosable.
 export function useTweaks() {
-  const state = useState<Tweaks>('tweaks', () => load())
+  const theme = useState<Theme>('theme', () => 'light')
 
-  function apply(t: Tweaks) {
+  function apply(t: Theme) {
     if (!import.meta.client) return
-    const el = document.documentElement
-    el.setAttribute('data-theme', t.theme)
-    el.setAttribute('data-density', t.density)
-    el.style.setProperty('--accent-h', String(t.accent))
-    el.style.setProperty('--radius', `${t.radius}px`)
-    el.style.setProperty('--radius-sm', `${Math.max(4, t.radius - 5)}px`)
-    localStorage.setItem(KEY, JSON.stringify(t))
+    document.documentElement.setAttribute('data-theme', t)
+    try { localStorage.setItem(KEY, t) } catch { /* ignore */ }
   }
 
-  function set(patch: Partial<Tweaks>) {
-    state.value = { ...state.value, ...patch }
-    apply(state.value)
+  function setTheme(t: Theme) {
+    theme.value = t
+    apply(t)
   }
 
   function toggleTheme() {
-    set({ theme: state.value.theme === 'dark' ? 'light' : 'dark' })
+    setTheme(theme.value === 'dark' ? 'light' : 'dark')
   }
 
-  const isDark = computed(() => state.value.theme === 'dark')
+  // Reconcile state with localStorage after hydration (useState hydrates from the
+  // server payload, which can't see localStorage — so read it here on the client).
+  function hydrate() {
+    if (!import.meta.client) return
+    let saved: string | null = null
+    try { saved = localStorage.getItem(KEY) } catch { /* ignore */ }
+    if (saved === 'light' || saved === 'dark') theme.value = saved
+    apply(theme.value)
+  }
 
-  return { tweaks: state, set, toggleTheme, isDark, apply }
+  const isDark = computed(() => theme.value === 'dark')
+
+  return { theme, setTheme, toggleTheme, isDark, apply, hydrate }
 }
