@@ -13,7 +13,7 @@ const Body = z.object({
 const MAX_ITERS = 6
 
 export default defineEventHandler(async (event) => {
-  const { user } = await requireUserSession(event)
+  const user = await requireDbUser(event)
   const body = await readValidatedBody(event, Body.parse)
   const now = Date.now()
 

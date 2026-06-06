@@ -13,7 +13,7 @@ const Body = z.object({
 })
 
 export default defineEventHandler(async (event) => {
-  const { user } = await requireUserSession(event)
+  const user = await requireDbUser(event)
   const id = getRouterParam(event, 'id')!
   const body = await readValidatedBody(event, Body.parse)
 
