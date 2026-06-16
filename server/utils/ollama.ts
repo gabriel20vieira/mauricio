@@ -83,3 +83,17 @@ export async function ollamaChat(
 function safeJson(s: string): Record<string, any> {
   try { return JSON.parse(s) } catch { return {} }
 }
+
+/** Single non-streaming completion (no tools). Used for short tasks like titling. */
+export async function ollamaComplete(messages: OllamaMessage[], opts: { signal?: AbortSignal } = {}): Promise<string> {
+  const cfg = useRuntimeConfig()
+  const res = await fetch(`${cfg.ollamaBaseUrl}/api/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: cfg.ollamaModel, stream: false, messages }),
+    signal: opts.signal,
+  })
+  if (!res.ok) throw new Error(`Ollama ${res.status}`)
+  const data = await res.json() as { message?: { content?: string } }
+  return data.message?.content || ''
+}

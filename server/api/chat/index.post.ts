@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { asc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { db, schema } from '../../utils/db'
-import { ollamaChat, type OllamaMessage } from '../../utils/ollama'
+import { ollamaChat, ollamaComplete, type OllamaMessage } from '../../utils/ollama'
 import { TOOLS, runTool, systemPrompt, type Card } from '../../utils/aiTools'
 
 const Body = z.object({
@@ -13,6 +13,19 @@ const Body = z.object({
 
 const MAX_ITERS = 6
 
+const TITLE_LANG: Record<string, string> = { 'pt-PT': 'português', 'es-ES': 'español', 'en-US': 'English' }
+
+// Short AI title from the first exchange. Throws on failure → caller keeps the
+// truncated-message fallback already stored.
+async function generateTitle(message: string, reply: string, locale?: string): Promise<string> {
+  const lang = TITLE_LANG[locale || ''] || 'English'
+  const raw = await ollamaComplete([
+    { role: 'system', content: `Generate a very short conversation title (max 5 words) in ${lang}. Reply with ONLY the title — no quotes, no trailing punctuation, no explanation.` },
+    { role: 'user', content: `${message}\n\n${(reply || '').slice(0, 400)}` },
+  ], { signal: AbortSignal.timeout(15_000) })
+  return raw.trim().replace(/^["'“”]+|["'“”.]+$/g, '').replace(/\s+/g, ' ').slice(0, 80)
+}
+
 export default defineEventHandler(async (event) => {
   const user = await requireDbUser(event)
   // Each message fans out to several Ollama calls — throttle to limit cost/abuse.
@@ -22,6 +35,7 @@ export default defineEventHandler(async (event) => {
 
   // Ensure conversation (owned by user).
   let convId = body.conversationId
+  const isNewConversation = !convId
   if (convId) {
     const owned = db.select().from(schema.chatConversations)
       .where(eq(schema.chatConversations.id, convId)).get()
@@ -30,6 +44,7 @@ export default defineEventHandler(async (event) => {
     convId = randomUUID()
     db.insert(schema.chatConversations).values({
       id: convId, userId: user.id,
+      // Fallback title (truncated first message); replaced by an AI title below.
       title: body.message.slice(0, 60), createdAt: now, updatedAt: now,
     }).run()
   }
@@ -110,6 +125,16 @@ export default defineEventHandler(async (event) => {
       }
     }
     db.update(schema.chatConversations).set({ updatedAt: Date.now() }).where(eq(schema.chatConversations.id, convId)).run()
+
+    // AI-generated title for new conversations (falls back to the truncated first
+    // message already stored if generation fails).
+    if (isNewConversation) {
+      const title = await generateTitle(body.message, finalContent, body.locale).catch(() => '')
+      if (title) {
+        db.update(schema.chatConversations).set({ title }).where(eq(schema.chatConversations.id, convId)).run()
+        send({ type: 'title', conversationId: convId, title })
+      }
+    }
 
     send({ type: 'done', conversationId: convId, content: finalContent, cards })
   } catch (err: any) {
