@@ -82,8 +82,7 @@ async function submit() {
 
           <div v-if="error" style="color: var(--neg); font-size: 13px; margin-bottom: 14px">{{ error }}</div>
 
-          <UiButton type="submit" size="lg" full :icon="loading ? undefined : 'check'">{{ loading ? 'A criar…' : 'Criar
-            administrador' }}</UiButton>
+          <UiButton type="submit" size="lg" full :icon="loading ? undefined : 'check'">{{ loading ? 'A criar…' : 'Criar administrador' }}</UiButton>
         </form>
       </div>
     </div>
