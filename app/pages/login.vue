@@ -2,7 +2,8 @@
 import { CATEGORIES } from '~~/shared/config'
 
 definePageMeta({ layout: 'auth' })
-useHead({ title: 'Entrar · Lar' })
+const appName = useRuntimeConfig().public.appName
+useHead({ title: `Entrar · ${appName}` })
 
 const { fetch: refreshSession } = useUserSession()
 const email = ref('')
@@ -36,7 +37,7 @@ async function submit() {
         <div style="width: 40px; height: 40px; border-radius: 11px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center">
           <UiIcon name="home" :size="22" />
         </div>
-        <span style="font-size: 20px; font-weight: 700; letter-spacing: -0.02em">Lar</span>
+        <span style="font-size: 20px; font-weight: 700; letter-spacing: -0.02em">{{ appName }}</span>
       </div>
 
       <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; position: relative">

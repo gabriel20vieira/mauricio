@@ -1,6 +1,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'auth' })
-useHead({ title: 'Configuração inicial · Casa' })
+const appName = useRuntimeConfig().public.appName
+useHead({ title: `Configuração inicial · ${appName}` })
 
 const { fetch: refreshSession } = useUserSession()
 const name = ref('')
@@ -42,7 +43,7 @@ async function submit() {
           style="width: 40px; height: 40px; border-radius: 11px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center">
           <UiIcon name="home" :size="22" />
         </div>
-        <span style="font-size: 20px; font-weight: 700; letter-spacing: -0.02em">Casa</span>
+        <span style="font-size: 20px; font-weight: 700; letter-spacing: -0.02em">{{ appName }}</span>
       </div>
 
       <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; position: relative">

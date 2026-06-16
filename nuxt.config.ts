@@ -6,6 +6,10 @@ export default defineNuxtConfig({
   runtimeConfig: {
     ollamaBaseUrl: process.env.OLLAMA_BASE_URL || 'http://192.168.1.203:11434',
     ollamaModel: process.env.OLLAMA_MODEL || 'minimax-m3:cloud',
+    // Public (client-readable) settings. App name is adjustable via NUXT_PUBLIC_APP_NAME.
+    public: {
+      appName: process.env.NUXT_PUBLIC_APP_NAME || 'Maurício',
+    },
     // nuxt-auth-utils session hardening (password comes from NUXT_SESSION_PASSWORD).
     session: {
       name: 'lar-session',
@@ -21,7 +25,7 @@ export default defineNuxtConfig({
   css: ['~/assets/css/styles.css'],
   app: {
     head: {
-      title: 'Lar — contas de casa',
+      title: `${process.env.NUXT_PUBLIC_APP_NAME || 'Maurício'} — contas de casa`,
       htmlAttrs: { lang: 'pt', 'data-theme': 'light', 'data-density': 'regular' },
       link: [
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },

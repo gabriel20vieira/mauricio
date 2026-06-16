@@ -8,6 +8,7 @@ async function logout() {
   await clear()
   await navigateTo('/login')
 }
+const appName = useRuntimeConfig().public.appName
 const route = useRoute()
 // Page title/subtitle come from route meta (definePageMeta) so they are identical
 // on server and client — avoids the child→parent hydration mismatch a shared
@@ -56,7 +57,7 @@ function navLinkStyle(active: boolean) {
           <div style="width: 36px; height: 36px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center">
             <UiIcon name="home" :size="20" />
           </div>
-          <span style="font-size: 18px; font-weight: 700; letter-spacing: -0.02em">Lar</span>
+          <span style="font-size: 18px; font-weight: 700; letter-spacing: -0.02em">{{ appName }}</span>
         </div>
 
         <UiButton icon="plus" full @click="openNewExpense">Novo gasto</UiButton>

@@ -326,11 +326,12 @@ export async function runTool(name: string, args: Record<string, any>, user: Use
 
 // ---------------------------------------------------------------- system prompt
 export function systemPrompt(user: User): string {
+  const appName = useRuntimeConfig().public.appName
   const today = new Date().toISOString().slice(0, 10)
   const cats = CATEGORIES.map(c => `${c.id} (${c.label}${c.subs.length ? `: ${c.subs.join('/')}` : ''})`).join(', ')
   const members = loadMembers().map(m => `${m.name} [${m.id}]${m.role === 'admin' ? ' (admin)' : ''}`).join(', ')
   return [
-    'És o assistente da app "Lar — contas de casa", que gere despesas domésticas de uma família. Respondes sempre em português de Portugal, de forma breve e útil.',
+    `És o assistente da app "${appName} — contas de casa", que gere despesas domésticas de uma família. Respondes sempre em português de Portugal, de forma breve e útil.`,
     `Hoje é ${today}. O ano corrente é ${today.slice(0, 4)}. Quando o utilizador disser um mês sem ano, assume o ano corrente.`,
     'Moeda: euro (€).',
     `Categorias válidas (usa SEMPRE o id): ${cats}.`,

@@ -2,6 +2,7 @@
 import { streamChat, type Card, type ConversationMeta } from '~/composables/useChat'
 
 definePageMeta({ title: 'Assistente', subtitle: 'Pergunta sobre as contas da casa' })
+const appName = useRuntimeConfig().public.appName
 
 interface UiCardState { card: Card, status?: 'pending' | 'done' | 'error', error?: string }
 interface UiMessage {
@@ -147,7 +148,7 @@ async function confirmCard(cs: UiCardState) {
             <UiIcon name="sparkles" :size="28" />
           </div>
           <div>
-            <div style="font-size: 17px; font-weight: 700">Assistente do Lar</div>
+            <div style="font-size: 17px; font-weight: 700">Assistente do {{ appName }}</div>
             <div style="font-size: 13.5px; color: var(--muted); max-width: 360px; margin-top: 4px">Pergunta sobre gastos, pede gráficos ou diz para adicionar um gasto — eu mostro uma confirmação antes de gravar.</div>
           </div>
           <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 460px; margin-top: 6px">
