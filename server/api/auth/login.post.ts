@@ -23,8 +23,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Conta desativada. Contacte um administrador.' })
   }
 
-  await setUserSession(event, {
-    user: { id: user.id, name: user.name, email: user.email, role: user.role, hue: user.hue },
-  })
+  await createSession(event, toSessionUser(user))
   return { ok: true }
 })

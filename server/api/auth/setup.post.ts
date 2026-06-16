@@ -33,8 +33,6 @@ export default defineEventHandler(async (event) => {
   }
   db.insert(schema.users).values(user).run()
 
-  await setUserSession(event, {
-    user: { id: user.id, name: user.name, email: user.email, role: user.role, hue: user.hue },
-  })
+  await createSession(event, toSessionUser(user as any))
   return { ok: true }
 })

@@ -34,6 +34,34 @@ export function catSoft(hue: number, dark: boolean) {
   return dark ? `oklch(0.34 0.045 ${hue})` : `oklch(0.94 0.035 ${hue})`
 }
 
+// Friendly device label from a User-Agent string (best-effort).
+export function deviceLabel(ua: string): string {
+  if (!ua) return 'Dispositivo desconhecido'
+  const browser = /Edg/.test(ua) ? 'Edge'
+    : /OPR|Opera/.test(ua) ? 'Opera'
+      : /Chrome/.test(ua) ? 'Chrome'
+        : /Firefox/.test(ua) ? 'Firefox'
+          : /Safari/.test(ua) ? 'Safari' : 'Navegador'
+  const os = /Windows/.test(ua) ? 'Windows'
+    : /Android/.test(ua) ? 'Android'
+      : /iPhone|iPad|iOS/.test(ua) ? 'iOS'
+        : /Mac OS X|Macintosh/.test(ua) ? 'macOS'
+          : /Linux/.test(ua) ? 'Linux' : '—'
+  return `${browser} · ${os}`
+}
+
+// Relative time label, e.g. "há 5 min". Uses the current clock (client-side).
+export function relativeTime(ts: number): string {
+  const s = Math.max(0, Math.floor((Date.now() - ts) / 1000))
+  if (s < 60) return 'agora mesmo'
+  const m = Math.floor(s / 60)
+  if (m < 60) return `há ${m} min`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `há ${h} h`
+  const d = Math.floor(h / 24)
+  return `há ${d} ${d === 1 ? 'dia' : 'dias'}`
+}
+
 export function initials(name: string) { return name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase() }
 export function firstName(name: string) { return name.split(' ')[0] }
 

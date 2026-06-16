@@ -19,5 +19,6 @@ export default defineEventHandler(async (event) => {
   // and household totals stay intact. Deactivated members can't log in and are
   // hidden from active member pickers.
   db.update(schema.users).set({ active: false }).where(eq(schema.users.id, id)).run()
+  revokeAllForUser(id) // cut off any open sessions immediately
   return { ok: true }
 })

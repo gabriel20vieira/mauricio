@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
   if (Object.keys(patch).length) db.update(schema.users).set(patch).where(eq(schema.users.id, user.id)).run()
 
   const updated = db.select().from(schema.users).where(eq(schema.users.id, user.id)).get()!
-  await setUserSession(event, { user: { id: updated.id, name: updated.name, email: updated.email, role: updated.role, hue: updated.hue } })
+  await refreshSessionUser(event, toSessionUser(updated))
   const { passwordHash: _, ...safe } = updated
   return safe
 })

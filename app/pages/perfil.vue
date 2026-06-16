@@ -1,7 +1,11 @@
 <script setup lang="ts">
+import { deviceLabel, relativeTime } from '~~/shared/config'
+import type { SessionInfo } from '~/composables/useStore'
+
 definePageMeta({ title: 'Perfil', subtitle: 'A sua conta e preferências' })
 const { user, fetch: refreshSession, clear } = useUserSession()
 const { theme, setTheme } = useTweaks()
+const store = useStore()
 
 const name = ref(user.value?.name ?? '')
 const pw = ref('')
@@ -9,6 +13,16 @@ const pw2 = ref('')
 const msg = ref('')
 const err = ref('')
 const saving = ref(false)
+
+const sessions = ref<SessionInfo[]>([])
+async function loadSessions() { sessions.value = await store.fetchSessions().catch(() => []) }
+onMounted(loadSessions)
+
+async function revoke(s: SessionInfo) {
+  await store.revokeSession(s.id)
+  if (s.current) { await clear(); return navigateTo('/login') }
+  await loadSessions()
+}
 
 async function saveProfile() {
   msg.value = ''; err.value = ''
@@ -72,6 +86,28 @@ async function logout() {
         <UiSegmented :model-value="theme" :options="[{ value: 'light', label: 'Claro' }, { value: 'dark', label: 'Escuro' }]"
           @update:model-value="setTheme($event as any)" />
       </UiField>
+    </UiCard>
+
+    <UiCard :pad="22">
+      <UiSectionTitle>Sessões ativas</UiSectionTitle>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 14px">Dispositivos onde a sua conta está aberta. Pode terminar qualquer um.</p>
+      <div style="display: flex; flex-direction: column">
+        <div v-for="s in sessions" :key="s.id"
+          style="display: flex; align-items: center; gap: 12px; padding: 12px 2px; border-top: 1px solid var(--border)">
+          <div style="width: 34px; height: 34px; border-radius: 9px; background: var(--surface-2); display: grid; place-items: center; color: var(--ink-2); flex-shrink: 0">
+            <UiIcon name="user" :size="18" />
+          </div>
+          <div style="flex: 1; min-width: 0">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span style="font-weight: 600; font-size: 14px">{{ deviceLabel(s.userAgent) }}</span>
+              <UiTag v-if="s.current" tone="accent">Este dispositivo</UiTag>
+            </div>
+            <div style="font-size: 12.5px; color: var(--muted)">Último acesso {{ relativeTime(s.lastSeenAt) }}<span v-if="s.ip"> · {{ s.ip }}</span></div>
+          </div>
+          <UiButton variant="outline" size="sm" icon="logout" @click="revoke(s)">{{ s.current ? 'Sair' : 'Terminar' }}</UiButton>
+        </div>
+        <div v-if="!sessions.length" style="font-size: 13px; color: var(--muted); padding: 8px 2px">Sem sessões ativas.</div>
+      </div>
     </UiCard>
 
     <UiCard :pad="22">

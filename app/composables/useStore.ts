@@ -79,13 +79,37 @@ export function useStore() {
     await $fetch(`/api/users/${id}`, { method: 'DELETE' })
     await refresh()
   }
+  async function setMemberActive(id: string, active: boolean) {
+    await $fetch(`/api/users/${id}`, { method: 'PATCH', body: { active } })
+    await refresh()
+  }
+
+  // ---- sessions ----
+  function fetchSessions(all = false) {
+    return $fetch<SessionInfo[]>('/api/sessions', { query: all ? { all: 1 } : {} })
+  }
+  function revokeSession(id: string) {
+    return $fetch(`/api/sessions/${id}`, { method: 'DELETE' })
+  }
 
   return {
     expenses, members, loaded, memberById, activeMembers,
     refresh, ensure,
     addExpense, updateExpense, deleteExpense,
-    addMember, updateMember, deleteMember,
+    addMember, updateMember, deleteMember, setMemberActive,
+    fetchSessions, revokeSession,
   }
+}
+
+export interface SessionInfo {
+  id: string
+  userId: string
+  userName?: string
+  userAgent: string
+  ip: string
+  createdAt: number
+  lastSeenAt: number
+  current: boolean
 }
 
 // ---- analytics helpers (pure) ----

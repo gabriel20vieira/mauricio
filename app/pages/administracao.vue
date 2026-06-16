@@ -1,11 +1,21 @@
 <script setup lang="ts">
-import { CATEGORIES, catColor, catSoft } from '~~/shared/config'
+import { CATEGORIES, catColor, catSoft, deviceLabel, relativeTime } from '~~/shared/config'
+import type { SessionInfo } from '~/composables/useStore'
 
 definePageMeta({ title: 'Administração', subtitle: 'Gestão de membros e categorias' })
 const store = useStore()
 const { user } = useUserSession()
 const { isDark } = useTweaks()
-onMounted(() => store.ensure())
+onMounted(() => { store.ensure(); loadSessions() })
+
+// --- sessions (all members) ---
+const sessions = ref<SessionInfo[]>([])
+async function loadSessions() { sessions.value = await store.fetchSessions(true).catch(() => []) }
+async function revokeSession(id: string) { await store.revokeSession(id); await loadSessions() }
+async function toggleActive(m: typeof store.members.value[number]) {
+  await store.setMemberActive(m.id, !m.active)
+  await loadSessions()
+}
 
 // --- add member ---
 const addOpen = ref(false)
@@ -70,8 +80,34 @@ async function removeMember(id: string) {
             </div>
             <div style="font-size: 12.5px; color: var(--muted)">{{ m.email }}</div>
           </div>
-          <UiButton v-if="m.active" variant="outline" size="sm" icon="pencil" @click="openEdit(m)">Editar</UiButton>
+          <div style="display: flex; gap: 6px">
+            <UiButton v-if="m.active" variant="outline" size="sm" icon="pencil" @click="openEdit(m)">Editar</UiButton>
+            <UiButton v-if="m.id !== user?.id && m.active" variant="danger" size="sm" icon="lock" @click="toggleActive(m)">Bloquear</UiButton>
+            <UiButton v-else-if="m.id !== user?.id" variant="outline" size="sm" icon="check" @click="toggleActive(m)">Desbloquear</UiButton>
+          </div>
         </div>
+      </div>
+    </UiCard>
+
+    <UiCard :pad="22">
+      <UiSectionTitle>Sessões ativas</UiSectionTitle>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 14px">Todos os dispositivos com sessão aberta. Pode terminar qualquer um.</p>
+      <div style="display: flex; flex-direction: column">
+        <div v-for="s in sessions" :key="s.id"
+          style="display: flex; align-items: center; gap: 12px; padding: 12px 2px; border-top: 1px solid var(--border)">
+          <div style="width: 34px; height: 34px; border-radius: 9px; background: var(--surface-2); display: grid; place-items: center; color: var(--ink-2); flex-shrink: 0">
+            <UiIcon name="user" :size="18" />
+          </div>
+          <div style="flex: 1; min-width: 0">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span style="font-weight: 600; font-size: 14px">{{ s.userName }}</span>
+              <UiTag v-if="s.current" tone="accent">Este dispositivo</UiTag>
+            </div>
+            <div style="font-size: 12.5px; color: var(--muted)">{{ deviceLabel(s.userAgent) }} · {{ relativeTime(s.lastSeenAt) }}<span v-if="s.ip"> · {{ s.ip }}</span></div>
+          </div>
+          <UiButton variant="outline" size="sm" icon="logout" @click="revokeSession(s.id)">Terminar</UiButton>
+        </div>
+        <div v-if="!sessions.length" style="font-size: 13px; color: var(--muted); padding: 8px 2px">Sem sessões ativas.</div>
       </div>
     </UiCard>
 

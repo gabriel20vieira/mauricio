@@ -8,7 +8,8 @@ declare module '#auth-utils' {
     hue: number
   }
   interface UserSession {
-    // session payload (besides user) — none extra for now
+    // Server-side session row id — used to validate/revoke per device.
+    sid?: string
   }
 }
 

@@ -45,7 +45,18 @@ export const chatMessages = sqliteTable('chat_messages', {
   createdAt: integer('created_at').notNull(),
 })
 
+export const sessions = sqliteTable('sessions', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userAgent: text('user_agent').notNull().default(''),
+  ip: text('ip').notNull().default(''),
+  createdAt: integer('created_at').notNull(),
+  lastSeenAt: integer('last_seen_at').notNull(),
+  revokedAt: integer('revoked_at'), // null = active
+})
+
 export type User = typeof users.$inferSelect
 export type Expense = typeof expenses.$inferSelect
+export type Session = typeof sessions.$inferSelect
 export type ChatConversation = typeof chatConversations.$inferSelect
 export type ChatMessage = typeof chatMessages.$inferSelect
