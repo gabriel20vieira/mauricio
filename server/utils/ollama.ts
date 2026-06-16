@@ -34,11 +34,11 @@ export async function ollamaChat(
   onToken: (t: string) => void,
   opts: { signal?: AbortSignal } = {},
 ): Promise<ChatResult> {
-  const cfg = useRuntimeConfig()
-  const res = await fetch(`${cfg.ollamaBaseUrl}/api/chat`, {
+  const cfg = getAssistantConfig()
+  const res = await fetch(`${cfg.baseUrl}/api/chat`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: cfg.ollamaModel, stream: true, messages, tools }),
+    headers: ollamaHeaders(cfg),
+    body: JSON.stringify({ model: cfg.model, stream: true, messages, tools }),
     signal: opts.signal,
   })
   if (!res.ok || !res.body) {
@@ -84,13 +84,20 @@ function safeJson(s: string): Record<string, any> {
   try { return JSON.parse(s) } catch { return {} }
 }
 
+// Headers for an Ollama request — Bearer token only when the cloud toggle is on.
+function ollamaHeaders(cfg: { useCloud: boolean, token: string }): Record<string, string> {
+  const h: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (cfg.useCloud && cfg.token) h.Authorization = `Bearer ${cfg.token}`
+  return h
+}
+
 /** Single non-streaming completion (no tools). Used for short tasks like titling. */
 export async function ollamaComplete(messages: OllamaMessage[], opts: { signal?: AbortSignal } = {}): Promise<string> {
-  const cfg = useRuntimeConfig()
-  const res = await fetch(`${cfg.ollamaBaseUrl}/api/chat`, {
+  const cfg = getAssistantConfig()
+  const res = await fetch(`${cfg.baseUrl}/api/chat`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: cfg.ollamaModel, stream: false, messages }),
+    headers: ollamaHeaders(cfg),
+    body: JSON.stringify({ model: cfg.model, stream: false, messages }),
     signal: opts.signal,
   })
   if (!res.ok) throw new Error(`Ollama ${res.status}`)

@@ -28,7 +28,10 @@ const nav = [
   { to: '/pessoas', labelKey: 'nav.people', icon: 'users', group: 'nav' },
   { to: '/administracao', labelKey: 'nav.admin', icon: 'shield', group: 'mgmt', adminOnly: true },
 ]
-const visibleNav = computed(() => nav.filter(n => !n.adminOnly || user.value?.role === 'admin'))
+const assistantEnabled = useAssistantEnabled()
+const visibleNav = computed(() => nav.filter(n =>
+  (!n.adminOnly || user.value?.role === 'admin')
+  && (n.to !== '/assistente' || assistantEnabled.value)))
 const navMain = computed(() => visibleNav.value.filter(n => n.group === 'nav'))
 const navMgmt = computed(() => visibleNav.value.filter(n => n.group === 'mgmt'))
 

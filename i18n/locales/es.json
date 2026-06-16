@@ -165,7 +165,19 @@
     "show": "Mostrar",
     "hidden": "Oculta",
     "hideWarning": "Los elementos ocultos desaparecen de los selectores pero se mantienen en los gastos antiguos. Puedes reactivarlos cuando quieras.",
-    "manageCategoriesSub": "Crear, editar y ocultar categorías y subcategorías."
+    "manageCategoriesSub": "Crear, editar y ocultar categorías y subcategorías.",
+    "autoTranslate": "Traducir automáticamente",
+    "assistant": "Asistente",
+    "assistantSub": "Activar el asistente y definir el servidor Ollama.",
+    "enabled": "Activado",
+    "useCloud": "Usar servidor cloud",
+    "server": "Servidor",
+    "model": "Modelo",
+    "token": "Token",
+    "conversations": "Conversaciones del asistente",
+    "conversationsSub": "Ver y gestionar las conversaciones de los miembros.",
+    "viewingOther": "Estás viendo la conversación de otro miembro.",
+    "noConversations": "Sin conversaciones."
   },
   "profile": {
     "accountData": "Datos de la cuenta",

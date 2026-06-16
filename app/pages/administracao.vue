@@ -63,6 +63,46 @@ async function toggleSub(s: any) {
   else await store.updateSubcategory(s.id, { active: true })
 }
 
+// Auto-translate the filled name into the other languages (needs assistant on).
+const assistantEnabled = useAssistantEnabled()
+const translating = ref(false)
+async function translateNames(target: { names: { en: string, pt: string, es: string } }) {
+  translating.value = true
+  try {
+    const r = await $fetch<{ en: string, pt: string, es: string }>('/api/categories/translate', { method: 'POST', body: { names: target.names } })
+    target.names.en = r.en; target.names.pt = r.pt; target.names.es = r.es
+  } catch { /* ignore */ } finally { translating.value = false }
+}
+
+// --- assistant config ---
+const asstCfg = reactive({ enabled: true, useCloud: false, baseUrl: '', model: '', token: '' })
+const savingCfg = ref(false)
+async function loadAsstCfg() { const c = await $fetch<typeof asstCfg>('/api/assistant/config').catch(() => null); if (c) Object.assign(asstCfg, c) }
+async function saveAsstCfg() {
+  savingCfg.value = true
+  try {
+    await $fetch('/api/assistant/config', { method: 'PUT', body: { ...asstCfg } })
+    assistantEnabled.value = asstCfg.enabled
+    await loadAllConvs()
+  } finally { savingCfg.value = false }
+}
+
+// --- members' conversations (admin) ---
+const allConvs = ref<any[]>([])
+async function loadAllConvs() { allConvs.value = await $fetch<any[]>('/api/chat/conversations', { query: { all: 1 } }).catch(() => []) }
+const convView = reactive<{ open: boolean, title: string, userName: string, messages: any[] }>({ open: false, title: '', userName: '', messages: [] })
+async function openConv(c: any) {
+  const d = await $fetch<{ messages: any[] }>(`/api/chat/conversations/${c.id}`)
+  Object.assign(convView, { open: true, title: c.title, userName: c.userName, messages: d.messages })
+}
+async function delConv(c: any) {
+  if (!confirm(t('admin.hideWarning'))) return
+  await $fetch(`/api/chat/conversations/${c.id}`, { method: 'DELETE' })
+  await loadAllConvs()
+}
+
+onMounted(() => { loadAsstCfg(); loadAllConvs() })
+
 // --- sessions (all members) ---
 const sessions = ref<SessionInfo[]>([])
 async function loadSessions() { sessions.value = await store.fetchSessions(true).catch(() => []) }
@@ -197,12 +237,77 @@ async function removeMember(id: string) {
       </div>
     </UiCard>
 
+    <!-- Assistant configuration -->
+    <UiCard :pad="22">
+      <UiSectionTitle>{{ $t('admin.assistant') }}</UiSectionTitle>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 14px">{{ $t('admin.assistantSub') }}</p>
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--border)">
+        <span style="font-size: 14px; font-weight: 540">{{ $t('admin.enabled') }}</span>
+        <UiToggle v-model="asstCfg.enabled" />
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--border); margin-bottom: 12px">
+        <span style="font-size: 14px; font-weight: 540">{{ $t('admin.useCloud') }}</span>
+        <UiToggle v-model="asstCfg.useCloud" />
+      </div>
+      <UiField :label="$t('admin.server')" style="margin-bottom: 12px"><UiInput v-model="asstCfg.baseUrl" placeholder="http://192.168.1.203:11434" /></UiField>
+      <UiField :label="$t('admin.model')" style="margin-bottom: 12px"><UiInput v-model="asstCfg.model" placeholder="minimax-m3:cloud" /></UiField>
+      <UiField v-if="asstCfg.useCloud" :label="$t('admin.token')" style="margin-bottom: 16px"><UiInput v-model="asstCfg.token" type="password" autocomplete="off" placeholder="••••••••" /></UiField>
+      <UiButton :icon="savingCfg ? undefined : 'check'" :disabled="savingCfg" @click="saveAsstCfg">{{ savingCfg ? $t('common.saving') : $t('common.save') }}</UiButton>
+    </UiCard>
+
+    <!-- Members' conversations -->
+    <UiCard :pad="22">
+      <UiSectionTitle>{{ $t('admin.conversations') }}</UiSectionTitle>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 8px">{{ $t('admin.conversationsSub') }}</p>
+      <div style="display: flex; flex-direction: column">
+        <div v-for="c in allConvs" :key="c.id" style="display: flex; align-items: center; gap: 10px; padding: 11px 2px; border-top: 1px solid var(--border)">
+          <UiIcon name="chat" :size="15" style="color: var(--muted); flex-shrink: 0" />
+          <div style="flex: 1; min-width: 0">
+            <div style="font-weight: 600; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ c.title }}</div>
+            <div style="font-size: 12px; color: var(--muted)">{{ c.userName }} · {{ $d(new Date(c.updatedAt), 'long') }}</div>
+          </div>
+          <UiIconButton name="arrowUR" :label="$t('common.edit')" @click="openConv(c)" />
+          <UiIconButton name="trash" :label="$t('common.delete')" @click="delConv(c)" />
+        </div>
+        <div v-if="!allConvs.length" style="font-size: 13px; color: var(--muted); padding: 8px 2px">{{ $t('admin.noConversations') }}</div>
+      </div>
+    </UiCard>
+
+    <!-- Read-only conversation viewer -->
+    <UiModal :open="convView.open" :title="convView.title" :width="640" @close="convView.open = false">
+      <div style="padding: 18px 20px">
+        <div style="font-size: 12.5px; color: var(--muted); background: var(--surface-2); padding: 8px 12px; border-radius: var(--radius-sm); margin-bottom: 16px">
+          {{ $t('admin.viewingOther') }} · {{ convView.userName }}
+        </div>
+        <div v-for="m in convView.messages" :key="m.id" style="margin-bottom: 16px">
+          <div v-if="m.role === 'user'" style="display: flex; justify-content: flex-end">
+            <div style="max-width: 80%; background: var(--accent); color: var(--accent-ink); padding: 9px 13px; border-radius: 14px 14px 4px 14px; font-size: 14px; white-space: pre-wrap">{{ m.content }}</div>
+          </div>
+          <div v-else style="display: flex; flex-direction: column; gap: 6px">
+            <template v-for="(seg, i) in m.segments" :key="i">
+              <div v-if="seg.type === 'text' && seg.text" class="md" v-html="renderMarkdown(seg.text)" />
+              <div v-else-if="seg.type === 'tool'">
+                <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; padding: 3px 9px; border-radius: 99px; background: var(--surface-2); color: var(--ink-2)">
+                  <UiIcon name="check" :size="12" style="color: var(--pos)" />{{ seg.label }}
+                </span>
+              </div>
+              <ChatChartCard v-else-if="seg.type === 'card' && seg.card.kind === 'chart'" :card="seg.card" />
+              <div v-else-if="seg.type === 'card'" style="font-size: 12.5px; color: var(--ink-2); border: 1px solid var(--border-2); border-radius: var(--radius-sm); padding: 8px 12px">{{ seg.card.summary }}</div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </UiModal>
+
     <!-- Category modal -->
     <UiModal :open="catModal.open" :title="catModal.id ? $t('admin.editCategory') : $t('admin.addCategory')" :width="460" @close="catModal.open = false">
       <form style="padding: 22px" @submit.prevent="saveCat">
         <UiField :label="$t('lang.en-US')" style="margin-bottom: 12px"><UiInput v-model="catModal.names.en" /></UiField>
         <UiField :label="$t('lang.pt-PT')" style="margin-bottom: 12px"><UiInput v-model="catModal.names.pt" /></UiField>
-        <UiField :label="$t('lang.es-ES')" style="margin-bottom: 14px"><UiInput v-model="catModal.names.es" /></UiField>
+        <UiField :label="$t('lang.es-ES')" style="margin-bottom: 10px"><UiInput v-model="catModal.names.es" /></UiField>
+        <div v-if="assistantEnabled" style="margin-bottom: 14px">
+          <UiButton variant="subtle" size="sm" icon="sparkles" type="button" :disabled="catNameEmpty || translating" @click="translateNames(catModal)">{{ translating ? $t('common.processing') : $t('admin.autoTranslate') }}</UiButton>
+        </div>
         <UiField :label="$t('admin.color')" style="margin-bottom: 18px">
           <div style="display: flex; align-items: center; gap: 12px">
             <input v-model.number="catModal.hue" type="range" min="0" max="360" style="flex: 1" />
@@ -221,7 +326,10 @@ async function removeMember(id: string) {
       <form style="padding: 22px" @submit.prevent="saveSub">
         <UiField :label="$t('lang.en-US')" style="margin-bottom: 12px"><UiInput v-model="subModal.names.en" /></UiField>
         <UiField :label="$t('lang.pt-PT')" style="margin-bottom: 12px"><UiInput v-model="subModal.names.pt" /></UiField>
-        <UiField :label="$t('lang.es-ES')" style="margin-bottom: 18px"><UiInput v-model="subModal.names.es" /></UiField>
+        <UiField :label="$t('lang.es-ES')" style="margin-bottom: 10px"><UiInput v-model="subModal.names.es" /></UiField>
+        <div v-if="assistantEnabled" style="margin-bottom: 14px">
+          <UiButton variant="subtle" size="sm" icon="sparkles" type="button" :disabled="subNameEmpty || translating" @click="translateNames(subModal)">{{ translating ? $t('common.processing') : $t('admin.autoTranslate') }}</UiButton>
+        </div>
         <div style="display: flex; gap: 10px; justify-content: flex-end">
           <UiButton variant="ghost" type="button" @click="subModal.open = false">{{ $t('common.cancel') }}</UiButton>
           <UiButton type="submit" icon="check" :disabled="subNameEmpty">{{ $t('common.save') }}</UiButton>

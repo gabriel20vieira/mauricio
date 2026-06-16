@@ -4,6 +4,8 @@ import { streamChat, type Card, type ConversationMeta } from '~/composables/useC
 definePageMeta({ titleKey: 'nav.assistant', subtitleKey: 'pageSub.assistant' })
 const appName = useRuntimeConfig().public.appName
 const { t, locale } = useI18n()
+const assistantEnabled = useAssistantEnabled()
+if (import.meta.client && !assistantEnabled.value) navigateTo('/')
 
 // A response is an ordered list of segments so text / tool calls / cards interleave
 // in reasoning order, both live and on history reload.

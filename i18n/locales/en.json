@@ -165,7 +165,19 @@
     "show": "Show",
     "hidden": "Hidden",
     "hideWarning": "Hidden items disappear from the pickers but stay on past expenses. You can re-enable them anytime.",
-    "manageCategoriesSub": "Create, edit and hide categories and subcategories."
+    "manageCategoriesSub": "Create, edit and hide categories and subcategories.",
+    "autoTranslate": "Auto-translate",
+    "assistant": "Assistant",
+    "assistantSub": "Enable the assistant and set the Ollama server.",
+    "enabled": "Enabled",
+    "useCloud": "Use cloud server",
+    "server": "Server",
+    "model": "Model",
+    "token": "Token",
+    "conversations": "Assistant conversations",
+    "conversationsSub": "View and manage household members’ conversations.",
+    "viewingOther": "You are viewing another member’s conversation.",
+    "noConversations": "No conversations."
   },
   "profile": {
     "accountData": "Account details",

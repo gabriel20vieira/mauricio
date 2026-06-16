@@ -28,6 +28,7 @@ async function generateTitle(message: string, reply: string, locale?: string): P
 
 export default defineEventHandler(async (event) => {
   const user = await requireDbUser(event)
+  if (!getAssistantConfig().enabled) throw createError({ statusCode: 403, statusMessage: 'O assistente está desativado.' })
   // Each message fans out to several Ollama calls — throttle to limit cost/abuse.
   rateLimit(event, { key: 'chat', limit: 20, windowMs: 60_000 })
   const body = await readValidatedBody(event, Body.parse)
