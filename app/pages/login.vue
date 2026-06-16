@@ -71,10 +71,10 @@ async function submit() {
 
         <form @submit.prevent="submit">
           <UiField label="Email" style="margin-bottom: 14px">
-            <UiInput v-model="email" type="email" placeholder="nome@casa.pt" required />
+            <UiInput v-model="email" type="email" placeholder="nome@casa.pt" autocomplete="username" required />
           </UiField>
           <UiField label="Password" style="margin-bottom: 18px">
-            <UiInput v-model="password" type="password" placeholder="••••••••" required />
+            <UiInput v-model="password" type="password" placeholder="••••••••" autocomplete="current-password" required />
           </UiField>
 
           <div v-if="error" style="color: var(--neg); font-size: 13px; margin-bottom: 14px">{{ error }}</div>

@@ -66,17 +66,17 @@ async function submit() {
 
         <form @submit.prevent="submit">
           <UiField label="Nome" style="margin-bottom: 14px">
-            <UiInput v-model="name" placeholder="ex.: Maria Silva" required />
+            <UiInput v-model="name" placeholder="ex.: Maria Silva" autocomplete="name" required />
           </UiField>
           <UiField label="Email" style="margin-bottom: 14px">
-            <UiInput v-model="email" type="email" placeholder="nome@casa.pt" required />
+            <UiInput v-model="email" type="email" placeholder="nome@casa.pt" autocomplete="email" required />
           </UiField>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px">
             <UiField label="Password">
-              <UiInput v-model="password" type="password" placeholder="••••••••" required />
+              <UiInput v-model="password" type="password" placeholder="••••••••" autocomplete="new-password" required />
             </UiField>
             <UiField label="Confirmar">
-              <UiInput v-model="confirm" type="password" placeholder="••••••••" required />
+              <UiInput v-model="confirm" type="password" placeholder="••••••••" autocomplete="new-password" required />
             </UiField>
           </div>
 

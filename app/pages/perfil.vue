@@ -55,10 +55,10 @@ async function logout() {
     <UiCard :pad="22">
       <UiSectionTitle>Dados da conta</UiSectionTitle>
       <form @submit.prevent="saveProfile">
-        <UiField label="Nome" style="margin-bottom: 14px"><UiInput v-model="name" /></UiField>
+        <UiField label="Nome" style="margin-bottom: 14px"><UiInput v-model="name" autocomplete="name" /></UiField>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px">
-          <UiField label="Nova password" hint="Deixe vazio para manter."><UiInput v-model="pw" type="password" placeholder="••••••••" /></UiField>
-          <UiField label="Confirmar"><UiInput v-model="pw2" type="password" placeholder="••••••••" /></UiField>
+          <UiField label="Nova password" hint="Deixe vazio para manter."><UiInput v-model="pw" type="password" placeholder="••••••••" autocomplete="new-password" /></UiField>
+          <UiField label="Confirmar"><UiInput v-model="pw2" type="password" placeholder="••••••••" autocomplete="new-password" /></UiField>
         </div>
         <div v-if="err" style="color: var(--neg); font-size: 13px; margin-bottom: 12px">{{ err }}</div>
         <div v-if="msg" style="color: var(--pos); font-size: 13px; margin-bottom: 12px">{{ msg }}</div>

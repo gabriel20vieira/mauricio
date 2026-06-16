@@ -91,10 +91,10 @@ async function removeMember(id: string) {
     <!-- Add modal -->
     <UiModal :open="addOpen" title="Adicionar membro" :width="460" @close="addOpen = false">
       <form style="padding: 22px" @submit.prevent="addMember">
-        <UiField label="Nome" style="margin-bottom: 14px"><UiInput v-model="form.name" placeholder="ex.: João Silva" required /></UiField>
-        <UiField label="Email" style="margin-bottom: 14px"><UiInput v-model="form.email" type="email" placeholder="nome@casa.pt" required /></UiField>
+        <UiField label="Nome" style="margin-bottom: 14px"><UiInput v-model="form.name" placeholder="ex.: João Silva" autocomplete="name" required /></UiField>
+        <UiField label="Email" style="margin-bottom: 14px"><UiInput v-model="form.email" type="email" placeholder="nome@casa.pt" autocomplete="off" required /></UiField>
         <UiField label="Password temporária" hint="O membro pode alterá-la depois no perfil." style="margin-bottom: 14px">
-          <UiInput v-model="form.password" type="password" placeholder="mín. 8 caracteres" required />
+          <UiInput v-model="form.password" type="password" placeholder="mín. 8 caracteres" autocomplete="new-password" required />
         </UiField>
         <UiField label="Função" style="margin-bottom: 18px">
           <UiSegmented v-model="form.role" :options="[{ value: 'user', label: 'Membro' }, { value: 'admin', label: 'Administrador' }]" />
@@ -115,7 +115,7 @@ async function removeMember(id: string) {
           <UiSegmented v-model="edit.role" :options="[{ value: 'user', label: 'Membro' }, { value: 'admin', label: 'Administrador' }]" />
         </UiField>
         <UiField label="Nova password" hint="Deixe vazio para manter a atual." style="margin-bottom: 18px">
-          <UiInput v-model="edit.password" type="password" placeholder="mín. 8 caracteres" />
+          <UiInput v-model="edit.password" type="password" placeholder="mín. 8 caracteres" autocomplete="new-password" />
         </UiField>
         <div v-if="editError" style="color: var(--neg); font-size: 13px; margin-bottom: 12px">{{ editError }}</div>
         <div style="display: flex; gap: 10px; align-items: center">

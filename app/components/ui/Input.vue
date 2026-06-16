@@ -7,6 +7,7 @@ const props = defineProps<{
   step?: string
   required?: boolean
   disabled?: boolean
+  autocomplete?: string
 }>()
 const emit = defineEmits<{ 'update:modelValue': [string] }>()
 
@@ -23,9 +24,9 @@ const style = computed(() => ({ ...base, ...ring.value, ...(props.prefix ? { pad
 <template>
   <div v-if="prefix" style="position: relative">
     <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 14.5px; pointer-events: none">{{ prefix }}</span>
-    <input :value="modelValue" :type="type || 'text'" :placeholder="placeholder" :step="step" :required="required" :disabled="disabled"
+    <input :value="modelValue" :type="type || 'text'" :placeholder="placeholder" :step="step" :required="required" :disabled="disabled" :autocomplete="autocomplete"
       :style="style" @focus="f = true" @blur="f = false" @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)" />
   </div>
-  <input v-else :value="modelValue" :type="type || 'text'" :placeholder="placeholder" :step="step" :required="required" :disabled="disabled"
+  <input v-else :value="modelValue" :type="type || 'text'" :placeholder="placeholder" :step="step" :required="required" :disabled="disabled" :autocomplete="autocomplete"
     :style="style" @focus="f = true" @blur="f = false" @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)" />
 </template>
