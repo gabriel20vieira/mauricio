@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { CAT_BY_ID, catColor, catSoft, firstName } from '~~/shared/config'
+import { catColor, catSoft, firstName } from '~~/shared/config'
 import type { Expense } from '~/composables/useStore'
 
 const props = defineProps<{ expense: Expense }>()
 const store = useStore()
+const cats = useCategories()
 const { user } = useUserSession()
 const { isDark } = useTweaks()
 const { openEditExpense } = useAppUi()
 
-const cat = computed(() => CAT_BY_ID[props.expense.cat])
+const cat = computed(() => cats.byId.value[props.expense.cat])
 const member = computed(() => store.memberById.value[props.expense.userId])
 const canEdit = computed(() => user.value?.role === 'admin' || props.expense.userId === user.value?.id)
 </script>
@@ -16,14 +17,14 @@ const canEdit = computed(() => user.value?.role === 'admin' || props.expense.use
 <template>
   <div class="exp-row" style="display: grid; grid-template-columns: 40px 1fr auto auto; align-items: center; gap: 14px; padding: 12px 4px; border-top: 1px solid var(--border); cursor: pointer"
     @click="openEditExpense(expense)">
-    <div :style="{ width: '40px', height: '40px', borderRadius: '11px', display: 'grid', placeItems: 'center', background: catSoft(cat.hue, isDark), color: catColor(cat.hue, isDark) }">
-      <UiIcon :name="cat.id === 'casa' ? 'home' : cat.id === 'transportes' ? 'card' : cat.id === 'lazer' ? 'tag' : cat.id === 'utilidades' ? 'bell' : 'receipt'" :size="18" />
+    <div :style="{ width: '40px', height: '40px', borderRadius: '11px', display: 'grid', placeItems: 'center', background: catSoft(cat?.hue ?? 200, isDark), color: catColor(cat?.hue ?? 200, isDark) }">
+      <UiIcon :name="cat?.id === 'casa' ? 'home' : cat?.id === 'transportes' ? 'card' : cat?.id === 'lazer' ? 'tag' : cat?.id === 'utilidades' ? 'bell' : 'receipt'" :size="18" />
     </div>
 
     <div style="min-width: 0">
-      <div style="font-weight: 600; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ expense.note || $t('cat.' + cat.id) }}</div>
+      <div style="font-weight: 600; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ expense.note || cats.catLabel(expense.cat) }}</div>
       <div style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); margin-top: 2px">
-        <UiCatDot :cat="cat" :size="7" />{{ $t('cat.' + cat.id) }}<template v-if="expense.sub"> · {{ expense.sub }}</template> · {{ $d(new Date(expense.date + 'T00:00:00'), 'short') }}
+        <UiCatDot v-if="cat" :cat="cat" :size="7" />{{ cats.catLabel(expense.cat) }}<template v-if="expense.sub"> · {{ cats.subLabel(expense.cat, expense.sub) }}</template> · {{ $d(new Date(expense.date + 'T00:00:00'), 'short') }}
       </div>
     </div>
 

@@ -5,13 +5,23 @@ definePageMeta({ titleKey: 'nav.assistant', subtitleKey: 'pageSub.assistant' })
 const appName = useRuntimeConfig().public.appName
 const { t, locale } = useI18n()
 
-interface UiCardState { card: Card, status?: 'pending' | 'done' | 'error', error?: string }
+// A response is an ordered list of segments so text / tool calls / cards interleave
+// in reasoning order, both live and on history reload.
+interface UiSegment {
+  type: 'text' | 'tool' | 'card'
+  text?: string // text
+  name?: string // tool
+  label?: string // tool
+  done?: boolean // tool
+  card?: Card // card
+  status?: 'pending' | 'done' | 'error' // card (confirm)
+  error?: string // card (confirm)
+}
 interface UiMessage {
   id: string
   role: 'user' | 'assistant'
-  content: string
-  cards: UiCardState[]
-  tools?: { label: string, done: boolean }[]
+  content?: string // user text
+  segments: UiSegment[]
   streaming?: boolean
 }
 
@@ -44,10 +54,9 @@ async function openConversation(id: string) {
   activeId.value = id
   convDrawer.value = false
   const data = await $fetch<{ messages: any[] }>(`/api/chat/conversations/${id}`)
-  messages.value = data.messages.map(m => ({
-    id: m.id, role: m.role, content: m.content,
-    cards: (m.cards || []).map((c: Card) => ({ card: c })),
-  }))
+  messages.value = data.messages.map(m => m.role === 'user'
+    ? { id: m.id, role: 'user', content: m.content, segments: [] }
+    : { id: m.id, role: 'assistant', segments: (m.segments || []).map((s: any) => ({ ...s, done: true })) })
   scrollDown()
 }
 
@@ -72,30 +81,42 @@ async function send(text?: string) {
   if (!msg || sending.value) return
   input.value = ''
   sending.value = true
-  messages.value.push({ id: 'u' + Date.now(), role: 'user', content: msg, cards: [] })
-  const assistant = reactive<UiMessage>({ id: 'a' + Date.now(), role: 'assistant', content: '', cards: [], tools: [], streaming: true })
+  messages.value.push({ id: 'u' + Date.now(), role: 'user', content: msg, segments: [] })
+  const assistant = reactive<UiMessage>({ id: 'a' + Date.now(), role: 'assistant', segments: [], streaming: true })
   messages.value.push(assistant)
   scrollDown()
 
+  const pushError = (m: string) => assistant.segments.push({ type: 'text', text: `⚠️ ${m}` })
+
   await streamChat({ conversationId: activeId.value || undefined, message: msg, locale: locale.value }, {
     onStart: (cid) => { activeId.value = cid },
-    onToken: (t) => { assistant.content += t; scrollDown() },
-    onTool: (_name, status, label) => {
-      if (status === 'running') assistant.tools!.push({ label: label || 'A trabalhar…', done: false })
-      else { const last = assistant.tools![assistant.tools!.length - 1]; if (last) { last.done = true; if (label) last.label = label } }
+    onToken: (t) => {
+      const last = assistant.segments[assistant.segments.length - 1]
+      if (last && last.type === 'text') last.text += t
+      else assistant.segments.push({ type: 'text', text: t })
       scrollDown()
     },
-    onCard: (card) => { assistant.cards.push({ card }); scrollDown() },
+    onTool: (name, status, label) => {
+      if (status === 'running') assistant.segments.push({ type: 'tool', name, label: label || '', done: false })
+      else {
+        for (let i = assistant.segments.length - 1; i >= 0; i--) {
+          const s = assistant.segments[i]
+          if (s.type === 'tool' && !s.done) { s.done = true; if (label) s.label = label; break }
+        }
+      }
+      scrollDown()
+    },
+    onCard: (card) => { assistant.segments.push({ type: 'card', card }); scrollDown() },
     onDone: async () => { assistant.streaming = false; await loadConversations() },
-    onError: (m) => { assistant.streaming = false; assistant.content = assistant.content || `⚠️ ${m}` },
-  }).catch((e) => { assistant.streaming = false; assistant.content = assistant.content || `⚠️ ${e?.message || 'Erro'}` })
+    onError: (m) => { assistant.streaming = false; pushError(m) },
+  }).catch((e) => { assistant.streaming = false; pushError(e?.message || 'Erro') })
 
   sending.value = false
   scrollDown()
 }
 
-async function confirmCard(cs: UiCardState) {
-  if (cs.card.kind !== 'confirm' || cs.status === 'done') return
+async function confirmCard(cs: UiSegment) {
+  if (!cs.card || cs.card.kind !== 'confirm' || cs.status === 'done') return
   cs.status = 'pending'
   cs.error = undefined
   const p = cs.card.payload
@@ -170,22 +191,22 @@ async function confirmCard(cs: UiCardState) {
             <div style="width: 30px; height: 30px; border-radius: 9px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; flex-shrink: 0">
               <UiIcon name="sparkles" :size="17" />
             </div>
-            <div style="flex: 1; min-width: 0">
-              <!-- tool chips -->
-              <div v-if="m.tools && m.tools.length" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px">
-                <span v-for="(t, i) in m.tools" :key="i"
-                  style="display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; padding: 3px 9px; border-radius: 99px; background: var(--surface-2); color: var(--ink-2)">
-                  <UiIcon :name="t.done ? 'check' : 'search'" :size="12" :style="{ color: t.done ? 'var(--pos)' : 'var(--muted)' }" />{{ t.label }}
-                </span>
-              </div>
-              <div v-if="m.content" style="font-size: 14.5px; line-height: 1.5; white-space: pre-wrap; color: var(--ink)">{{ m.content }}</div>
-              <div v-else-if="m.streaming && !(m.tools && m.tools.length)" style="font-size: 14px; color: var(--muted)">{{ $t('assistant.thinking') }}</div>
-
-              <!-- cards -->
-              <template v-for="(cs, i) in m.cards" :key="i">
-                <ChatChartCard v-if="cs.card.kind === 'chart'" :card="cs.card" />
-                <ChatConfirmCard v-else :card="cs.card" :status="cs.status" :error="cs.error" @confirm="confirmCard(cs)" />
+            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+              <!-- ordered segments: text / tool / card, interleaved -->
+              <template v-for="(seg, i) in m.segments" :key="i">
+                <!-- text (markdown) -->
+                <div v-if="seg.type === 'text' && seg.text" class="md" v-html="renderMarkdown(seg.text)" />
+                <!-- tool chip (its own line) -->
+                <div v-else-if="seg.type === 'tool'">
+                  <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; padding: 3px 9px; border-radius: 99px; background: var(--surface-2); color: var(--ink-2)">
+                    <UiIcon :name="seg.done ? 'check' : 'search'" :size="12" :style="{ color: seg.done ? 'var(--pos)' : 'var(--muted)' }" />{{ seg.label || $t('assistant.working') }}
+                  </span>
+                </div>
+                <!-- card -->
+                <ChatChartCard v-else-if="seg.type === 'card' && seg.card!.kind === 'chart'" :card="seg.card" />
+                <ChatConfirmCard v-else-if="seg.type === 'card'" :card="seg.card" :status="seg.status" :error="seg.error" @confirm="confirmCard(seg)" />
               </template>
+              <div v-if="m.streaming && !m.segments.length" style="font-size: 14px; color: var(--muted)">{{ $t('assistant.thinking') }}</div>
             </div>
           </div>
         </div>
@@ -320,4 +341,27 @@ async function confirmCard(cs: UiCardState) {
 @media (max-width: 760px) {
   .asst-scroll { padding: 16px; }
 }
+
+/* Markdown rendering of assistant text */
+.md {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--ink);
+  word-break: break-word;
+}
+.md :deep(p) { margin: 0 0 8px; }
+.md :deep(p:last-child) { margin-bottom: 0; }
+.md :deep(ul), .md :deep(ol) { margin: 4px 0 8px; padding-left: 20px; }
+.md :deep(li) { margin: 2px 0; }
+.md :deep(strong) { font-weight: 650; }
+.md :deep(em) { font-style: italic; }
+.md :deep(a) { color: var(--accent); text-decoration: underline; }
+.md :deep(h1), .md :deep(h2), .md :deep(h3) { font-size: 15px; font-weight: 700; margin: 10px 0 6px; }
+.md :deep(code) { font-family: var(--mono); font-size: 0.88em; background: var(--surface-2); padding: 1px 5px; border-radius: 5px; }
+.md :deep(pre) { background: var(--surface-2); padding: 10px 12px; border-radius: var(--radius-sm); overflow-x: auto; margin: 6px 0; }
+.md :deep(pre code) { background: none; padding: 0; }
+.md :deep(blockquote) { border-left: 3px solid var(--border-2); margin: 6px 0; padding: 2px 0 2px 12px; color: var(--ink-2); }
+.md :deep(table) { border-collapse: collapse; font-size: 13px; margin: 6px 0; }
+.md :deep(th), .md :deep(td) { border: 1px solid var(--border); padding: 4px 8px; text-align: left; }
+.md :deep(hr) { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
 </style>

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { CATEGORIES, catColor, monthKey, firstName } from '~~/shared/config'
+import { catColor, monthKey, firstName } from '~~/shared/config'
 
 definePageMeta({ titleKey: 'nav.reports', subtitleKey: 'pageSub.reports' })
 const store = useStore()
+const cats = useCategories()
 const { isDark } = useTweaks()
 const { locale } = useI18n()
 onMounted(() => store.ensure())
@@ -23,7 +24,7 @@ const totalCents = computed(() => store.expenses.value.reduce((a, e) => a + e.am
 const byCat = computed(() => {
   const map: Record<string, number> = {}
   for (const e of store.expenses.value) map[e.cat] = (map[e.cat] || 0) + e.amountCents
-  return CATEGORIES.map(c => ({ cat: c, cents: map[c.id] || 0 })).filter(x => x.cents > 0).sort((a, b) => b.cents - a.cents)
+  return cats.active.value.map(c => ({ cat: c, cents: map[c.id] || 0 })).filter(x => x.cents > 0).sort((a, b) => b.cents - a.cents)
 })
 const maxCat = computed(() => Math.max(...byCat.value.map(x => x.cents), 1))
 
@@ -49,7 +50,7 @@ const maxPerson = computed(() => Math.max(...byPerson.value.map(p => p.cents), 1
         <div style="display: flex; flex-direction: column; gap: 14px">
           <div v-for="x in byCat" :key="x.cat.id">
             <div style="display: flex; align-items: center; gap: 9px; margin-bottom: 6px; font-size: 13.5px">
-              <UiCatDot :cat="x.cat" :size="9" /><span style="flex: 1">{{ $t('cat.' + x.cat.id) }}</span>
+              <UiCatDot :cat="x.cat" :size="9" /><span style="flex: 1">{{ cats.catLabel(x.cat.id) }}</span>
               <span class="tnum" style="font-weight: 600">{{ $n(x.cents / 100, 'currency0') }}</span>
               <span class="tnum" style="color: var(--muted); width: 38px; text-align: right">{{ Math.round((x.cents / (totalCents || 1)) * 100) }}%</span>
             </div>

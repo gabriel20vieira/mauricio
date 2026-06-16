@@ -154,7 +154,18 @@
     "errCreate": "Erro ao criar membro",
     "errSave": "Erro ao guardar",
     "errRemove": "Erro ao remover",
-    "errPwLength": "Password mínima de 8 caracteres"
+    "errPwLength": "Password mínima de 8 caracteres",
+    "addCategory": "Adicionar categoria",
+    "editCategory": "Editar categoria",
+    "color": "Cor",
+    "subcategories": "Subcategorias",
+    "addSub": "Adicionar subcategoria",
+    "editSub": "Editar subcategoria",
+    "hide": "Ocultar",
+    "show": "Mostrar",
+    "hidden": "Oculta",
+    "hideWarning": "Itens ocultos desaparecem dos seletores mas mantêm-se nos gastos antigos. Pode reativá-los a qualquer momento.",
+    "manageCategoriesSub": "Criar, editar e ocultar categorias e subcategorias."
   },
   "profile": {
     "accountData": "Dados da conta",

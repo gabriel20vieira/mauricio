@@ -9,15 +9,22 @@ export default defineEventHandler(async (event) => {
     .where(eq(schema.chatMessages.conversationId, id))
     .orderBy(asc(schema.chatMessages.createdAt))
     .all()
-  // Only surface user/assistant turns to the UI (tool turns are internal).
-  const messages = rows
-    .filter(m => m.role !== 'tool')
-    .map(m => ({
-      id: m.id,
-      role: m.role,
-      content: m.content,
-      cards: m.cards ? JSON.parse(m.cards) : [],
-      createdAt: m.createdAt,
-    }))
+  const messages: any[] = []
+  for (const m of rows) {
+    if (m.role === 'user') {
+      messages.push({ id: m.id, role: 'user', content: m.content, createdAt: m.createdAt })
+    } else if (m.role === 'assistant') {
+      if (m.segments) {
+        messages.push({ id: m.id, role: 'assistant', segments: JSON.parse(m.segments), createdAt: m.createdAt })
+      } else if (m.content || m.cards) {
+        // Backward-compat for responses stored before segments existed.
+        const segs: any[] = []
+        if (m.content) segs.push({ type: 'text', text: m.content })
+        if (m.cards) for (const card of JSON.parse(m.cards)) segs.push({ type: 'card', card })
+        if (segs.length) messages.push({ id: m.id, role: 'assistant', segments: segs, createdAt: m.createdAt })
+      }
+    }
+    // tool rows are internal — skipped
+  }
   return { conversation, messages }
 })

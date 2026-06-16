@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { CAT_BY_ID, CATEGORIES, catColor, monthKey, firstName } from '~~/shared/config'
+import { catColor, monthKey, firstName } from '~~/shared/config'
 
 definePageMeta({ titleKey: 'nav.summary', subtitleKey: 'pageSub.summary' })
 const store = useStore()
+const cats = useCategories()
 const selected = useMonth()
 const { isDark } = useTweaks()
-const { d, t } = useI18n()
+const { d } = useI18n()
 
 onMounted(async () => {
   await store.ensure()
@@ -35,10 +36,10 @@ const monthLabel = computed(() => {
 const byCat = computed(() => {
   const map: Record<string, number> = {}
   for (const e of monthExpenses.value) map[e.cat] = (map[e.cat] || 0) + e.amountCents
-  return CATEGORIES.map(c => ({ cat: c, cents: map[c.id] || 0 }))
+  return cats.active.value.map(c => ({ cat: c, cents: map[c.id] || 0 }))
     .filter(x => x.cents > 0).sort((a, b) => b.cents - a.cents)
 })
-const donutSegments = computed(() => byCat.value.map(x => ({ value: x.cents, color: catColor(x.cat.hue, isDark.value), label: t('cat.' + x.cat.id) })))
+const donutSegments = computed(() => byCat.value.map(x => ({ value: x.cents, color: catColor(x.cat.hue, isDark.value), label: cats.catLabel(x.cat.id) })))
 const topCats = computed(() => byCat.value.slice(0, 2))
 
 // By person
@@ -79,7 +80,7 @@ const recent = computed(() => monthExpenses.value.slice(0, 6))
         <div :style="{ width: '40px', height: '40px', borderRadius: '11px', display: 'grid', placeItems: 'center', marginBottom: '14px', background: `oklch(${isDark ? '0.34 0.045' : '0.94 0.035'} ${t.cat.hue})`, color: catColor(t.cat.hue, isDark) }">
           <UiIcon name="receipt" :size="20" />
         </div>
-        <div style="font-size: 13px; color: var(--muted)">{{ $t('cat.' + t.cat.id) }}</div>
+        <div style="font-size: 13px; color: var(--muted)">{{ cats.catLabel(t.cat.id) }}</div>
         <div class="tnum" style="font-size: 24px; font-weight: 700; margin-top: 2px">{{ $n(t.cents / 100, 'currency0') }}</div>
       </UiCard>
     </div>
@@ -103,7 +104,7 @@ const recent = computed(() => monthExpenses.value.slice(0, 6))
           <div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
             <div v-for="x in byCat.slice(0, 5)" :key="x.cat.id" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px">
               <UiCatDot :cat="x.cat" :size="9" />
-              <span style="flex: 1">{{ $t('cat.' + x.cat.id) }}</span>
+              <span style="flex: 1">{{ cats.catLabel(x.cat.id) }}</span>
               <span class="tnum" style="font-weight: 600">{{ $n(x.cents / 100, 'currency0') }}</span>
               <span class="tnum" style="color: var(--muted); width: 38px; text-align: right">{{ Math.round((x.cents / (total * 100 || 1)) * 100) }}%</span>
             </div>

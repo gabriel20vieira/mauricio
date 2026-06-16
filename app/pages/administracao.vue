@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CATEGORIES, catColor, catSoft, deviceLabel, relativeTime } from '~~/shared/config'
+import { catColor, deviceLabel, relativeTime } from '~~/shared/config'
 import type { SessionInfo } from '~/composables/useStore'
 
 definePageMeta({ titleKey: 'nav.admin', subtitleKey: 'pageSub.admin' })
@@ -23,6 +23,44 @@ async function changeForced(val: string) {
   forced.value = val
   await $fetch('/api/i18n/forced', { method: 'PUT', body: { locale: val === 'auto' ? null : val } }).catch(() => {})
   if (val !== 'auto') await setLocale(val as any)
+}
+
+// --- categories / subcategories management ---
+const cats = useCategories()
+const catModal = reactive({ open: false, id: '', hue: 200, names: { en: '', pt: '', es: '' }, error: '' })
+function openCatNew() { Object.assign(catModal, { open: true, id: '', hue: 200, names: { en: '', pt: '', es: '' }, error: '' }) }
+function openCatEdit(c: any) { Object.assign(catModal, { open: true, id: c.id, hue: c.hue, names: { ...c.names }, error: '' }) }
+const catNameEmpty = computed(() => !catModal.names.en && !catModal.names.pt && !catModal.names.es)
+async function saveCat() {
+  catModal.error = ''
+  if (catNameEmpty.value) return
+  try {
+    if (catModal.id) await store.updateCategory(catModal.id, { names: catModal.names, hue: catModal.hue })
+    else await store.addCategory({ names: catModal.names, hue: catModal.hue })
+    catModal.open = false
+  } catch (e: any) { catModal.error = e?.data?.statusMessage || 'Erro' }
+}
+async function toggleCat(c: any) {
+  if (c.active) { if (!confirm(t('admin.hideWarning'))) return; await store.hideCategory(c.id) }
+  else await store.updateCategory(c.id, { active: true })
+}
+
+const subModal = reactive({ open: false, id: '', categoryId: '', names: { en: '', pt: '', es: '' }, error: '' })
+function openSubNew(categoryId: string) { Object.assign(subModal, { open: true, id: '', categoryId, names: { en: '', pt: '', es: '' }, error: '' }) }
+function openSubEdit(s: any, categoryId: string) { Object.assign(subModal, { open: true, id: s.id, categoryId, names: { ...s.names }, error: '' }) }
+async function saveSub() {
+  subModal.error = ''
+  if (!subModal.names.en && !subModal.names.pt && !subModal.names.es) { subModal.error = '!'; return }
+  try {
+    if (subModal.id) await store.updateSubcategory(subModal.id, { names: subModal.names })
+    else await store.addSubcategory({ categoryId: subModal.categoryId, names: subModal.names })
+    subModal.open = false
+  } catch (e: any) { subModal.error = e?.data?.statusMessage || '!' }
+}
+const subNameEmpty = computed(() => !subModal.names.en && !subModal.names.pt && !subModal.names.es)
+async function toggleSub(s: any) {
+  if (s.active) { if (!confirm(t('admin.hideWarning'))) return; await store.hideSubcategory(s.id) }
+  else await store.updateSubcategory(s.id, { active: true })
 }
 
 // --- sessions (all members) ---
@@ -129,17 +167,67 @@ async function removeMember(id: string) {
     </UiCard>
 
     <UiCard :pad="22">
-      <UiSectionTitle>{{ $t('admin.categories') }}</UiSectionTitle>
-      <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px">{{ $t('admin.categoriesSub') }}</p>
-      <div style="display: flex; flex-wrap: wrap; gap: 10px">
-        <div v-for="c in CATEGORIES" :key="c.id"
-          :style="{ display: 'flex', alignItems: 'center', gap: '9px', padding: '10px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: catSoft(c.hue, isDark) }">
-          <span :style="{ width: '10px', height: '10px', borderRadius: '50%', background: catColor(c.hue, isDark) }" />
-          <span style="font-weight: 600; font-size: 13.5px; color: var(--ink)">{{ $t('cat.' + c.id) }}</span>
-          <span v-if="c.subs.length" style="font-size: 12px; color: var(--ink-2)">· {{ c.subs.join(', ') }}</span>
+      <UiSectionTitle>
+        {{ $t('admin.categories') }}
+        <template #action><UiButton icon="plus" size="sm" @click="openCatNew">{{ $t('admin.addCategory') }}</UiButton></template>
+      </UiSectionTitle>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 8px">{{ $t('admin.manageCategoriesSub') }}</p>
+
+      <div style="display: flex; flex-direction: column">
+        <div v-for="c in store.categories.value" :key="c.id"
+          :style="{ padding: '12px 2px', borderTop: '1px solid var(--border)', opacity: c.active ? 1 : 0.55 }">
+          <div style="display: flex; align-items: center; gap: 10px">
+            <span :style="{ width: '12px', height: '12px', borderRadius: '50%', background: catColor(c.hue, isDark), flexShrink: 0 }" />
+            <span style="font-weight: 600; font-size: 14px">{{ cats.catLabel(c.id) }}</span>
+            <UiTag v-if="!c.active" tone="muted">{{ $t('admin.hidden') }}</UiTag>
+            <div style="flex: 1" />
+            <button class="lk" @click="openSubNew(c.id)">{{ $t('admin.addSub') }}</button>
+            <button class="lk" @click="openCatEdit(c)">{{ $t('common.edit') }}</button>
+            <button class="lk" :style="{ color: c.active ? 'var(--neg)' : 'var(--accent)' }" @click="toggleCat(c)">{{ c.active ? $t('admin.hide') : $t('admin.show') }}</button>
+          </div>
+          <div v-if="c.subs.length" style="display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 2px 22px">
+            <span v-for="s in c.subs" :key="s.id"
+              :style="{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '3px 8px', borderRadius: '99px', border: '1px solid var(--border-2)', fontSize: '12px', opacity: s.active ? 1 : 0.5 }">
+              {{ cats.subLabel(c.id, s.id) }}
+              <button class="lk" style="font-size: 11px" @click="openSubEdit(s, c.id)">{{ $t('common.edit') }}</button>
+              <button class="lk" style="font-size: 11px" :style="{ color: s.active ? 'var(--neg)' : 'var(--accent)' }" @click="toggleSub(s)">{{ s.active ? $t('admin.hide') : $t('admin.show') }}</button>
+            </span>
+          </div>
         </div>
       </div>
     </UiCard>
+
+    <!-- Category modal -->
+    <UiModal :open="catModal.open" :title="catModal.id ? $t('admin.editCategory') : $t('admin.addCategory')" :width="460" @close="catModal.open = false">
+      <form style="padding: 22px" @submit.prevent="saveCat">
+        <UiField :label="$t('lang.en-US')" style="margin-bottom: 12px"><UiInput v-model="catModal.names.en" /></UiField>
+        <UiField :label="$t('lang.pt-PT')" style="margin-bottom: 12px"><UiInput v-model="catModal.names.pt" /></UiField>
+        <UiField :label="$t('lang.es-ES')" style="margin-bottom: 14px"><UiInput v-model="catModal.names.es" /></UiField>
+        <UiField :label="$t('admin.color')" style="margin-bottom: 18px">
+          <div style="display: flex; align-items: center; gap: 12px">
+            <input v-model.number="catModal.hue" type="range" min="0" max="360" style="flex: 1" />
+            <span :style="{ width: '26px', height: '26px', borderRadius: '50%', background: catColor(catModal.hue, isDark), flexShrink: 0 }" />
+          </div>
+        </UiField>
+        <div style="display: flex; gap: 10px; justify-content: flex-end">
+          <UiButton variant="ghost" type="button" @click="catModal.open = false">{{ $t('common.cancel') }}</UiButton>
+          <UiButton type="submit" icon="check" :disabled="catNameEmpty">{{ $t('common.save') }}</UiButton>
+        </div>
+      </form>
+    </UiModal>
+
+    <!-- Subcategory modal -->
+    <UiModal :open="subModal.open" :title="subModal.id ? $t('admin.editSub') : $t('admin.addSub')" :width="420" @close="subModal.open = false">
+      <form style="padding: 22px" @submit.prevent="saveSub">
+        <UiField :label="$t('lang.en-US')" style="margin-bottom: 12px"><UiInput v-model="subModal.names.en" /></UiField>
+        <UiField :label="$t('lang.pt-PT')" style="margin-bottom: 12px"><UiInput v-model="subModal.names.pt" /></UiField>
+        <UiField :label="$t('lang.es-ES')" style="margin-bottom: 18px"><UiInput v-model="subModal.names.es" /></UiField>
+        <div style="display: flex; gap: 10px; justify-content: flex-end">
+          <UiButton variant="ghost" type="button" @click="subModal.open = false">{{ $t('common.cancel') }}</UiButton>
+          <UiButton type="submit" icon="check" :disabled="subNameEmpty">{{ $t('common.save') }}</UiButton>
+        </div>
+      </form>
+    </UiModal>
 
     <UiCard :pad="22">
       <UiSectionTitle>{{ $t('admin.forcedLanguage') }}</UiSectionTitle>
@@ -191,3 +279,16 @@ async function removeMember(id: string) {
     </UiModal>
   </div>
 </template>
+
+<style scoped>
+.lk {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 12.5px;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.lk:hover { text-decoration: underline; }
+</style>

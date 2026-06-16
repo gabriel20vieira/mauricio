@@ -5,6 +5,7 @@ import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { sql } from 'drizzle-orm'
 import * as schema from '../db/schema'
+import { seedCategoriesIfEmpty } from './seedCategories'
 
 // In a built/bundled server (.output) the source path no longer exists, so the
 // DB location is configurable via LAR_DB_PATH (set in Docker to a mounted volume).
@@ -77,7 +78,29 @@ function ensureColumn(table: string, column: string, ddl: string) {
 }
 ensureColumn('users', 'active', 'active INTEGER NOT NULL DEFAULT 1')
 ensureColumn('users', 'locale', 'locale TEXT')
+ensureColumn('chat_messages', 'segments', 'segments TEXT')
 sqlite.exec(`CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);`)
+sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS categories (
+    id TEXT PRIMARY KEY,
+    hue INTEGER NOT NULL DEFAULT 200,
+    sort INTEGER NOT NULL DEFAULT 0,
+    active INTEGER NOT NULL DEFAULT 1,
+    name_en TEXT NOT NULL DEFAULT '',
+    name_pt TEXT NOT NULL DEFAULT '',
+    name_es TEXT NOT NULL DEFAULT ''
+  );
+  CREATE TABLE IF NOT EXISTS subcategories (
+    id TEXT PRIMARY KEY,
+    category_id TEXT NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+    sort INTEGER NOT NULL DEFAULT 0,
+    active INTEGER NOT NULL DEFAULT 1,
+    name_en TEXT NOT NULL DEFAULT '',
+    name_pt TEXT NOT NULL DEFAULT '',
+    name_es TEXT NOT NULL DEFAULT ''
+  );
+`)
+seedCategoriesIfEmpty(sqlite)
 
 export function userCount(): number {
   const row = db.get<{ c: number }>(sql`SELECT COUNT(*) as c FROM users`)

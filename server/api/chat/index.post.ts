@@ -80,7 +80,11 @@ export default defineEventHandler(async (event) => {
   send({ type: 'start', conversationId: convId })
 
   const cards: Card[] = []
+  // Ordered render segments (text / tool / card) — interleaved so the UI can show
+  // the assistant's reasoning line by line, live and on history reload.
+  const segments: any[] = []
   let finalContent = ''
+  let lastAssistantId = ''
 
   try {
     for (let iter = 0; iter < MAX_ITERS; iter++) {
@@ -88,20 +92,23 @@ export default defineEventHandler(async (event) => {
 
       // Persist + echo the assistant turn.
       const aId = randomUUID()
+      lastAssistantId = aId
       db.insert(schema.chatMessages).values({
         id: aId, conversationId: convId, role: 'assistant', content,
         toolCalls: toolCalls.length ? JSON.stringify(toolCalls) : null, createdAt: Date.now(),
       }).run()
       messages.push({ role: 'assistant', content, tool_calls: toolCalls.length ? toolCalls : undefined })
+      if (content) segments.push({ type: 'text', text: content })
 
       if (!toolCalls.length) { finalContent = content; break }
 
       // Execute each tool; feed results back.
       for (const tc of toolCalls) {
         send({ type: 'tool', name: tc.function.name, status: 'running' })
-        const outcome = await runTool(tc.function.name, tc.function.arguments, user as any, event)
+        const outcome = await runTool(tc.function.name, tc.function.arguments, user as any, event, body.locale)
         send({ type: 'tool', name: tc.function.name, status: 'done', label: outcome.label })
-        if (outcome.card) { cards.push(outcome.card); send({ type: 'card', card: outcome.card }) }
+        segments.push({ type: 'tool', name: tc.function.name, label: outcome.label })
+        if (outcome.card) { cards.push(outcome.card); segments.push({ type: 'card', card: outcome.card }); send({ type: 'card', card: outcome.card }) }
         const toolContent = JSON.stringify(outcome.result)
         db.insert(schema.chatMessages).values({
           id: randomUUID(), conversationId: convId, role: 'tool', content: toolContent,
@@ -115,14 +122,11 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // Attach accumulated cards to the final assistant message + bump conversation.
-    if (cards.length || finalContent) {
-      const last = db.select().from(schema.chatMessages)
-        .where(eq(schema.chatMessages.conversationId, convId))
-        .orderBy(asc(schema.chatMessages.createdAt)).all().filter(m => m.role === 'assistant').pop()
-      if (last && cards.length) {
-        db.update(schema.chatMessages).set({ cards: JSON.stringify(cards) }).where(eq(schema.chatMessages.id, last.id)).run()
-      }
+    // Store the ordered segments + cards on the last assistant row (the render record).
+    if (lastAssistantId) {
+      db.update(schema.chatMessages)
+        .set({ segments: JSON.stringify(segments), cards: cards.length ? JSON.stringify(cards) : null, content: finalContent })
+        .where(eq(schema.chatMessages.id, lastAssistantId)).run()
     }
     db.update(schema.chatConversations).set({ updatedAt: Date.now() }).where(eq(schema.chatConversations.id, convId)).run()
 

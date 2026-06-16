@@ -154,7 +154,18 @@
     "errCreate": "Error creating member",
     "errSave": "Error saving",
     "errRemove": "Error removing",
-    "errPwLength": "Minimum password of 8 characters"
+    "errPwLength": "Minimum password of 8 characters",
+    "addCategory": "Add category",
+    "editCategory": "Edit category",
+    "color": "Color",
+    "subcategories": "Subcategories",
+    "addSub": "Add subcategory",
+    "editSub": "Edit subcategory",
+    "hide": "Hide",
+    "show": "Show",
+    "hidden": "Hidden",
+    "hideWarning": "Hidden items disappear from the pickers but stay on past expenses. You can re-enable them anytime.",
+    "manageCategoriesSub": "Create, edit and hide categories and subcategories."
   },
   "profile": {
     "accountData": "Account details",

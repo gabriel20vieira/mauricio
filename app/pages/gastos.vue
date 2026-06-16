@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { CATEGORIES, monthKey } from '~~/shared/config'
+import { monthKey } from '~~/shared/config'
 
 definePageMeta({ titleKey: 'nav.expenses', subtitleKey: 'pageSub.expenses' })
 const store = useStore()
+const cats = useCategories()
 const { openNewExpense } = useAppUi()
 onMounted(() => store.ensure())
 
@@ -41,7 +42,7 @@ function clearFilters() { q.value = ''; fCat.value = ''; fWho.value = ''; fMonth
             style="width: 100%; padding: 10px 12px 10px 36px; border-radius: var(--radius-sm); font-size: 14px; border: 1px solid var(--border-2); background: var(--surface); color: var(--ink); outline: none" />
         </div>
         <div style="width: 150px">
-          <UiSelect v-model="fCat"><option value="">{{ $t('expenses.category') }}</option><option v-for="c in CATEGORIES" :key="c.id" :value="c.id">{{ $t('cat.' + c.id) }}</option></UiSelect>
+          <UiSelect v-model="fCat"><option value="">{{ $t('expenses.category') }}</option><option v-for="c in cats.active" :key="c.id" :value="c.id">{{ cats.catLabel(c.id) }}</option></UiSelect>
         </div>
         <div style="width: 140px">
           <UiSelect v-model="fWho"><option value="">{{ $t('expenses.person') }}</option><option v-for="m in store.members.value" :key="m.id" :value="m.id">{{ m.name }}</option></UiSelect>

@@ -1,0 +1,25 @@
+import { randomUUID } from 'node:crypto'
+import { eq } from 'drizzle-orm'
+import { z } from 'zod'
+import { db, schema } from '../../utils/db'
+
+const Body = z.object({
+  categoryId: z.string().min(1),
+  names: z.object({ en: z.string().trim().default(''), pt: z.string().trim().default(''), es: z.string().trim().default('') }),
+})
+
+export default defineEventHandler(async (event) => {
+  await requireAdmin(event)
+  const body = await readValidatedBody(event, Body.parse)
+  if (!body.names.en && !body.names.pt && !body.names.es) {
+    throw createError({ statusCode: 400, statusMessage: 'Indique pelo menos um nome.' })
+  }
+  const cat = db.select().from(schema.categories).where(eq(schema.categories.id, body.categoryId)).get()
+  if (!cat) throw createError({ statusCode: 400, statusMessage: 'Categoria inválida.' })
+
+  const maxSort = db.select().from(schema.subcategories).all()
+    .filter(s => s.categoryId === body.categoryId).reduce((m, s) => Math.max(m, s.sort), -1)
+  const row = { id: randomUUID(), categoryId: body.categoryId, sort: maxSort + 1, active: true, nameEn: body.names.en, namePt: body.names.pt, nameEs: body.names.es }
+  db.insert(schema.subcategories).values(row).run()
+  return row
+})

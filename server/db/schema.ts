@@ -21,6 +21,31 @@ export const settings = sqliteTable('settings', {
   value: text('value'),
 })
 
+// Editable categories/subcategories with a name per locale. `active=false` = hidden
+// (reversible), kept so historical expenses keep resolving their names.
+export const categories = sqliteTable('categories', {
+  id: text('id').primaryKey(),
+  hue: integer('hue').notNull().default(200),
+  sort: integer('sort').notNull().default(0),
+  active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  nameEn: text('name_en').notNull().default(''),
+  namePt: text('name_pt').notNull().default(''),
+  nameEs: text('name_es').notNull().default(''),
+})
+
+export const subcategories = sqliteTable('subcategories', {
+  id: text('id').primaryKey(),
+  categoryId: text('category_id').notNull().references(() => categories.id, { onDelete: 'cascade' }),
+  sort: integer('sort').notNull().default(0),
+  active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  nameEn: text('name_en').notNull().default(''),
+  namePt: text('name_pt').notNull().default(''),
+  nameEs: text('name_es').notNull().default(''),
+})
+
+export type Category = typeof categories.$inferSelect
+export type Subcategory = typeof subcategories.$inferSelect
+
 export const expenses = sqliteTable('expenses', {
   id: text('id').primaryKey(),
   date: text('date').notNull(), // ISO yyyy-mm-dd
@@ -50,6 +75,7 @@ export const chatMessages = sqliteTable('chat_messages', {
   toolCallId: text('tool_call_id'), // for role:tool — which call it answers
   toolName: text('tool_name'), // for role:tool / convenience
   cards: text('cards'), // JSON string | null — confirm/chart descriptors attached to an assistant turn
+  segments: text('segments'), // JSON string | null — ordered render segments (text/tool/card) for a response
   createdAt: integer('created_at').notNull(),
 })
 

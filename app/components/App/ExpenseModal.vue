@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { CATEGORIES, CAT_BY_ID, METHODS, catColor, catSoft } from '~~/shared/config'
+import { METHODS, catColor, catSoft } from '~~/shared/config'
 
 const { t } = useI18n()
 const { expenseModal, closeExpense } = useAppUi()
 const store = useStore()
+const cats = useCategories()
 const { user } = useUserSession()
 const { isDark } = useTweaks()
 
@@ -12,8 +13,9 @@ const open = computed(() => expenseModal.value.open)
 const isAdmin = computed(() => user.value?.role === 'admin')
 
 const today = new Date().toISOString().slice(0, 10)
+const defaultCat = () => cats.active.value[0]?.id ?? ''
 const form = reactive({
-  amount: '', cat: 'alimentacao', sub: '', date: today, who: user.value?.id ?? '', method: 'Cartão', note: '',
+  amount: '', cat: '', sub: '', date: today, who: user.value?.id ?? '', method: 'Cartão', note: '',
 })
 const error = ref('')
 const saving = ref(false)
@@ -27,14 +29,15 @@ watch(open, (o) => {
     form.cat = e.cat; form.sub = e.sub; form.date = e.date
     form.who = e.userId; form.method = e.method || 'Cartão'; form.note = e.note
   } else {
-    form.amount = ''; form.cat = 'alimentacao'; form.sub = ''; form.date = today
+    form.amount = ''; form.cat = defaultCat(); form.sub = ''; form.date = today
     form.who = user.value?.id ?? ''; form.method = 'Cartão'; form.note = ''
   }
 })
 
-const cat = computed(() => CAT_BY_ID[form.cat])
+const subs = computed(() => cats.activeSubs(form.cat))
 watch(() => form.cat, () => {
-  if (!cat.value.subs.includes(form.sub)) form.sub = ''
+  // Reset sub if it no longer belongs to the selected category.
+  if (form.sub && !subs.value.some(s => s.id === form.sub)) form.sub = ''
 })
 
 // A normal user can only edit/create their own expenses.
@@ -104,18 +107,18 @@ async function remove() {
 
       <UiField :label="$t('expenseModal.category')" style="margin-bottom: 14px">
         <div style="display: flex; flex-wrap: wrap; gap: 8px">
-          <button v-for="c in CATEGORIES" :key="c.id" type="button" :disabled="lockedOther"
+          <button v-for="c in cats.active" :key="c.id" type="button" :disabled="lockedOther"
             :style="chipStyle(form.cat === c.id, c.hue)" @click="form.cat = c.id">
-            <span :style="{ width: '8px', height: '8px', borderRadius: '50%', background: catColor(c.hue, isDark) }" />{{ $t('cat.' + c.id) }}
+            <span :style="{ width: '8px', height: '8px', borderRadius: '50%', background: catColor(c.hue, isDark) }" />{{ cats.catLabel(c.id) }}
           </button>
         </div>
       </UiField>
 
-      <div v-if="cat.subs.length" style="margin-bottom: 14px">
+      <div v-if="subs.length" style="margin-bottom: 14px">
         <UiField :label="$t('expenseModal.subcategory')">
           <div style="display: flex; flex-wrap: wrap; gap: 8px">
-            <button type="button" :disabled="lockedOther" :style="chipStyle(form.sub === '', cat.hue)" @click="form.sub = ''">—</button>
-            <button v-for="s in cat.subs" :key="s" type="button" :disabled="lockedOther" :style="chipStyle(form.sub === s, cat.hue)" @click="form.sub = s">{{ s }}</button>
+            <button type="button" :disabled="lockedOther" :style="chipStyle(form.sub === '', cats.hue(form.cat))" @click="form.sub = ''">—</button>
+            <button v-for="s in subs" :key="s.id" type="button" :disabled="lockedOther" :style="chipStyle(form.sub === s.id, cats.hue(form.cat))" @click="form.sub = s.id">{{ cats.subLabel(form.cat, s.id) }}</button>
           </div>
         </UiField>
       </div>

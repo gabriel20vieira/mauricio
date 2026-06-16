@@ -6,9 +6,10 @@ import { desc } from 'drizzle-orm'
 import type { H3Event } from 'h3'
 import { db, schema } from './db'
 import type { Expense, User } from '../db/schema'
-import { CATEGORIES, CAT_BY_ID, monthKey, euro, MONTHS_PT_LONG } from '../../shared/config'
+import { monthKey, euro, MONTHS_PT_LONG } from '../../shared/config'
 import type { OllamaTool } from './ollama'
 import { aggregate, type AggQuery, type Dimension } from './aggregate'
+import { loadCategories, loadSubcategories, catName, subName, catNameMap, subNameMap } from './categories'
 
 // ---- card descriptors sent to the client ----
 export interface ConfirmCard {
@@ -36,7 +37,6 @@ export interface ToolOutcome {
 }
 
 // ---------------------------------------------------------------- definitions
-const catIds = CATEGORIES.map(c => c.id)
 const DIMS = ['pessoa', 'categoria', 'subcategoria', 'dia', 'mes', 'ano', 'metodo']
 const AGG_FILTERS = {
   type: 'object',
@@ -47,7 +47,7 @@ const AGG_FILTERS = {
     year: { type: 'string', description: 'Ano yyyy' },
     dateFrom: { type: 'string', description: 'Desde yyyy-mm-dd (inclusive)' },
     dateTo: { type: 'string', description: 'Até yyyy-mm-dd (inclusive)' },
-    cat: { type: 'string', enum: catIds, description: 'ID da categoria' },
+    cat: { type: 'string', description: 'ID da categoria (ver get_categories / lista no prompt)' },
     sub: { type: 'string' },
     who: { type: 'string', description: 'Nome ou ID do membro' },
     method: { type: 'string' },
@@ -56,7 +56,7 @@ const AGG_FILTERS = {
 export const TOOLS: OllamaTool[] = [
   fn('search_expenses', 'Procura gastos por filtros. Devolve lista de gastos.', {
     month: { type: 'string', description: 'Mês no formato yyyy-mm (ex. 2026-06)' },
-    cat: { type: 'string', enum: catIds, description: 'ID da categoria' },
+    cat: { type: 'string', description: 'ID da categoria (ver get_categories / lista no prompt)' },
     sub: { type: 'string', description: 'Subcategoria (ex. Casa, Fora, Renda)' },
     who: { type: 'string', description: 'Nome ou ID do membro que pagou' },
     minAmount: { type: 'number', description: 'Valor mínimo em euros' },
@@ -79,7 +79,7 @@ export const TOOLS: OllamaTool[] = [
   fn('propose_add_expense', 'Propõe adicionar um gasto. NÃO grava — mostra cartão de confirmação ao utilizador.', {
     date: { type: 'string', description: 'yyyy-mm-dd' },
     amount: { type: 'number', description: 'Valor em euros' },
-    cat: { type: 'string', enum: catIds, description: 'ID da categoria' },
+    cat: { type: 'string', description: 'ID da categoria (ver get_categories / lista no prompt)' },
     sub: { type: 'string' },
     note: { type: 'string' },
     method: { type: 'string', description: 'Cartão, MB Way, Débito, Transferência, Dinheiro' },
@@ -158,26 +158,36 @@ function monthLabel(mk: string): string {
   const [y, m] = mk.split('-').map(Number)
   return `${MONTHS_PT_LONG[(m || 1) - 1]} ${y}`
 }
-function expenseView(e: Expense, members: User[]) {
+function expenseView(e: Expense, members: User[], catMap: Record<string, string>, subMap: Record<string, string>) {
   const who = members.find(m => m.id === e.userId)
   return {
     id: e.id, date: e.date, amount: e.amountCents / 100, valor: euro(e.amountCents / 100),
-    categoria: CAT_BY_ID[e.cat]?.label || e.cat, cat: e.cat, sub: e.sub,
+    categoria: catMap[e.cat] || e.cat, cat: e.cat, sub: e.sub, subcategoria: e.sub ? (subMap[e.sub] || e.sub) : '',
     nota: e.note, metodo: e.method, quem: who?.name || '—', whoId: e.userId,
   }
 }
 
 // ---------------------------------------------------------------- executor
-export async function runTool(name: string, args: Record<string, any>, user: User, _event: H3Event): Promise<ToolOutcome> {
+export async function runTool(name: string, args: Record<string, any>, user: User, _event: H3Event, locale?: string): Promise<ToolOutcome> {
   const members = loadMembers()
   const expenses = loadExpenses()
+  const catMap = catNameMap(locale)
+  const subMap = subNameMap(locale)
 
   switch (name) {
     case 'list_members':
       return { label: 'Listou membros', result: members.map(m => ({ id: m.id, nome: m.name, papel: m.role })) }
 
-    case 'get_categories':
-      return { label: 'Listou categorias', result: CATEGORIES.map(c => ({ id: c.id, label: c.label, subs: c.subs })) }
+    case 'get_categories': {
+      const subsAll = loadSubcategories()
+      return {
+        label: 'Listou categorias',
+        result: loadCategories().filter(c => c.active).map(c => ({
+          id: c.id, label: catName(c, locale),
+          subs: subsAll.filter(s => s.categoryId === c.id && s.active).map(s => ({ id: s.id, label: subName(s, locale) })),
+        })),
+      }
+    }
 
     case 'search_expenses': {
       const m = resolveMember(members, args.who)
@@ -193,7 +203,7 @@ export async function runTool(name: string, args: Record<string, any>, user: Use
       const totalCents = rows.reduce((a, e) => a + e.amountCents, 0)
       return {
         label: `Procurou gastos (${rows.length})`,
-        result: { count: rows.length, total: euro(totalCents / 100), totalAmount: totalCents / 100, gastos: rows.slice(0, limit).map(e => expenseView(e, members)) },
+        result: { count: rows.length, total: euro(totalCents / 100), totalAmount: totalCents / 100, gastos: rows.slice(0, limit).map(e => expenseView(e, members, catMap, subMap)) },
       }
     }
 
@@ -217,7 +227,7 @@ export async function runTool(name: string, args: Record<string, any>, user: Use
         result: {
           mes: monthLabel(mk), month: mk, total: euro(totalCents / 100), totalAmount: totalCents / 100, movimentos: rows.length,
           mesAnterior: euro(prevCents / 100), variacaoPct: prevCents ? Math.round(((totalCents - prevCents) / prevCents) * 100) : null,
-          porCategoria: Object.entries(byCat).sort((a, b) => b[1] - a[1]).map(([c, v]) => ({ categoria: CAT_BY_ID[c]?.label || c, cat: c, total: euro(v / 100), amount: v / 100 })),
+          porCategoria: Object.entries(byCat).sort((a, b) => b[1] - a[1]).map(([c, v]) => ({ categoria: catMap[c] || c, cat: c, total: euro(v / 100), amount: v / 100 })),
           porPessoa: Object.entries(byPerson).sort((a, b) => b[1] - a[1]).map(([u, v]) => ({ pessoa: members.find(m => m.id === u)?.name || u, total: euro(v / 100), amount: v / 100 })),
         },
       }
@@ -271,13 +281,13 @@ export async function runTool(name: string, args: Record<string, any>, user: Use
 
     case 'propose_add_expense': {
       const m = resolveMember(members, args.who)
-      const cat = CAT_BY_ID[args.cat]
       const payload = {
         date: args.date, amount: Number(args.amount), cat: args.cat,
         sub: args.sub || '', note: args.note || '', method: args.method || '',
         who: m?.id, // server enforces: non-admin forced to self
       }
-      const summary = `Adicionar gasto de ${euro(payload.amount)} em ${cat?.label || args.cat}${payload.sub ? ` · ${payload.sub}` : ''} (${args.date})${payload.note ? ` — ${payload.note}` : ''}${m ? ` · ${m.name}` : ''}`
+      const subTxt = payload.sub ? (subMap[payload.sub] || payload.sub) : ''
+      const summary = `Adicionar gasto de ${euro(payload.amount)} em ${catMap[args.cat] || args.cat}${subTxt ? ` · ${subTxt}` : ''} (${args.date})${payload.note ? ` — ${payload.note}` : ''}${m ? ` · ${m.name}` : ''}`
       return { label: 'Propôs adicionar gasto', result: { proposto: true, aguardaConfirmacao: true, resumo: summary }, card: { kind: 'confirm', action: 'add', payload, summary } }
     }
 
@@ -294,13 +304,13 @@ export async function runTool(name: string, args: Record<string, any>, user: Use
     case 'propose_delete_expense': {
       const target = expenses.find(e => e.id === args.id)
       if (!target) return { label: 'Gasto não encontrado', result: { erro: 'Gasto não encontrado com esse ID.' } }
-      const v = expenseView(target, members)
+      const v = expenseView(target, members, catMap, subMap)
       const summary = `Eliminar gasto de ${v.valor} em ${v.categoria} (${v.date})${v.nota ? ` — ${v.nota}` : ''} · ${v.quem}`
       return { label: 'Propôs eliminar gasto', result: { proposto: true, aguardaConfirmacao: true, resumo: summary }, card: { kind: 'confirm', action: 'delete', payload: { id: target.id }, summary } }
     }
 
     case 'aggregate': {
-      const agg = aggregate(buildQuery(args))
+      const agg = aggregate(buildQuery(args), locale)
       // Compact view for the model to read/reason about (e.g. who spent most).
       const ranking = agg.categories.map((label, i) => ({
         label,
@@ -310,7 +320,7 @@ export async function runTool(name: string, args: Record<string, any>, user: Use
     }
 
     case 'make_chart': {
-      const agg = aggregate(buildQuery(args))
+      const agg = aggregate(buildQuery(args), locale)
       const type = CHART_TYPE_MAP[args.chartType] || 'column'
       return {
         label: `Gerou gráfico (${args.chartType})`,
@@ -325,11 +335,6 @@ export async function runTool(name: string, args: Record<string, any>, user: Use
 }
 
 // ---------------------------------------------------------------- system prompt
-const CAT_LABELS: Record<string, Record<string, string>> = {
-  'pt-PT': { alimentacao: 'Alimentação', transportes: 'Transportes', casa: 'Casa', utilidades: 'Água/Luz/Gás', lazer: 'Lazer', higiene: 'Higiene', reparacoes: 'Reparações' },
-  'es-ES': { alimentacao: 'Alimentación', transportes: 'Transporte', casa: 'Hogar', utilidades: 'Agua/Luz/Gas', lazer: 'Ocio', higiene: 'Higiene', reparacoes: 'Reparaciones' },
-  'en-US': { alimentacao: 'Food', transportes: 'Transport', casa: 'Home', utilidades: 'Water/Power/Gas', lazer: 'Leisure', higiene: 'Hygiene', reparacoes: 'Repairs' },
-}
 const LANG_DIRECTIVE: Record<string, string> = {
   'pt-PT': 'Responde sempre em português de Portugal, de forma breve e útil.',
   'es-ES': 'Responde siempre en español de España, de forma breve y útil.',
@@ -337,11 +342,14 @@ const LANG_DIRECTIVE: Record<string, string> = {
 }
 
 export function systemPrompt(user: User, locale?: string): string {
-  const loc = locale && CAT_LABELS[locale] ? locale : 'en-US'
+  const loc = locale && LANG_DIRECTIVE[locale] ? locale : 'en-US'
   const appName = useRuntimeConfig().public.appName
   const today = new Date().toISOString().slice(0, 10)
-  const labels = CAT_LABELS[loc]
-  const cats = CATEGORIES.map(c => `${c.id} (${labels[c.id] || c.label}${c.subs.length ? `: ${c.subs.join('/')}` : ''})`).join(', ')
+  const subsAll = loadSubcategories()
+  const cats = loadCategories().filter(c => c.active).map((c) => {
+    const subs = subsAll.filter(s => s.categoryId === c.id && s.active)
+    return `${c.id} (${catName(c, loc)}${subs.length ? `: ${subs.map(s => `${subName(s, loc)}[${s.id}]`).join('/')}` : ''})`
+  }).join(', ')
   const members = loadMembers().map(m => `${m.name} [${m.id}]${m.role === 'admin' ? ' (admin)' : ''}`).join(', ')
   return [
     `You are the assistant of the household-accounts app "${appName}". ${LANG_DIRECTIVE[loc]}`,
