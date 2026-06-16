@@ -14,6 +14,8 @@ const MAX_ITERS = 6
 
 export default defineEventHandler(async (event) => {
   const user = await requireDbUser(event)
+  // Each message fans out to several Ollama calls — throttle to limit cost/abuse.
+  rateLimit(event, { key: 'chat', limit: 20, windowMs: 60_000 })
   const body = await readValidatedBody(event, Body.parse)
   const now = Date.now()
 

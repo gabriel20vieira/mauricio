@@ -18,10 +18,18 @@ export default defineEventHandler(async (event) => {
   const email = body.email.toLowerCase()
 
   const dup = db.select().from(schema.users).where(eq(schema.users.email, email)).get()
-  if (dup) throw createError({ statusCode: 409, statusMessage: 'Já existe um membro com esse email.' })
+  if (dup && dup.active) throw createError({ statusCode: 409, statusMessage: 'Já existe um membro com esse email.' })
+
+  const passwordHash = await hashPassword(body.password)
+
+  // Re-adding a previously deactivated email reactivates that member (keeps history).
+  if (dup && !dup.active) {
+    db.update(schema.users).set({ name: body.name, role: body.role, passwordHash, active: true })
+      .where(eq(schema.users.id, dup.id)).run()
+    return { id: dup.id, name: body.name, email, role: body.role, hue: dup.hue, active: true, createdAt: dup.createdAt }
+  }
 
   const count = db.select().from(schema.users).all().length
-  const passwordHash = await hashPassword(body.password)
   const user = {
     id: randomUUID(),
     name: body.name,
@@ -29,6 +37,7 @@ export default defineEventHandler(async (event) => {
     passwordHash,
     role: body.role,
     hue: MEMBER_HUES[count % MEMBER_HUES.length],
+    active: true,
     createdAt: Date.now(),
   }
   db.insert(schema.users).values(user).run()

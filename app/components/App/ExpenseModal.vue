@@ -132,7 +132,7 @@ async function remove() {
 
       <UiField v-if="canChangeWho" label="Pago por" style="margin-bottom: 14px">
         <UiSelect v-model="form.who">
-          <option v-for="m in store.members.value" :key="m.id" :value="m.id">{{ m.name }}</option>
+          <option v-for="m in store.activeMembers.value" :key="m.id" :value="m.id">{{ m.name }}</option>
         </UiSelect>
       </UiField>
 

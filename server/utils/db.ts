@@ -27,6 +27,7 @@ sqlite.exec(`
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'user',
     hue INTEGER NOT NULL DEFAULT 245,
+    active INTEGER NOT NULL DEFAULT 1,
     created_at INTEGER NOT NULL
   );
   CREATE TABLE IF NOT EXISTS expenses (
@@ -59,6 +60,13 @@ sqlite.exec(`
     created_at INTEGER NOT NULL
   );
 `)
+
+// Idempotent column additions for databases created before a column existed.
+function ensureColumn(table: string, column: string, ddl: string) {
+  const cols = sqlite.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]
+  if (!cols.some(c => c.name === column)) sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${ddl}`)
+}
+ensureColumn('users', 'active', 'active INTEGER NOT NULL DEFAULT 1')
 
 export function userCount(): number {
   const row = db.get<{ c: number }>(sql`SELECT COUNT(*) as c FROM users`)

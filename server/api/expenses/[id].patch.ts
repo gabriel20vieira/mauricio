@@ -32,7 +32,11 @@ export default defineEventHandler(async (event) => {
   if (body.sub !== undefined) patch.sub = body.sub
   if (body.note !== undefined) patch.note = body.note
   if (body.method !== undefined) patch.method = body.method
-  if (user.role === 'admin' && body.who !== undefined) patch.userId = body.who
+  if (user.role === 'admin' && body.who !== undefined) {
+    const target = db.select().from(schema.users).where(eq(schema.users.id, body.who)).get()
+    if (!target || !target.active) throw createError({ statusCode: 400, statusMessage: 'Membro inválido.' })
+    patch.userId = body.who
+  }
 
   if (Object.keys(patch).length) db.update(schema.expenses).set(patch).where(eq(schema.expenses.id, id)).run()
   return db.select().from(schema.expenses).where(eq(schema.expenses.id, id)).get()

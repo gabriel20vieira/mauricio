@@ -10,12 +10,14 @@ export default defineEventHandler(async (event) => {
   if (admin.id === id) throw createError({ statusCode: 400, statusMessage: 'Não pode apagar a sua própria conta.' })
 
   if (target.role === 'admin') {
-    const otherAdmins = db.select().from(schema.users)
-      .where(and(eq(schema.users.role, 'admin'), ne(schema.users.id, id))).all().length
-    if (otherAdmins === 0) throw createError({ statusCode: 400, statusMessage: 'Tem de existir pelo menos um administrador.' })
+    const otherActiveAdmins = db.select().from(schema.users)
+      .where(and(eq(schema.users.role, 'admin'), eq(schema.users.active, true), ne(schema.users.id, id))).all().length
+    if (otherActiveAdmins === 0) throw createError({ statusCode: 400, statusMessage: 'Tem de existir pelo menos um administrador.' })
   }
 
-  // Expenses cascade-delete via the FK.
-  db.delete(schema.users).where(eq(schema.users.id, id)).run()
+  // Soft-delete: deactivate instead of removing, so the member's expense history
+  // and household totals stay intact. Deactivated members can't log in and are
+  // hidden from active member pickers.
+  db.update(schema.users).set({ active: false }).where(eq(schema.users.id, id)).run()
   return { ok: true }
 })

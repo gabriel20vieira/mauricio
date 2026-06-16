@@ -77,9 +77,13 @@ Imagem multi-stage (Node 24, build do Nuxt + `better-sqlite3` nativo). A base de
 SQLite vive num volume (`lar_data` → `/app/data/lar.sqlite`), persistente entre reinícios.
 
 ```bash
-cp .env.production .env      # define NUXT_SESSION_PASSWORD (mín. 32 caracteres)
+cp .env.example .env         # define um NUXT_SESSION_PASSWORD forte e aleatório (mín. 32 caracteres)
 docker compose up -d --build # http://localhost:3000
 ```
+
+> O arranque em produção **falha** se `NUXT_SESSION_PASSWORD` ficar com o valor de exemplo
+> ou tiver menos de 32 caracteres (proteção contra falsificação de sessão).
+> `OLLAMA_BASE_URL`/`OLLAMA_MODEL` são opcionais (têm defaults).
 
 Primeiro arranque → BD vazia → a app mostra o form de registo do administrador.
 

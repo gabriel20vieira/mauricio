@@ -3,7 +3,12 @@ import { db, userCount, schema } from '../utils/db'
 
 // Dev convenience: loads the "Casa Silva" demo household (Apr–Jun 2026).
 // Only works on an empty database. Seeded members log in with password "demo1234".
+// SECURITY: disabled outside development — it would otherwise let anyone create a
+// known-password admin on a fresh production deploy. Real setup is via /setup.
 export default defineEventHandler(async () => {
+  if (!import.meta.dev) {
+    throw createError({ statusCode: 404, statusMessage: 'Not Found' })
+  }
   if (userCount() > 0) {
     throw createError({ statusCode: 403, statusMessage: 'A base de dados já tem utilizadores.' })
   }

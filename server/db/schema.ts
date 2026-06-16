@@ -7,6 +7,9 @@ export const users = sqliteTable('users', {
   passwordHash: text('password_hash').notNull(),
   role: text('role', { enum: ['admin', 'user'] }).notNull().default('user'),
   hue: integer('hue').notNull().default(245),
+  // Soft-delete flag: deactivated members keep their expense history but cannot
+  // log in and are hidden from active member pickers.
+  active: integer('active', { mode: 'boolean' }).notNull().default(true),
   createdAt: integer('created_at').notNull(),
 })
 

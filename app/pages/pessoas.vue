@@ -9,7 +9,7 @@ onMounted(() => store.ensure())
 
 const isAdmin = computed(() => user.value?.role === 'admin')
 
-const rows = computed(() => store.members.value.map((m) => {
+const rows = computed(() => store.activeMembers.value.map((m) => {
   const mine = store.expenses.value.filter(e => e.userId === m.id)
   return { member: m, total: mine.reduce((a, e) => a + e.amountCents, 0), count: mine.length }
 }))

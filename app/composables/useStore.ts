@@ -4,6 +4,7 @@ export interface Member {
   email: string
   role: 'admin' | 'user'
   hue: number
+  active: boolean
   createdAt: number
 }
 export interface Expense {
@@ -49,6 +50,9 @@ export function useStore() {
 
   const memberById = computed<Record<string, Member>>(() =>
     Object.fromEntries(members.value.map(m => [m.id, m])))
+  // Active members only — for pickers / current household roster. Inactive members
+  // are kept for historical expense attribution but excluded from new assignments.
+  const activeMembers = computed<Member[]>(() => members.value.filter(m => m.active))
 
   async function addExpense(input: ExpenseInput) {
     await $fetch('/api/expenses', { method: 'POST', body: input })
@@ -77,7 +81,7 @@ export function useStore() {
   }
 
   return {
-    expenses, members, loaded, memberById,
+    expenses, members, loaded, memberById, activeMembers,
     refresh, ensure,
     addExpense, updateExpense, deleteExpense,
     addMember, updateMember, deleteMember,

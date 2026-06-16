@@ -58,7 +58,7 @@ async function removeMember(id: string) {
 
       <div style="display: flex; flex-direction: column">
         <div v-for="m in store.members.value" :key="m.id"
-          style="display: flex; align-items: center; gap: 13px; padding: 12px 4px; border-top: 1px solid var(--border)">
+          :style="{ display: 'flex', alignItems: 'center', gap: '13px', padding: '12px 4px', borderTop: '1px solid var(--border)', opacity: m.active ? 1 : 0.55 }">
           <UiAvatar :member="m" :size="38" />
           <div style="flex: 1; min-width: 0">
             <div style="display: flex; align-items: center; gap: 8px">
@@ -66,10 +66,11 @@ async function removeMember(id: string) {
               <UiTag v-if="m.role === 'admin'" tone="admin">Admin</UiTag>
               <UiTag v-else>Membro</UiTag>
               <UiTag v-if="m.id === user?.id" tone="muted">Você</UiTag>
+              <UiTag v-if="!m.active" tone="muted">Inativo</UiTag>
             </div>
             <div style="font-size: 12.5px; color: var(--muted)">{{ m.email }}</div>
           </div>
-          <UiButton variant="outline" size="sm" icon="pencil" @click="openEdit(m)">Editar</UiButton>
+          <UiButton v-if="m.active" variant="outline" size="sm" icon="pencil" @click="openEdit(m)">Editar</UiButton>
         </div>
       </div>
     </UiCard>

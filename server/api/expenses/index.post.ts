@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { db, schema } from '../../utils/db'
 
@@ -18,6 +19,12 @@ export default defineEventHandler(async (event) => {
 
   // Only admins can record an expense on behalf of someone else.
   const userId = user.role === 'admin' && body.who ? body.who : user.id
+
+  // Validate the target member exists and is active (clear 400 instead of FK 500).
+  if (userId !== user.id) {
+    const target = db.select().from(schema.users).where(eq(schema.users.id, userId)).get()
+    if (!target || !target.active) throw createError({ statusCode: 400, statusMessage: 'Membro inválido.' })
+  }
 
   const row = {
     id: randomUUID(),

@@ -10,12 +10,18 @@ const Body = z.object({
 
 // First-run only: creates the household's first administrator.
 export default defineEventHandler(async (event) => {
+  rateLimit(event, { key: 'setup', limit: 5, windowMs: 10 * 60_000 })
   if (userCount() > 0) {
     throw createError({ statusCode: 403, statusMessage: 'Já existe uma conta. O registo é feito por um administrador.' })
   }
 
   const body = await readValidatedBody(event, Body.parse)
   const passwordHash = await hashPassword(body.password)
+  // Re-check after the async hashing to close the TOCTOU window — only the very
+  // first request on an empty DB may create the admin.
+  if (userCount() > 0) {
+    throw createError({ statusCode: 403, statusMessage: 'Já existe uma conta. O registo é feito por um administrador.' })
+  }
   const user = {
     id: randomUUID(),
     name: body.name,
