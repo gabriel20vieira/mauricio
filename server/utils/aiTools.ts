@@ -87,7 +87,7 @@ export const TOOLS: OllamaTool[] = [
   }, ['date', 'amount', 'cat']),
   fn('propose_update_expense', 'Propõe editar um gasto existente. NÃO grava — mostra cartão de confirmação.', {
     id: { type: 'string', description: 'ID do gasto' },
-    date: { type: 'string' }, amount: { type: 'number' }, cat: { type: 'string', enum: catIds },
+    date: { type: 'string' }, amount: { type: 'number' }, cat: { type: 'string', description: 'ID da categoria' },
     sub: { type: 'string' }, note: { type: 'string' }, method: { type: 'string' },
   }, ['id']),
   fn('propose_delete_expense', 'Propõe eliminar um gasto. NUNCA elimina — mostra cartão para o utilizador confirmar.', {
