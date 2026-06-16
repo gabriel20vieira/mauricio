@@ -1,1 +1,1 @@
-openssl rand -base64 128
+openssl rand -base64 48
