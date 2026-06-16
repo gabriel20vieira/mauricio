@@ -2,7 +2,9 @@ import { monthKey } from '~~/shared/config'
 import type { Expense } from './useStore'
 
 export function useMonth() {
-  return useState<string>('selected-month', () => '')
+  // Default to the current month so SSR has a valid yyyy-mm before data loads
+  // (empty string → Invalid Date → i18n datetime throws in production SSR).
+  return useState<string>('selected-month', () => monthKey(new Date().toISOString().slice(0, 10)))
 }
 
 // Ensure the selected month is valid given current data; default to the latest.

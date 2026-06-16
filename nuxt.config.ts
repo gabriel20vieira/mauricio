@@ -5,6 +5,7 @@ export default defineNuxtConfig({
   modules: ['nuxt-auth-utils', '@nuxtjs/i18n'],
   i18n: {
     strategy: 'no_prefix', // single domain, no /pt /es URL prefixes
+    bundle: { optimizeTranslationDirective: false }, // opt out (buggy, deprecated in v10)
     defaultLocale: 'en-US',
     locales: [
       { code: 'en-US', language: 'en-US', name: 'English', file: 'en.json' },

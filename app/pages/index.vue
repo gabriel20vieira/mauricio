@@ -29,6 +29,7 @@ const delta = computed(() => prevTotal.value ? Math.round(((total.value - prevTo
 
 const monthLabel = computed(() => {
   const [y, m] = selected.value.split('-').map(Number)
+  if (!y || !m) return ''
   return d(new Date(y, m - 1, 1), 'monthYear')
 })
 
