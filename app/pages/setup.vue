@@ -1,6 +1,6 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'auth' })
-useHead({ title: 'Configuração inicial · Lar' })
+useHead({ title: 'Configuração inicial · Casa' })
 
 const { fetch: refreshSession } = useUserSession()
 const name = ref('')
@@ -30,22 +30,29 @@ async function submit() {
 <template>
   <div class="login-wrap">
     <!-- Brand panel -->
-    <div class="login-brand" style="position: relative; overflow: hidden; background: var(--accent-soft); padding: 56px; display: flex; flex-direction: column">
-      <div style="position: absolute; width: 420px; height: 420px; border: 1px solid oklch(0.5 0.05 var(--accent-h) / 0.25); border-radius: 50%; top: -120px; right: -80px" />
-      <div style="position: absolute; width: 360px; height: 360px; border: 1px solid oklch(0.5 0.05 var(--accent-h) / 0.2); border-radius: 50%; bottom: -140px; left: 80px" />
+    <div class="login-brand"
+      style="position: relative; overflow: hidden; background: var(--accent-soft); padding: 56px; display: flex; flex-direction: column">
+      <div
+        style="position: absolute; width: 420px; height: 420px; border: 1px solid oklch(0.5 0.05 var(--accent-h) / 0.25); border-radius: 50%; top: -120px; right: -80px" />
+      <div
+        style="position: absolute; width: 360px; height: 360px; border: 1px solid oklch(0.5 0.05 var(--accent-h) / 0.2); border-radius: 50%; bottom: -140px; left: 80px" />
 
       <div style="display: flex; align-items: center; gap: 12px; position: relative">
-        <div style="width: 40px; height: 40px; border-radius: 11px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center">
+        <div
+          style="width: 40px; height: 40px; border-radius: 11px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center">
           <UiIcon name="home" :size="22" />
         </div>
-        <span style="font-size: 20px; font-weight: 700; letter-spacing: -0.02em">Lar</span>
+        <span style="font-size: 20px; font-weight: 700; letter-spacing: -0.02em">Casa</span>
       </div>
 
       <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; position: relative">
         <UiTag tone="accent">Primeira configuração</UiTag>
-        <h1 style="margin-top: 14px; font-size: 38px; line-height: 1.1; font-weight: 700; letter-spacing: -0.03em; color: var(--ink)">Vamos criar o<br>administrador da casa.</h1>
+        <h1
+          style="margin-top: 14px; font-size: 38px; line-height: 1.1; font-weight: 700; letter-spacing: -0.03em; color: var(--ink)">
+          Vamos criar o<br>administrador da casa.</h1>
         <p style="margin-top: 22px; max-width: 360px; font-size: 15px; color: var(--ink-2); line-height: 1.55">
-          Esta é a conta principal. Depois poderá adicionar os restantes membros da família a partir da área de Administração.
+          Esta é a conta principal. Depois poderá adicionar os restantes membros da família a partir da área de
+          Administração.
         </p>
       </div>
     </div>
@@ -74,7 +81,8 @@ async function submit() {
 
           <div v-if="error" style="color: var(--neg); font-size: 13px; margin-bottom: 14px">{{ error }}</div>
 
-          <UiButton type="submit" size="lg" full :icon="loading ? undefined : 'check'">{{ loading ? 'A criar…' : 'Criar administrador' }}</UiButton>
+          <UiButton type="submit" size="lg" full :icon="loading ? undefined : 'check'">{{ loading ? 'A criar…' : 'Criar
+            administrador' }}</UiButton>
         </form>
       </div>
     </div>
