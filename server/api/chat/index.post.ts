@@ -8,6 +8,7 @@ import { TOOLS, runTool, systemPrompt, type Card } from '../../utils/aiTools'
 const Body = z.object({
   conversationId: z.string().optional(),
   message: z.string().min(1).max(4000),
+  locale: z.string().optional(), // active UI locale → assistant replies in it
 })
 
 const MAX_ITERS = 6
@@ -43,7 +44,7 @@ export default defineEventHandler(async (event) => {
     .where(eq(schema.chatMessages.conversationId, convId))
     .orderBy(asc(schema.chatMessages.createdAt)).all()
   const recent = stored.slice(-40)
-  const messages: OllamaMessage[] = [{ role: 'system', content: systemPrompt(user as any) }]
+  const messages: OllamaMessage[] = [{ role: 'system', content: systemPrompt(user as any, body.locale) }]
   for (const m of recent) {
     if (m.role === 'assistant') {
       messages.push({ role: 'assistant', content: m.content, tool_calls: m.toolCalls ? JSON.parse(m.toolCalls) : undefined })

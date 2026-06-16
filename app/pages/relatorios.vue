@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { CATEGORIES, catColor, euro, euro0, MONTHS_PT, monthKey, firstName } from '~~/shared/config'
+import { CATEGORIES, catColor, monthKey, firstName } from '~~/shared/config'
 
-definePageMeta({ title: 'Relatórios', subtitle: 'Evolução e repartição dos gastos' })
+definePageMeta({ titleKey: 'nav.reports', subtitleKey: 'pageSub.reports' })
 const store = useStore()
 const { isDark } = useTweaks()
+const { locale } = useI18n()
 onMounted(() => store.ensure())
 
 // Last 6 months evolution
@@ -13,7 +14,7 @@ const monthly = computed(() => {
   const keys = Object.keys(map).sort().slice(-6)
   return keys.map(k => {
     const [, m] = k.split('-').map(Number)
-    return { label: MONTHS_PT[m - 1], value: map[k] / 100, color: 'var(--accent)' }
+    return { label: new Intl.DateTimeFormat(locale.value, { month: 'short' }).format(new Date(2000, m - 1, 1)), value: map[k] / 100, color: 'var(--accent)' }
   })
 })
 
@@ -37,19 +38,19 @@ const maxPerson = computed(() => Math.max(...byPerson.value.map(p => p.cents), 1
 <template>
   <div style="max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px">
     <UiCard :pad="22">
-      <UiSectionTitle>Evolução mensal</UiSectionTitle>
+      <UiSectionTitle>{{ $t('reports.monthlyEvolution') }}</UiSectionTitle>
       <UiBarChart v-if="monthly.length" :data="monthly" :height="200" />
-      <UiEmptyState v-else icon="chart" title="Sem dados" sub="Os gastos aparecem aqui assim que existirem." />
+      <UiEmptyState v-else icon="chart" :title="$t('reports.noData')" :sub="$t('reports.noDataSub')" />
     </UiCard>
 
     <div class="dash-cols" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
       <UiCard :pad="22">
-        <UiSectionTitle>Repartição por categoria</UiSectionTitle>
+        <UiSectionTitle>{{ $t('reports.byCategory') }}</UiSectionTitle>
         <div style="display: flex; flex-direction: column; gap: 14px">
           <div v-for="x in byCat" :key="x.cat.id">
             <div style="display: flex; align-items: center; gap: 9px; margin-bottom: 6px; font-size: 13.5px">
-              <UiCatDot :cat="x.cat" :size="9" /><span style="flex: 1">{{ x.cat.label }}</span>
-              <span class="tnum" style="font-weight: 600">{{ euro0(x.cents / 100) }}</span>
+              <UiCatDot :cat="x.cat" :size="9" /><span style="flex: 1">{{ $t('cat.' + x.cat.id) }}</span>
+              <span class="tnum" style="font-weight: 600">{{ $n(x.cents / 100, 'currency0') }}</span>
               <span class="tnum" style="color: var(--muted); width: 38px; text-align: right">{{ Math.round((x.cents / (totalCents || 1)) * 100) }}%</span>
             </div>
             <UiMiniBar :value="x.cents" :max="maxCat" :color="catColor(x.cat.hue, isDark)" />
@@ -58,13 +59,13 @@ const maxPerson = computed(() => Math.max(...byPerson.value.map(p => p.cents), 1
       </UiCard>
 
       <UiCard :pad="22">
-        <UiSectionTitle>Repartição por pessoa</UiSectionTitle>
+        <UiSectionTitle>{{ $t('reports.byPerson') }}</UiSectionTitle>
         <div style="display: flex; flex-direction: column; gap: 16px">
           <div v-for="p in byPerson" :key="p.member.id">
             <div style="display: flex; align-items: center; gap: 11px; margin-bottom: 7px">
               <UiAvatar :member="p.member" :size="30" />
               <span style="flex: 1; font-weight: 540; font-size: 14px">{{ firstName(p.member.name) }}</span>
-              <span class="tnum" style="font-weight: 600">{{ euro(p.cents / 100) }}</span>
+              <span class="tnum" style="font-weight: 600">{{ $n(p.cents / 100, 'currency') }}</span>
             </div>
             <UiMiniBar :value="p.cents" :max="maxPerson" :color="catColor(p.member.hue, isDark)" />
           </div>

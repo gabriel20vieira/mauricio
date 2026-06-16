@@ -9,24 +9,24 @@ async function logout() {
   await navigateTo('/login')
 }
 const appName = useRuntimeConfig().public.appName
+const { t } = useI18n()
 const route = useRoute()
-// Page title/subtitle come from route meta (definePageMeta) so they are identical
-// on server and client — avoids the child→parent hydration mismatch a shared
-// useState set during page setup would cause.
+// Page title/subtitle come from route meta (definePageMeta keys) so they are
+// identical on server and client and translate with the active locale.
 const header = computed(() => ({
-  title: (route.meta.title as string) ?? '',
-  sub: (route.meta.subtitle as string) ?? '',
+  title: route.meta.titleKey ? t(route.meta.titleKey as string) : '',
+  sub: route.meta.subtitleKey ? t(route.meta.subtitleKey as string) : '',
 }))
 const router = useRouter()
 
 const nav = [
-  { to: '/', label: 'Resumo', icon: 'dashboard', group: 'nav' },
-  { to: '/gastos', label: 'Gastos', icon: 'receipt', group: 'nav' },
-  { to: '/relatorios', label: 'Relatórios', icon: 'chart', group: 'nav' },
-  { to: '/balanco', label: 'Balanço', icon: 'scale', group: 'nav' },
-  { to: '/assistente', label: 'Assistente', icon: 'sparkles', group: 'nav' },
-  { to: '/pessoas', label: 'Pessoas', icon: 'users', group: 'nav' },
-  { to: '/administracao', label: 'Administração', icon: 'shield', group: 'mgmt', adminOnly: true },
+  { to: '/', labelKey: 'nav.summary', icon: 'dashboard', group: 'nav' },
+  { to: '/gastos', labelKey: 'nav.expenses', icon: 'receipt', group: 'nav' },
+  { to: '/relatorios', labelKey: 'nav.reports', icon: 'chart', group: 'nav' },
+  { to: '/balanco', labelKey: 'nav.balance', icon: 'scale', group: 'nav' },
+  { to: '/assistente', labelKey: 'nav.assistant', icon: 'sparkles', group: 'nav' },
+  { to: '/pessoas', labelKey: 'nav.people', icon: 'users', group: 'nav' },
+  { to: '/administracao', labelKey: 'nav.admin', icon: 'shield', group: 'mgmt', adminOnly: true },
 ]
 const visibleNav = computed(() => nav.filter(n => !n.adminOnly || user.value?.role === 'admin'))
 const navMain = computed(() => visibleNav.value.filter(n => n.group === 'nav'))
@@ -60,17 +60,17 @@ function navLinkStyle(active: boolean) {
           <span style="font-size: 18px; font-weight: 700; letter-spacing: -0.02em">{{ appName }}</span>
         </div>
 
-        <UiButton icon="plus" full @click="openNewExpense">Novo gasto</UiButton>
+        <UiButton icon="plus" full @click="openNewExpense">{{ $t('layout.newExpense') }}</UiButton>
 
-        <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: var(--faint); padding: 16px 8px 6px">NAVEGAÇÃO</div>
+        <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: var(--faint); padding: 16px 8px 6px">{{ $t('layout.navigation') }}</div>
         <NuxtLink v-for="n in navMain" :key="n.to" :to="n.to" :style="navLinkStyle(route.path === n.to)">
-          <UiIcon :name="n.icon" :size="19" />{{ n.label }}
+          <UiIcon :name="n.icon" :size="19" />{{ $t(n.labelKey) }}
         </NuxtLink>
 
         <template v-if="navMgmt.length">
-          <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: var(--faint); padding: 16px 8px 6px">GESTÃO</div>
+          <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: var(--faint); padding: 16px 8px 6px">{{ $t('layout.management') }}</div>
           <NuxtLink v-for="n in navMgmt" :key="n.to" :to="n.to" :style="navLinkStyle(route.path.startsWith(n.to))">
-            <UiIcon :name="n.icon" :size="19" />{{ n.label }}
+            <UiIcon :name="n.icon" :size="19" />{{ $t(n.labelKey) }}
           </NuxtLink>
         </template>
 
@@ -83,10 +83,10 @@ function navLinkStyle(active: boolean) {
             <UiAvatar :member="user ? { name: user.name, hue: user.hue } : null" :size="34" />
             <div style="flex: 1; min-width: 0">
               <div style="font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ user?.name }}</div>
-              <div style="font-size: 12px; color: var(--muted)">{{ user?.role === 'admin' ? 'Administrador' : 'Membro' }}</div>
+              <div style="font-size: 12px; color: var(--muted)">{{ user?.role === 'admin' ? $t('layout.administrator') : $t('layout.member') }}</div>
             </div>
           </button>
-          <UiIconButton name="logout" label="Terminar sessão" @click="logout" />
+          <UiIconButton name="logout" :label="$t('layout.endSession')" @click="logout" />
         </div>
       </aside>
     </div>
@@ -102,8 +102,8 @@ function navLinkStyle(active: boolean) {
           <h1 style="font-size: 19px; font-weight: 700; letter-spacing: -0.02em">{{ header.title }}</h1>
           <div class="topbar-sub" style="font-size: 13px; color: var(--muted)">{{ header.sub }}</div>
         </div>
-        <UiIconButton :name="isDark ? 'sun' : 'moon'" label="Alternar tema" @click="toggleTheme" />
-        <div class="add-btn-top"><UiButton icon="plus" @click="openNewExpense">Novo gasto</UiButton></div>
+        <UiIconButton :name="isDark ? 'sun' : 'moon'" :label="$t('layout.toggleTheme')" @click="toggleTheme" />
+        <div class="add-btn-top"><UiButton icon="plus" @click="openNewExpense">{{ $t('layout.newExpense') }}</UiButton></div>
       </header>
 
       <main class="main-scroll" style="flex: 1; overflow-y: auto; padding: 26px 26px 40px">
@@ -114,11 +114,11 @@ function navLinkStyle(active: boolean) {
       <nav class="bottom-nav" style="display: none; position: sticky; bottom: 0; border-top: 1px solid var(--border); background: var(--surface); padding: 8px 6px; gap: 2px; z-index: 60">
         <NuxtLink v-for="n in bottomNav" :key="n.to" :to="n.to"
           :style="{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', padding: '6px 2px', fontSize: '10.5px', fontWeight: 600, color: route.path === n.to ? 'var(--accent)' : 'var(--muted)' }">
-          <UiIcon :name="n.icon" :size="20" />{{ n.label }}
+          <UiIcon :name="n.icon" :size="20" />{{ $t(n.labelKey) }}
         </NuxtLink>
         <button style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px; font-size: 10.5px; font-weight: 600; color: var(--accent); background: none; border: none"
           @click="openNewExpense">
-          <UiIcon name="plus" :size="20" />Gasto
+          <UiIcon name="plus" :size="20" />{{ $t('nav.expenses') }}
         </button>
       </nav>
     </div>

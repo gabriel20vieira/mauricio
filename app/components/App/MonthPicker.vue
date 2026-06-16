@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { MONTHS_PT_LONG, monthKey } from '~~/shared/config'
+import { monthKey } from '~~/shared/config'
 
+const { d } = useI18n()
 const store = useStore()
 const selected = useMonth()
 
@@ -11,7 +12,7 @@ const months = computed(() => {
 })
 function label(mk: string) {
   const [y, m] = mk.split('-').map(Number)
-  return `${MONTHS_PT_LONG[m - 1]} ${y}`
+  return d(new Date(y, m - 1, 1), 'monthYear')
 }
 </script>
 

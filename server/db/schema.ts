@@ -10,7 +10,15 @@ export const users = sqliteTable('users', {
   // Soft-delete flag: deactivated members keep their expense history but cannot
   // log in and are hidden from active member pickers.
   active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  // Preferred locale (e.g. 'pt-PT'); null = auto-detect from the browser.
+  locale: text('locale'),
   createdAt: integer('created_at').notNull(),
+})
+
+// Global key/value app settings (admin-controlled). e.g. forcedLocale.
+export const settings = sqliteTable('settings', {
+  key: text('key').primaryKey(),
+  value: text('value'),
 })
 
 export const expenses = sqliteTable('expenses', {

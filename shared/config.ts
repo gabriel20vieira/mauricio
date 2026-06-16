@@ -50,16 +50,16 @@ export function deviceLabel(ua: string): string {
   return `${browser} · ${os}`
 }
 
-// Relative time label, e.g. "há 5 min". Uses the current clock (client-side).
-export function relativeTime(ts: number): string {
+// Locale-aware relative time label, e.g. "5 minutes ago" / "há 5 minutos".
+export function relativeTime(ts: number, locale = 'en-US'): string {
   const s = Math.max(0, Math.floor((Date.now() - ts) / 1000))
-  if (s < 60) return 'agora mesmo'
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' })
+  if (s < 60) return rtf.format(-s, 'second')
   const m = Math.floor(s / 60)
-  if (m < 60) return `há ${m} min`
+  if (m < 60) return rtf.format(-m, 'minute')
   const h = Math.floor(m / 60)
-  if (h < 24) return `há ${h} h`
-  const d = Math.floor(h / 24)
-  return `há ${d} ${d === 1 ? 'dia' : 'dias'}`
+  if (h < 24) return rtf.format(-h, 'hour')
+  return rtf.format(-Math.floor(h / 24), 'day')
 }
 
 export function initials(name: string) { return name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase() }

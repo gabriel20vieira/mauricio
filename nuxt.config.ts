@@ -2,7 +2,23 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  modules: ['nuxt-auth-utils'],
+  modules: ['nuxt-auth-utils', '@nuxtjs/i18n'],
+  i18n: {
+    strategy: 'no_prefix', // single domain, no /pt /es URL prefixes
+    defaultLocale: 'en-US',
+    locales: [
+      { code: 'en-US', language: 'en-US', name: 'English', file: 'en.json' },
+      { code: 'pt-PT', language: 'pt-PT', name: 'Português', file: 'pt.json' },
+      { code: 'es-ES', language: 'es-ES', name: 'Español', file: 'es.json' },
+    ],
+    lazy: true,
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'i18n_locale',
+      fallbackLocale: 'en-US', // detection fallback → English
+      redirectOn: 'no prefix',
+    },
+  },
   runtimeConfig: {
     ollamaBaseUrl: process.env.OLLAMA_BASE_URL || 'http://192.168.1.203:11434',
     ollamaModel: process.env.OLLAMA_MODEL || 'minimax-m3:cloud',

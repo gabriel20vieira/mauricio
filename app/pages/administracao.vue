@@ -2,11 +2,28 @@
 import { CATEGORIES, catColor, catSoft, deviceLabel, relativeTime } from '~~/shared/config'
 import type { SessionInfo } from '~/composables/useStore'
 
-definePageMeta({ title: 'Administração', subtitle: 'Gestão de membros e categorias' })
+definePageMeta({ titleKey: 'nav.admin', subtitleKey: 'pageSub.admin' })
 const store = useStore()
 const { user } = useUserSession()
 const { isDark } = useTweaks()
-onMounted(() => { store.ensure(); loadSessions() })
+const { t, locale, locales, setLocale } = useI18n()
+onMounted(() => { store.ensure(); loadSessions(); loadForced() })
+
+// --- forced language (admin, global) ---
+const forced = ref<string>('auto')
+const langOptions = computed(() => [
+  { value: 'auto', label: t('admin.automatic') },
+  ...locales.value.map((l: any) => ({ value: l.code, label: l.name })),
+])
+async function loadForced() {
+  const st = await $fetch<{ forced: string | null }>('/api/i18n/state').catch(() => ({ forced: null }))
+  forced.value = st.forced || 'auto'
+}
+async function changeForced(val: string) {
+  forced.value = val
+  await $fetch('/api/i18n/forced', { method: 'PUT', body: { locale: val === 'auto' ? null : val } }).catch(() => {})
+  if (val !== 'auto') await setLocale(val as any)
+}
 
 // --- sessions (all members) ---
 const sessions = ref<SessionInfo[]>([])
@@ -26,13 +43,13 @@ const adding = ref(false)
 function resetForm() { form.name = ''; form.email = ''; form.password = ''; form.role = 'user'; addError.value = '' }
 async function addMember() {
   addError.value = ''
-  if (form.password.length < 8) { addError.value = 'Password mínima de 8 caracteres'; return }
+  if (form.password.length < 8) { addError.value = t('admin.errPwLength'); return }
   adding.value = true
   try {
     await store.addMember({ ...form })
     addOpen.value = false; resetForm()
   } catch (e: any) {
-    addError.value = e?.data?.statusMessage || 'Erro ao criar membro'
+    addError.value = e?.data?.statusMessage || t('admin.errCreate')
   } finally { adding.value = false }
 }
 
@@ -46,15 +63,15 @@ async function saveEdit() {
   editError.value = ''
   try {
     const body: any = { name: edit.name, role: edit.role }
-    if (edit.password) { if (edit.password.length < 8) { editError.value = 'Password mínima de 8 caracteres'; return } body.password = edit.password }
+    if (edit.password) { if (edit.password.length < 8) { editError.value = t('admin.errPwLength'); return } body.password = edit.password }
     await store.updateMember(edit.id, body)
     edit.open = false
-  } catch (e: any) { editError.value = e?.data?.statusMessage || 'Erro ao guardar' }
+  } catch (e: any) { editError.value = e?.data?.statusMessage || t('admin.errSave') }
 }
 async function removeMember(id: string) {
   editError.value = ''
   try { await store.deleteMember(id); edit.open = false }
-  catch (e: any) { editError.value = e?.data?.statusMessage || 'Erro ao remover' }
+  catch (e: any) { editError.value = e?.data?.statusMessage || t('admin.errRemove') }
 }
 </script>
 
@@ -62,8 +79,8 @@ async function removeMember(id: string) {
   <div style="max-width: 920px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px">
     <UiCard :pad="22">
       <UiSectionTitle>
-        Membros da casa
-        <template #action><UiButton icon="plus" size="sm" @click="addOpen = true">Adicionar</UiButton></template>
+        {{ $t('admin.members') }}
+        <template #action><UiButton icon="plus" size="sm" @click="addOpen = true">{{ $t('admin.add') }}</UiButton></template>
       </UiSectionTitle>
 
       <div style="display: flex; flex-direction: column">
@@ -73,25 +90,25 @@ async function removeMember(id: string) {
           <div style="flex: 1; min-width: 0">
             <div style="display: flex; align-items: center; gap: 8px">
               <span style="font-weight: 600; font-size: 14.5px">{{ m.name }}</span>
-              <UiTag v-if="m.role === 'admin'" tone="admin">Admin</UiTag>
-              <UiTag v-else>Membro</UiTag>
-              <UiTag v-if="m.id === user?.id" tone="muted">Você</UiTag>
-              <UiTag v-if="!m.active" tone="muted">Inativo</UiTag>
+              <UiTag v-if="m.role === 'admin'" tone="admin">{{ $t('layout.administrator') }}</UiTag>
+              <UiTag v-else>{{ $t('layout.member') }}</UiTag>
+              <UiTag v-if="m.id === user?.id" tone="muted">{{ $t('common.you') }}</UiTag>
+              <UiTag v-if="!m.active" tone="muted">{{ $t('admin.inactive') }}</UiTag>
             </div>
             <div style="font-size: 12.5px; color: var(--muted)">{{ m.email }}</div>
           </div>
           <div style="display: flex; gap: 6px">
-            <UiButton v-if="m.active" variant="outline" size="sm" icon="pencil" @click="openEdit(m)">Editar</UiButton>
-            <UiButton v-if="m.id !== user?.id && m.active" variant="danger" size="sm" icon="lock" @click="toggleActive(m)">Bloquear</UiButton>
-            <UiButton v-else-if="m.id !== user?.id" variant="outline" size="sm" icon="check" @click="toggleActive(m)">Desbloquear</UiButton>
+            <UiButton v-if="m.active" variant="outline" size="sm" icon="pencil" @click="openEdit(m)">{{ $t('common.edit') }}</UiButton>
+            <UiButton v-if="m.id !== user?.id && m.active" variant="danger" size="sm" icon="lock" @click="toggleActive(m)">{{ $t('admin.block') }}</UiButton>
+            <UiButton v-else-if="m.id !== user?.id" variant="outline" size="sm" icon="check" @click="toggleActive(m)">{{ $t('admin.unblock') }}</UiButton>
           </div>
         </div>
       </div>
     </UiCard>
 
     <UiCard :pad="22">
-      <UiSectionTitle>Sessões ativas</UiSectionTitle>
-      <p style="font-size: 13px; color: var(--muted); margin-bottom: 14px">Todos os dispositivos com sessão aberta. Pode terminar qualquer um.</p>
+      <UiSectionTitle>{{ $t('admin.sessions') }}</UiSectionTitle>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 14px">{{ $t('admin.sessionsAllSub') }}</p>
       <div style="display: flex; flex-direction: column">
         <div v-for="s in sessions" :key="s.id"
           style="display: flex; align-items: center; gap: 12px; padding: 12px 2px; border-top: 1px solid var(--border)">
@@ -101,64 +118,74 @@ async function removeMember(id: string) {
           <div style="flex: 1; min-width: 0">
             <div style="display: flex; align-items: center; gap: 8px">
               <span style="font-weight: 600; font-size: 14px">{{ s.userName }}</span>
-              <UiTag v-if="s.current" tone="accent">Este dispositivo</UiTag>
+              <UiTag v-if="s.current" tone="accent">{{ $t('admin.thisDevice') }}</UiTag>
             </div>
-            <div style="font-size: 12.5px; color: var(--muted)">{{ deviceLabel(s.userAgent) }} · {{ relativeTime(s.lastSeenAt) }}<span v-if="s.ip"> · {{ s.ip }}</span></div>
+            <div style="font-size: 12.5px; color: var(--muted)">{{ deviceLabel(s.userAgent) }} · {{ relativeTime(s.lastSeenAt, locale) }}<span v-if="s.ip"> · {{ s.ip }}</span></div>
           </div>
-          <UiButton variant="outline" size="sm" icon="logout" @click="revokeSession(s.id)">Terminar</UiButton>
+          <UiButton variant="outline" size="sm" icon="logout" @click="revokeSession(s.id)">{{ $t('admin.terminate') }}</UiButton>
         </div>
-        <div v-if="!sessions.length" style="font-size: 13px; color: var(--muted); padding: 8px 2px">Sem sessões ativas.</div>
+        <div v-if="!sessions.length" style="font-size: 13px; color: var(--muted); padding: 8px 2px">{{ $t('admin.noSessions') }}</div>
       </div>
     </UiCard>
 
     <UiCard :pad="22">
-      <UiSectionTitle>Categorias</UiSectionTitle>
-      <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px">As categorias da casa e respetivas subcategorias.</p>
+      <UiSectionTitle>{{ $t('admin.categories') }}</UiSectionTitle>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px">{{ $t('admin.categoriesSub') }}</p>
       <div style="display: flex; flex-wrap: wrap; gap: 10px">
         <div v-for="c in CATEGORIES" :key="c.id"
           :style="{ display: 'flex', alignItems: 'center', gap: '9px', padding: '10px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: catSoft(c.hue, isDark) }">
           <span :style="{ width: '10px', height: '10px', borderRadius: '50%', background: catColor(c.hue, isDark) }" />
-          <span style="font-weight: 600; font-size: 13.5px; color: var(--ink)">{{ c.label }}</span>
+          <span style="font-weight: 600; font-size: 13.5px; color: var(--ink)">{{ $t('cat.' + c.id) }}</span>
           <span v-if="c.subs.length" style="font-size: 12px; color: var(--ink-2)">· {{ c.subs.join(', ') }}</span>
         </div>
       </div>
     </UiCard>
 
+    <UiCard :pad="22">
+      <UiSectionTitle>{{ $t('admin.forcedLanguage') }}</UiSectionTitle>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 14px">{{ $t('admin.forcedLanguageHint') }}</p>
+      <div style="max-width: 260px">
+        <UiSelect :model-value="forced" @update:model-value="changeForced($event)">
+          <option v-for="o in langOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
+        </UiSelect>
+      </div>
+    </UiCard>
+
     <!-- Add modal -->
-    <UiModal :open="addOpen" title="Adicionar membro" :width="460" @close="addOpen = false">
+    <UiModal :open="addOpen" :title="$t('admin.addMemberTitle')" :width="460" @close="addOpen = false">
       <form style="padding: 22px" @submit.prevent="addMember">
-        <UiField label="Nome" style="margin-bottom: 14px"><UiInput v-model="form.name" placeholder="ex.: João Silva" autocomplete="name" required /></UiField>
-        <UiField label="Email" style="margin-bottom: 14px"><UiInput v-model="form.email" type="email" placeholder="nome@casa.pt" autocomplete="off" required /></UiField>
-        <UiField label="Password temporária" hint="O membro pode alterá-la depois no perfil." style="margin-bottom: 14px">
-          <UiInput v-model="form.password" type="password" placeholder="mín. 8 caracteres" autocomplete="new-password" required />
+        <UiField :label="$t('profile.name')" style="margin-bottom: 14px"><UiInput v-model="form.name" :placeholder="$t('admin.namePlaceholder')" autocomplete="name" required /></UiField>
+        <UiField :label="$t('auth.email')" style="margin-bottom: 14px"><UiInput v-model="form.email" type="email" placeholder="nome@casa.pt" autocomplete="off" required /></UiField>
+        <UiField :label="$t('admin.tempPassword')" :hint="$t('admin.tempPasswordHint')" style="margin-bottom: 14px">
+          <UiInput v-model="form.password" type="password" :placeholder="$t('admin.passwordPlaceholder')" autocomplete="new-password" required />
         </UiField>
-        <UiField label="Função" style="margin-bottom: 18px">
-          <UiSegmented v-model="form.role" :options="[{ value: 'user', label: 'Membro' }, { value: 'admin', label: 'Administrador' }]" />
+        <UiField :label="$t('admin.role')" style="margin-bottom: 18px">
+          <UiSegmented v-model="form.role" :options="[{ value: 'user', label: $t('layout.member') }, { value: 'admin', label: $t('layout.administrator') }]" />
         </UiField>
         <div v-if="addError" style="color: var(--neg); font-size: 13px; margin-bottom: 12px">{{ addError }}</div>
         <div style="display: flex; gap: 10px; justify-content: flex-end">
-          <UiButton variant="ghost" type="button" @click="addOpen = false">Cancelar</UiButton>
-          <UiButton type="submit" :icon="adding ? undefined : 'check'">{{ adding ? 'A criar…' : 'Criar membro' }}</UiButton>
+          <UiButton variant="ghost" type="button" @click="addOpen = false">{{ $t('common.cancel') }}</UiButton>
+          <UiButton type="submit" :icon="adding ? undefined : 'check'">{{ adding ? $t('auth.creating') : $t('admin.createMember') }}</UiButton>
         </div>
       </form>
     </UiModal>
 
     <!-- Edit modal -->
-    <UiModal :open="edit.open" title="Editar membro" :width="460" @close="edit.open = false">
+    <UiModal :open="edit.open" :title="$t('admin.editMemberTitle')" :width="460" @close="edit.open = false">
       <form style="padding: 22px" @submit.prevent="saveEdit">
-        <UiField label="Nome" style="margin-bottom: 14px"><UiInput v-model="edit.name" required /></UiField>
-        <UiField label="Função" style="margin-bottom: 14px">
-          <UiSegmented v-model="edit.role" :options="[{ value: 'user', label: 'Membro' }, { value: 'admin', label: 'Administrador' }]" />
+        <UiField :label="$t('profile.name')" style="margin-bottom: 14px"><UiInput v-model="edit.name" required /></UiField>
+        <UiField :label="$t('admin.role')" style="margin-bottom: 14px">
+          <UiSegmented v-model="edit.role" :options="[{ value: 'user', label: $t('layout.member') }, { value: 'admin', label: $t('layout.administrator') }]" />
         </UiField>
-        <UiField label="Nova password" hint="Deixe vazio para manter a atual." style="margin-bottom: 18px">
-          <UiInput v-model="edit.password" type="password" placeholder="mín. 8 caracteres" autocomplete="new-password" />
+        <UiField :label="$t('profile.newPassword')" :hint="$t('admin.editPasswordHint')" style="margin-bottom: 18px">
+          <UiInput v-model="edit.password" type="password" :placeholder="$t('admin.passwordPlaceholder')" autocomplete="new-password" />
         </UiField>
         <div v-if="editError" style="color: var(--neg); font-size: 13px; margin-bottom: 12px">{{ editError }}</div>
         <div style="display: flex; gap: 10px; align-items: center">
-          <UiButton v-if="edit.id !== user?.id" variant="danger" type="button" icon="trash" @click="removeMember(edit.id)">Remover</UiButton>
+          <UiButton v-if="edit.id !== user?.id" variant="danger" type="button" icon="trash" @click="removeMember(edit.id)">{{ $t('admin.remove') }}</UiButton>
           <div style="flex: 1" />
-          <UiButton variant="ghost" type="button" @click="edit.open = false">Cancelar</UiButton>
-          <UiButton type="submit" icon="check">Guardar</UiButton>
+          <UiButton variant="ghost" type="button" @click="edit.open = false">{{ $t('common.cancel') }}</UiButton>
+          <UiButton type="submit" icon="check">{{ $t('common.save') }}</UiButton>
         </div>
       </form>
     </UiModal>

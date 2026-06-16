@@ -34,7 +34,7 @@ export interface ChatHandlers {
 
 /** POST a message and consume the SSE stream, dispatching to handlers. */
 export async function streamChat(
-  body: { conversationId?: string, message: string },
+  body: { conversationId?: string, message: string, locale?: string },
   handlers: ChatHandlers,
   signal?: AbortSignal,
 ) {

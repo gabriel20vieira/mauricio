@@ -2,10 +2,11 @@
 import { deviceLabel, relativeTime } from '~~/shared/config'
 import type { SessionInfo } from '~/composables/useStore'
 
-definePageMeta({ title: 'Perfil', subtitle: 'A sua conta e preferências' })
+definePageMeta({ titleKey: 'profile.title', subtitleKey: 'pageSub.profile' })
 const { user, fetch: refreshSession, clear } = useUserSession()
 const { theme, setTheme } = useTweaks()
 const store = useStore()
+const { t, locale, locales, setLocale } = useI18n()
 
 const name = ref(user.value?.name ?? '')
 const pw = ref('')
@@ -14,9 +15,25 @@ const msg = ref('')
 const err = ref('')
 const saving = ref(false)
 
+// Language preference ('auto' = detect from browser; otherwise a locale code).
+const langPref = ref<string>('auto')
+const langOptions = computed(() => [
+  { value: 'auto', label: t('profile.useAutomatic') },
+  ...locales.value.map((l: any) => ({ value: l.code, label: l.name })),
+])
+async function changeLang(val: string) {
+  langPref.value = val
+  if (val !== 'auto') await setLocale(val as any)
+  await $fetch('/api/me', { method: 'PATCH', body: { locale: val === 'auto' ? null : val } }).catch(() => {})
+}
+
 const sessions = ref<SessionInfo[]>([])
 async function loadSessions() { sessions.value = await store.fetchSessions().catch(() => []) }
-onMounted(loadSessions)
+onMounted(async () => {
+  await loadSessions()
+  const st = await $fetch<{ userLocale: string | null }>('/api/i18n/state').catch(() => ({ userLocale: null }))
+  langPref.value = st.userLocale || 'auto'
+})
 
 async function revoke(s: SessionInfo) {
   await store.revokeSession(s.id)
@@ -29,18 +46,18 @@ async function saveProfile() {
   const body: any = {}
   if (name.value && name.value !== user.value?.name) body.name = name.value
   if (pw.value) {
-    if (pw.value.length < 8) { err.value = 'Password mínima de 8 caracteres'; return }
-    if (pw.value !== pw2.value) { err.value = 'As passwords não coincidem'; return }
+    if (pw.value.length < 8) { err.value = t('profile.errPwLength'); return }
+    if (pw.value !== pw2.value) { err.value = t('profile.errPwMatch'); return }
     body.password = pw.value
   }
-  if (!Object.keys(body).length) { msg.value = 'Nada para guardar'; return }
+  if (!Object.keys(body).length) { msg.value = t('profile.nothingToSave'); return }
   saving.value = true
   try {
     await $fetch('/api/me', { method: 'PATCH', body })
     await refreshSession()
     pw.value = ''; pw2.value = ''
-    msg.value = 'Perfil atualizado.'
-  } catch (e: any) { err.value = e?.data?.statusMessage || 'Erro ao guardar' }
+    msg.value = t('profile.msgSaved')
+  } catch (e: any) { err.value = e?.data?.statusMessage || t('profile.errSave') }
   finally { saving.value = false }
 }
 
@@ -67,30 +84,35 @@ async function logout() {
     </UiCard>
 
     <UiCard :pad="22">
-      <UiSectionTitle>Dados da conta</UiSectionTitle>
+      <UiSectionTitle>{{ $t('profile.accountData') }}</UiSectionTitle>
       <form @submit.prevent="saveProfile">
-        <UiField label="Nome" style="margin-bottom: 14px"><UiInput v-model="name" autocomplete="name" /></UiField>
+        <UiField :label="$t('profile.name')" style="margin-bottom: 14px"><UiInput v-model="name" autocomplete="name" /></UiField>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px">
-          <UiField label="Nova password" hint="Deixe vazio para manter."><UiInput v-model="pw" type="password" placeholder="••••••••" autocomplete="new-password" /></UiField>
-          <UiField label="Confirmar"><UiInput v-model="pw2" type="password" placeholder="••••••••" autocomplete="new-password" /></UiField>
+          <UiField :label="$t('profile.newPassword')" :hint="$t('profile.newPasswordHint')"><UiInput v-model="pw" type="password" placeholder="••••••••" autocomplete="new-password" /></UiField>
+          <UiField :label="$t('profile.confirm')"><UiInput v-model="pw2" type="password" placeholder="••••••••" autocomplete="new-password" /></UiField>
         </div>
         <div v-if="err" style="color: var(--neg); font-size: 13px; margin-bottom: 12px">{{ err }}</div>
         <div v-if="msg" style="color: var(--pos); font-size: 13px; margin-bottom: 12px">{{ msg }}</div>
-        <UiButton type="submit" :icon="saving ? undefined : 'check'">{{ saving ? 'A guardar…' : 'Guardar alterações' }}</UiButton>
+        <UiButton type="submit" :icon="saving ? undefined : 'check'">{{ saving ? $t('common.saving') : $t('profile.saveChanges') }}</UiButton>
       </form>
     </UiCard>
 
     <UiCard :pad="22">
-      <UiSectionTitle>Aparência</UiSectionTitle>
-      <UiField label="Tema" hint="A escolha fica guardada neste dispositivo.">
-        <UiSegmented :model-value="theme" :options="[{ value: 'light', label: 'Claro' }, { value: 'dark', label: 'Escuro' }]"
+      <UiSectionTitle>{{ $t('profile.appearance') }}</UiSectionTitle>
+      <UiField :label="$t('profile.theme')" :hint="$t('profile.themeHint')" style="margin-bottom: 16px">
+        <UiSegmented :model-value="theme" :options="[{ value: 'light', label: $t('profile.light') }, { value: 'dark', label: $t('profile.dark') }]"
           @update:model-value="setTheme($event as any)" />
+      </UiField>
+      <UiField :label="$t('profile.language')" :hint="$t('profile.languageHint')">
+        <UiSelect :model-value="langPref" @update:model-value="changeLang($event)">
+          <option v-for="o in langOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
+        </UiSelect>
       </UiField>
     </UiCard>
 
     <UiCard :pad="22">
-      <UiSectionTitle>Sessões ativas</UiSectionTitle>
-      <p style="font-size: 13px; color: var(--muted); margin-bottom: 14px">Dispositivos onde a sua conta está aberta. Pode terminar qualquer um.</p>
+      <UiSectionTitle>{{ $t('profile.sessions') }}</UiSectionTitle>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 14px">{{ $t('profile.sessionsSub') }}</p>
       <div style="display: flex; flex-direction: column">
         <div v-for="s in sessions" :key="s.id"
           style="display: flex; align-items: center; gap: 12px; padding: 12px 2px; border-top: 1px solid var(--border)">
@@ -100,23 +122,23 @@ async function logout() {
           <div style="flex: 1; min-width: 0">
             <div style="display: flex; align-items: center; gap: 8px">
               <span style="font-weight: 600; font-size: 14px">{{ deviceLabel(s.userAgent) }}</span>
-              <UiTag v-if="s.current" tone="accent">Este dispositivo</UiTag>
+              <UiTag v-if="s.current" tone="accent">{{ $t('profile.thisDevice') }}</UiTag>
             </div>
-            <div style="font-size: 12.5px; color: var(--muted)">Último acesso {{ relativeTime(s.lastSeenAt) }}<span v-if="s.ip"> · {{ s.ip }}</span></div>
+            <div style="font-size: 12.5px; color: var(--muted)">{{ $t('profile.lastSeen', { time: relativeTime(s.lastSeenAt, locale) }) }}<span v-if="s.ip"> · {{ s.ip }}</span></div>
           </div>
-          <UiButton variant="outline" size="sm" icon="logout" @click="revoke(s)">{{ s.current ? 'Sair' : 'Terminar' }}</UiButton>
+          <UiButton variant="outline" size="sm" icon="logout" @click="revoke(s)">{{ s.current ? $t('profile.leave') : $t('profile.terminate') }}</UiButton>
         </div>
-        <div v-if="!sessions.length" style="font-size: 13px; color: var(--muted); padding: 8px 2px">Sem sessões ativas.</div>
+        <div v-if="!sessions.length" style="font-size: 13px; color: var(--muted); padding: 8px 2px">{{ $t('profile.noSessions') }}</div>
       </div>
     </UiCard>
 
     <UiCard :pad="22">
       <div style="display: flex; align-items: center; justify-content: space-between">
         <div>
-          <div style="font-weight: 600">Terminar sessão</div>
-          <div style="font-size: 13px; color: var(--muted)">Sair da sua conta neste dispositivo.</div>
+          <div style="font-weight: 600">{{ $t('profile.endSession') }}</div>
+          <div style="font-size: 13px; color: var(--muted)">{{ $t('profile.endSessionSub') }}</div>
         </div>
-        <UiButton variant="outline" icon="logout" @click="logout">Sair</UiButton>
+        <UiButton variant="outline" icon="logout" @click="logout">{{ $t('profile.signOut') }}</UiButton>
       </div>
     </UiCard>
   </div>

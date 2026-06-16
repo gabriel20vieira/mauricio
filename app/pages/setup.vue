@@ -1,7 +1,8 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'auth' })
 const appName = useRuntimeConfig().public.appName
-useHead({ title: `Configuração inicial · ${appName}` })
+const { t } = useI18n()
+useHead({ title: () => `${t('auth.setupTitle')} · ${appName}` })
 
 const { fetch: refreshSession } = useUserSession()
 const name = ref('')
@@ -13,15 +14,15 @@ const loading = ref(false)
 
 async function submit() {
   error.value = ''
-  if (password.value.length < 8) { error.value = 'A password deve ter pelo menos 8 caracteres'; return }
-  if (password.value !== confirm.value) { error.value = 'As passwords não coincidem'; return }
+  if (password.value.length < 8) { error.value = t('auth.errPwLength'); return }
+  if (password.value !== confirm.value) { error.value = t('auth.errPwMatch'); return }
   loading.value = true
   try {
     await $fetch('/api/auth/setup', { method: 'POST', body: { name: name.value, email: email.value, password: password.value } })
     await refreshSession()
     await navigateTo('/')
   } catch (e: any) {
-    error.value = e?.data?.statusMessage || 'Não foi possível criar a conta'
+    error.value = e?.data?.statusMessage || t('auth.errCreate')
   } finally {
     loading.value = false
   }
@@ -47,13 +48,12 @@ async function submit() {
       </div>
 
       <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; position: relative">
-        <UiTag tone="accent">Primeira configuração</UiTag>
+        <UiTag tone="accent">{{ $t('auth.setupBadge') }}</UiTag>
         <h1
-          style="margin-top: 14px; font-size: 38px; line-height: 1.1; font-weight: 700; letter-spacing: -0.03em; color: var(--ink)">
-          Vamos criar o<br>administrador da casa.</h1>
+          style="margin-top: 14px; font-size: 38px; line-height: 1.1; font-weight: 700; letter-spacing: -0.03em; color: var(--ink)"
+          v-html="$t('auth.setupHeroTitle').replace('{br}', '<br>')" />
         <p style="margin-top: 22px; max-width: 360px; font-size: 15px; color: var(--ink-2); line-height: 1.55">
-          Esta é a conta principal. Depois poderá adicionar os restantes membros da família a partir da área de
-          Administração.
+          {{ $t('auth.setupHeroText') }}
         </p>
       </div>
     </div>
@@ -61,28 +61,28 @@ async function submit() {
     <!-- Form panel -->
     <div style="display: flex; align-items: center; justify-content: center; padding: 40px 24px; background: var(--bg)">
       <div style="width: 100%; max-width: 380px">
-        <h2 style="font-size: 24px; font-weight: 700; letter-spacing: -0.02em">Conta de administrador</h2>
-        <p style="color: var(--muted); margin: 6px 0 28px; font-size: 14px">Crie a primeira conta para começar.</p>
+        <h2 style="font-size: 24px; font-weight: 700; letter-spacing: -0.02em">{{ $t('auth.setupH2') }}</h2>
+        <p style="color: var(--muted); margin: 6px 0 28px; font-size: 14px">{{ $t('auth.setupSubtitle') }}</p>
 
         <form @submit.prevent="submit">
-          <UiField label="Nome" style="margin-bottom: 14px">
-            <UiInput v-model="name" placeholder="ex.: Maria Silva" autocomplete="name" required />
+          <UiField :label="$t('auth.name')" style="margin-bottom: 14px">
+            <UiInput v-model="name" :placeholder="$t('auth.namePlaceholder')" autocomplete="name" required />
           </UiField>
-          <UiField label="Email" style="margin-bottom: 14px">
+          <UiField :label="$t('auth.email')" style="margin-bottom: 14px">
             <UiInput v-model="email" type="email" placeholder="nome@casa.pt" autocomplete="email" required />
           </UiField>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px">
-            <UiField label="Password">
+            <UiField :label="$t('auth.password')">
               <UiInput v-model="password" type="password" placeholder="••••••••" autocomplete="new-password" required />
             </UiField>
-            <UiField label="Confirmar">
+            <UiField :label="$t('auth.confirm')">
               <UiInput v-model="confirm" type="password" placeholder="••••••••" autocomplete="new-password" required />
             </UiField>
           </div>
 
           <div v-if="error" style="color: var(--neg); font-size: 13px; margin-bottom: 14px">{{ error }}</div>
 
-          <UiButton type="submit" size="lg" full :icon="loading ? undefined : 'check'">{{ loading ? 'A criar…' : 'Criar administrador' }}</UiButton>
+          <UiButton type="submit" size="lg" full :icon="loading ? undefined : 'check'">{{ loading ? $t('auth.creating') : $t('auth.createAdmin') }}</UiButton>
         </form>
       </div>
     </div>

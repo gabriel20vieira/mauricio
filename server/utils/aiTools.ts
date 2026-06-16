@@ -325,13 +325,26 @@ export async function runTool(name: string, args: Record<string, any>, user: Use
 }
 
 // ---------------------------------------------------------------- system prompt
-export function systemPrompt(user: User): string {
+const CAT_LABELS: Record<string, Record<string, string>> = {
+  'pt-PT': { alimentacao: 'Alimentação', transportes: 'Transportes', casa: 'Casa', utilidades: 'Água/Luz/Gás', lazer: 'Lazer', higiene: 'Higiene', reparacoes: 'Reparações' },
+  'es-ES': { alimentacao: 'Alimentación', transportes: 'Transporte', casa: 'Hogar', utilidades: 'Agua/Luz/Gas', lazer: 'Ocio', higiene: 'Higiene', reparacoes: 'Reparaciones' },
+  'en-US': { alimentacao: 'Food', transportes: 'Transport', casa: 'Home', utilidades: 'Water/Power/Gas', lazer: 'Leisure', higiene: 'Hygiene', reparacoes: 'Repairs' },
+}
+const LANG_DIRECTIVE: Record<string, string> = {
+  'pt-PT': 'Responde sempre em português de Portugal, de forma breve e útil.',
+  'es-ES': 'Responde siempre en español de España, de forma breve y útil.',
+  'en-US': 'Always respond in American English, briefly and helpfully.',
+}
+
+export function systemPrompt(user: User, locale?: string): string {
+  const loc = locale && CAT_LABELS[locale] ? locale : 'en-US'
   const appName = useRuntimeConfig().public.appName
   const today = new Date().toISOString().slice(0, 10)
-  const cats = CATEGORIES.map(c => `${c.id} (${c.label}${c.subs.length ? `: ${c.subs.join('/')}` : ''})`).join(', ')
+  const labels = CAT_LABELS[loc]
+  const cats = CATEGORIES.map(c => `${c.id} (${labels[c.id] || c.label}${c.subs.length ? `: ${c.subs.join('/')}` : ''})`).join(', ')
   const members = loadMembers().map(m => `${m.name} [${m.id}]${m.role === 'admin' ? ' (admin)' : ''}`).join(', ')
   return [
-    `És o assistente da app "${appName} — contas de casa", que gere despesas domésticas de uma família. Respondes sempre em português de Portugal, de forma breve e útil.`,
+    `You are the assistant of the household-accounts app "${appName}". ${LANG_DIRECTIVE[loc]}`,
     `Hoje é ${today}. O ano corrente é ${today.slice(0, 4)}. Quando o utilizador disser um mês sem ano, assume o ano corrente.`,
     'Moeda: euro (€).',
     `Categorias válidas (usa SEMPRE o id): ${cats}.`,

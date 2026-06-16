@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { ChartCard } from '~/composables/useChat'
-import { euro0 } from '~~/shared/config'
 
 const props = defineProps<{ card: ChartCard }>()
+const { n } = useI18n()
 const { isDark } = useTweaks()
 
 const HUES = [165, 45, 245, 305, 205, 25, 345, 155, 95, 275]
@@ -16,7 +16,7 @@ const cats = computed(() => props.card.chart.categories || [])
 const series = computed(() => props.card.chart.series || [])
 const multi = computed(() => series.value.length > 1)
 const isEuro = computed(() => props.card.chart.measureLabel === '€')
-function fmt(v: number) { return isEuro.value ? euro0(v) : String(Math.round(v * 100) / 100) }
+function fmt(v: number) { return isEuro.value ? n(v, 'currency0') : String(Math.round(v * 100) / 100) }
 
 const maxVal = computed(() => Math.max(1, ...series.value.flatMap(s => s.data)))
 const stackTotals = computed(() => cats.value.map((_, i) => series.value.reduce((a, s) => a + (s.data[i] || 0), 0)))
@@ -62,7 +62,7 @@ const legend = computed(() => multi.value
   <UiCard :style="{ marginTop: '8px', maxWidth: '560px' }" :pad="18">
     <div style="font-size: 14px; font-weight: 600; margin-bottom: 12px">{{ card.chart.title }}</div>
 
-    <div v-if="!cats.length" style="font-size: 13px; color: var(--muted)">Sem dados para mostrar.</div>
+    <div v-if="!cats.length" style="font-size: 13px; color: var(--muted)">{{ $t('reports.noData') }}</div>
 
     <!-- DONUT -->
     <div v-else-if="type === 'donut'" style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap">

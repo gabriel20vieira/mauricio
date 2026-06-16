@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CAT_BY_ID, catColor, catSoft, euro, fmtDateShort, firstName } from '~~/shared/config'
+import { CAT_BY_ID, catColor, catSoft, firstName } from '~~/shared/config'
 import type { Expense } from '~/composables/useStore'
 
 const props = defineProps<{ expense: Expense }>()
@@ -21,9 +21,9 @@ const canEdit = computed(() => user.value?.role === 'admin' || props.expense.use
     </div>
 
     <div style="min-width: 0">
-      <div style="font-weight: 600; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ expense.note || cat.label }}</div>
+      <div style="font-weight: 600; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ expense.note || $t('cat.' + cat.id) }}</div>
       <div style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); margin-top: 2px">
-        <UiCatDot :cat="cat" :size="7" />{{ cat.label }}<template v-if="expense.sub"> · {{ expense.sub }}</template> · {{ fmtDateShort(expense.date) }}
+        <UiCatDot :cat="cat" :size="7" />{{ $t('cat.' + cat.id) }}<template v-if="expense.sub"> · {{ expense.sub }}</template> · {{ $d(new Date(expense.date + 'T00:00:00'), 'short') }}
       </div>
     </div>
 
@@ -33,7 +33,7 @@ const canEdit = computed(() => user.value?.role === 'admin' || props.expense.use
     </div>
 
     <div style="display: flex; align-items: center; gap: 10px">
-      <span class="tnum" style="font-weight: 600; font-size: 14.5px">{{ euro(expense.amountCents / 100) }}</span>
+      <span class="tnum" style="font-weight: 600; font-size: 14.5px">{{ $n(expense.amountCents / 100, 'currency') }}</span>
       <UiIcon :name="canEdit ? 'pencil' : 'lock'" :size="15" :style="{ color: canEdit ? 'var(--muted)' : 'var(--faint)' }" />
     </div>
   </div>

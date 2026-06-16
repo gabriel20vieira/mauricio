@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { streamChat, type Card, type ConversationMeta } from '~/composables/useChat'
 
-definePageMeta({ title: 'Assistente', subtitle: 'Pergunta sobre as contas da casa' })
+definePageMeta({ titleKey: 'nav.assistant', subtitleKey: 'pageSub.assistant' })
 const appName = useRuntimeConfig().public.appName
+const { t, locale } = useI18n()
 
 interface UiCardState { card: Card, status?: 'pending' | 'done' | 'error', error?: string }
 interface UiMessage {
@@ -23,12 +24,12 @@ const sending = ref(false)
 const scroller = ref<HTMLElement | null>(null)
 const convDrawer = ref(false) // mobile slide-over for the conversation list
 
-const suggestions = [
-  'Quanto gastámos este mês?',
-  'Mostra um gráfico dos gastos por categoria',
-  'Quem contribuiu mais este mês?',
-  'Adiciona um gasto de 25€ em alimentação fora, jantar',
-]
+const suggestions = computed(() => [
+  t('assistant.suggestion1'),
+  t('assistant.suggestion2'),
+  t('assistant.suggestion3'),
+  t('assistant.suggestion4'),
+])
 
 onMounted(async () => {
   await store.ensure().catch(() => {})
@@ -76,7 +77,7 @@ async function send(text?: string) {
   messages.value.push(assistant)
   scrollDown()
 
-  await streamChat({ conversationId: activeId.value || undefined, message: msg }, {
+  await streamChat({ conversationId: activeId.value || undefined, message: msg, locale: locale.value }, {
     onStart: (cid) => { activeId.value = cid },
     onToken: (t) => { assistant.content += t; scrollDown() },
     onTool: (_name, status, label) => {
@@ -120,14 +121,14 @@ async function confirmCard(cs: UiCardState) {
     <!-- Conversation list (slide-over on mobile) -->
     <div class="asst-scrim" @click="convDrawer = false" />
     <aside class="asst-convs">
-      <UiButton icon="plus" full @click="newConversation">Nova conversa</UiButton>
+      <UiButton icon="plus" full @click="newConversation">{{ $t('assistant.newConversation') }}</UiButton>
       <div class="asst-convs-list">
         <div v-for="c in conversations" :key="c.id" class="asst-conv"
           :class="{ active: activeId === c.id }"
           @click="openConversation(c.id)">
           <UiIcon name="chat" :size="15" style="flex-shrink: 0; opacity: 0.7" />
           <span class="asst-conv-title">{{ c.title }}</span>
-          <button class="conv-del" title="Apagar" @click.stop="removeConversation(c.id)">
+          <button class="conv-del" :title="$t('common.delete')" @click.stop="removeConversation(c.id)">
             <UiIcon name="trash" :size="14" />
           </button>
         </div>
@@ -138,8 +139,8 @@ async function confirmCard(cs: UiCardState) {
     <div class="asst-thread">
       <!-- Top bar: open conversation list (drawer) + start a new chat -->
       <div class="asst-bar">
-        <UiButton variant="outline" size="sm" icon="chat" @click="convDrawer = true">Conversas</UiButton>
-        <UiButton size="sm" icon="plus" @click="newConversation">Nova conversa</UiButton>
+        <UiButton variant="outline" size="sm" icon="chat" @click="convDrawer = true">{{ $t('assistant.conversations') }}</UiButton>
+        <UiButton size="sm" icon="plus" @click="newConversation">{{ $t('assistant.newConversation') }}</UiButton>
       </div>
       <div ref="scroller" class="asst-scroll">
         <!-- Empty / welcome -->
@@ -148,8 +149,8 @@ async function confirmCard(cs: UiCardState) {
             <UiIcon name="sparkles" :size="28" />
           </div>
           <div>
-            <div style="font-size: 17px; font-weight: 700">Assistente do {{ appName }}</div>
-            <div style="font-size: 13.5px; color: var(--muted); max-width: 360px; margin-top: 4px">Pergunta sobre gastos, pede gráficos ou diz para adicionar um gasto — eu mostro uma confirmação antes de gravar.</div>
+            <div style="font-size: 17px; font-weight: 700">{{ $t('assistant.of', { name: appName }) }}</div>
+            <div style="font-size: 13.5px; color: var(--muted); max-width: 360px; margin-top: 4px">{{ $t('assistant.welcomeSub') }}</div>
           </div>
           <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 460px; margin-top: 6px">
             <button v-for="s in suggestions" :key="s"
@@ -178,7 +179,7 @@ async function confirmCard(cs: UiCardState) {
                 </span>
               </div>
               <div v-if="m.content" style="font-size: 14.5px; line-height: 1.5; white-space: pre-wrap; color: var(--ink)">{{ m.content }}</div>
-              <div v-else-if="m.streaming && !(m.tools && m.tools.length)" style="font-size: 14px; color: var(--muted)">A pensar…</div>
+              <div v-else-if="m.streaming && !(m.tools && m.tools.length)" style="font-size: 14px; color: var(--muted)">{{ $t('assistant.thinking') }}</div>
 
               <!-- cards -->
               <template v-for="(cs, i) in m.cards" :key="i">
@@ -192,9 +193,9 @@ async function confirmCard(cs: UiCardState) {
 
       <!-- Composer -->
       <div class="asst-composer">
-        <textarea v-model="input" rows="1" placeholder="Escreve uma mensagem…"
+        <textarea v-model="input" rows="1" :placeholder="$t('assistant.placeholder')"
           @keydown.enter.exact.prevent="send()" />
-        <UiButton icon="send" :disabled="sending || !input.trim()" @click="send()">Enviar</UiButton>
+        <UiButton icon="send" :disabled="sending || !input.trim()" @click="send()">{{ $t('assistant.send') }}</UiButton>
       </div>
     </div>
   </div>

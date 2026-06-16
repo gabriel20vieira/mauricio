@@ -76,6 +76,8 @@ function ensureColumn(table: string, column: string, ddl: string) {
   if (!cols.some(c => c.name === column)) sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${ddl}`)
 }
 ensureColumn('users', 'active', 'active INTEGER NOT NULL DEFAULT 1')
+ensureColumn('users', 'locale', 'locale TEXT')
+sqlite.exec(`CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);`)
 
 export function userCount(): number {
   const row = db.get<{ c: number }>(sql`SELECT COUNT(*) as c FROM users`)

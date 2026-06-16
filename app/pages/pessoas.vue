@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { catColor, euro, firstName } from '~~/shared/config'
+import { catColor, firstName } from '~~/shared/config'
 
-definePageMeta({ title: 'Pessoas', subtitle: 'Membros da casa' })
+definePageMeta({ titleKey: 'nav.people', subtitleKey: 'pageSub.people' })
 const store = useStore()
 const { user } = useUserSession()
 const { isDark } = useTweaks()
@@ -18,7 +18,7 @@ const rows = computed(() => store.activeMembers.value.map((m) => {
 <template>
   <div style="max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px">
     <div v-if="isAdmin" style="display: flex; justify-content: flex-end">
-      <UiButton icon="plus" @click="navigateTo('/administracao')">Adicionar membro</UiButton>
+      <UiButton icon="plus" @click="navigateTo('/administracao')">{{ $t('people.addMember') }}</UiButton>
     </div>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px">
@@ -34,8 +34,8 @@ const rows = computed(() => store.activeMembers.value.map((m) => {
           </div>
         </div>
         <div style="display: flex; justify-content: space-between; padding-top: 14px; border-top: 1px solid var(--border)">
-          <div><div class="tnum" style="font-weight: 600">{{ euro(r.total / 100) }}</div><div style="font-size: 12px; color: var(--muted)">Total registado</div></div>
-          <div style="text-align: right"><div class="tnum" style="font-weight: 600">{{ r.count }}</div><div style="font-size: 12px; color: var(--muted)">Movimentos</div></div>
+          <div><div class="tnum" style="font-weight: 600">{{ $n(r.total / 100, 'currency') }}</div><div style="font-size: 12px; color: var(--muted)">{{ $t('people.total') }}</div></div>
+          <div style="text-align: right"><div class="tnum" style="font-weight: 600">{{ r.count }}</div><div style="font-size: 12px; color: var(--muted)">{{ $t('people.expensesCount') }}</div></div>
         </div>
       </UiCard>
     </div>
