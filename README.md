@@ -5,6 +5,8 @@ roles, **admin-only registration**, and a first-run setup screen on first use.
 
 Multi-language (English, Portuguese, Spanish), light/dark theme, Euro.
 
+![Dashboard](docs/screenshots/dashboard.png)
+
 ## Stack
 
 - **Nuxt 4** + Nitro, TypeScript
