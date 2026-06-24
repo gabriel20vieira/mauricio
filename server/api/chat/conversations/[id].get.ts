@@ -5,10 +5,9 @@ import { requireConversation } from '../../../utils/chat'
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')!
   const { conversation } = await requireConversation(event, id)
-  const rows = db.select().from(schema.chatMessages)
+  const rows = await db.select().from(schema.chatMessages)
     .where(eq(schema.chatMessages.conversationId, id))
     .orderBy(asc(schema.chatMessages.createdAt))
-    .all()
   const messages: any[] = []
   for (const m of rows) {
     if (m.role === 'user') {

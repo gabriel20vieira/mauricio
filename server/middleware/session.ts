@@ -9,8 +9,10 @@ export default defineEventHandler(async (event) => {
   const sid = session?.sid
   if (!sid) return // no authenticated session — nothing to validate
 
-  const row = db.select().from(schema.sessions).where(eq(schema.sessions.id, sid)).get()
-  const user = session.user ? db.select().from(schema.users).where(eq(schema.users.id, session.user.id)).get() : null
+  const [row] = await db.select().from(schema.sessions).where(eq(schema.sessions.id, sid)).limit(1)
+  const [user] = session.user
+    ? await db.select().from(schema.users).where(eq(schema.users.id, session.user.id)).limit(1)
+    : [null]
 
   // Revoked / unknown session, or deactivated member → drop the session.
   if (!row || row.revokedAt || !user || !user.active) {
@@ -20,6 +22,6 @@ export default defineEventHandler(async (event) => {
 
   // Throttle last-seen writes to at most once per minute.
   if (Date.now() - row.lastSeenAt > 60_000) {
-    db.update(schema.sessions).set({ lastSeenAt: Date.now() }).where(eq(schema.sessions.id, sid)).run()
+    await db.update(schema.sessions).set({ lastSeenAt: Date.now() }).where(eq(schema.sessions.id, sid))
   }
 })

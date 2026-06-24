@@ -21,7 +21,7 @@ export function toSessionUser(u: User): SessionUser {
 export async function createSession(event: H3Event, user: SessionUser) {
   const id = randomUUID()
   const now = Date.now()
-  db.insert(schema.sessions).values({
+  await db.insert(schema.sessions).values({
     id,
     userId: user.id,
     userAgent: (getHeader(event, 'user-agent') || '').slice(0, 300),
@@ -29,7 +29,7 @@ export async function createSession(event: H3Event, user: SessionUser) {
     createdAt: now,
     lastSeenAt: now,
     revokedAt: null,
-  }).run()
+  })
   await setUserSession(event, { user, sid: id })
 }
 
@@ -39,11 +39,11 @@ export async function refreshSessionUser(event: H3Event, user: SessionUser) {
   await setUserSession(event, { user, sid: current?.sid })
 }
 
-export function revokeSession(id: string) {
-  db.update(schema.sessions).set({ revokedAt: Date.now() }).where(eq(schema.sessions.id, id)).run()
+export async function revokeSession(id: string) {
+  await db.update(schema.sessions).set({ revokedAt: Date.now() }).where(eq(schema.sessions.id, id))
 }
 
-export function revokeAllForUser(userId: string) {
-  db.update(schema.sessions).set({ revokedAt: Date.now() })
-    .where(and(eq(schema.sessions.userId, userId), isNull(schema.sessions.revokedAt))).run()
+export async function revokeAllForUser(userId: string) {
+  await db.update(schema.sessions).set({ revokedAt: Date.now() })
+    .where(and(eq(schema.sessions.userId, userId), isNull(schema.sessions.revokedAt)))
 }

@@ -10,7 +10,8 @@ Multi-language (English, Portuguese, Spanish), light/dark theme, Euro.
 ## Stack
 
 - **Nuxt 4** + Nitro, TypeScript
-- **SQLite** (local file) via Drizzle ORM + better-sqlite3 — zero config
+- **MySQL 8** via Drizzle ORM + mysql2 — schema auto-created on boot (no migrate step)
+- **phpMyAdmin** — DB admin UI (docker compose, port 8080)
 - **nuxt-auth-utils** — sealed-cookie session, scrypt password hashing
 - **@nuxtjs/i18n** — locale detection with per-user preference + admin override
 - **Ollama** — chat assistant with tool calling (optional)
@@ -19,11 +20,13 @@ Multi-language (English, Portuguese, Spanish), light/dark theme, Euro.
 
 ```bash
 npm install
-cp .env.example .env        # set NUXT_SESSION_PASSWORD (min. 32 chars)
+cp .env.example .env        # set NUXT_SESSION_PASSWORD + MYSQL_* vars
+docker compose up -d db     # start MySQL (exposes localhost:3306) — or use your own
 npm run dev                 # http://localhost:3000
 ```
 
-The database (`server/db/lar.sqlite`) is created automatically on first boot.
+The schema (tables + default categories) is created automatically on first boot —
+no separate migrate step. Point `MYSQL_*` at the docker `db` service or any MySQL 8.
 
 ## Authentication flow
 
@@ -100,26 +103,23 @@ Creates the "Casa Silva" family (Apr–Jun 2026). Everyone signs in with `demo12
 
 ## Docker
 
-Multi-stage image (Node 24, Nuxt build + native `better-sqlite3`). The SQLite database
-lives in a volume (`lar_data` → `/app/data/lar.sqlite`), persistent across restarts.
+`docker compose` runs three services: the **app** (Nuxt, port 3000), **MySQL 8**
+(`db`, persisted in the `db_data` volume), and **phpMyAdmin** (port 8080).
 
 ```bash
-cp .env.example .env         # set a strong, random NUXT_SESSION_PASSWORD (min. 32 chars)
-docker compose up -d --build # http://localhost:3000
+cp .env.example .env         # set NUXT_SESSION_PASSWORD + MYSQL_PASSWORD + MYSQL_ROOT_PASSWORD
+docker compose up -d --build # app → :3000   ·   phpMyAdmin → :8080
 ```
+
+- App: http://localhost:3000
+- phpMyAdmin: http://localhost:8080 (log in with the MySQL user/password)
 
 > Production boot **fails** if `NUXT_SESSION_PASSWORD` is left at the example value or
 > is shorter than 32 chars (session-forgery protection).
-> `OLLAMA_BASE_URL`/`OLLAMA_MODEL` are optional (have defaults).
+> The app waits for MySQL to be healthy before starting (compose `depends_on` +
+> healthcheck). `OLLAMA_BASE_URL`/`OLLAMA_MODEL` are optional (have defaults).
 
 First boot → empty DB → the app shows the admin registration form.
-
-Build/run without compose:
-
-```bash
-docker build -t mauricio .
-docker run -p 3000:3000 -e NUXT_SESSION_PASSWORD=<32+-secret> -v lar_data:/app/data mauricio
-```
 
 ## Screens
 
@@ -131,8 +131,8 @@ Balance · People · Administration · Profile.
 - `app/` — pages, layouts, components (`components/ui` primitives, `components/App`
   app-specific), composables, CSS
 - `server/api` — auth, expenses, users, categories, chat, assistant endpoints
-- `server/db` — Drizzle schema + SQLite connection
-- `server/utils` — db migrations, categories, sessions, settings, Ollama, AI tools
+- `server/db` — Drizzle schema (mysql-core)
+- `server/utils` — mysql2 pool + schema init, categories, sessions, settings, Ollama, AI tools
 - `i18n/locales` — `en.json`, `pt.json`, `es.json`
 - `shared/config.ts` — Euro formatting, date helpers (client + server)
 - `docs/superpowers/specs` — design spec

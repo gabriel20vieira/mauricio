@@ -1,92 +1,95 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
+import { mysqlTable, varchar, int, bigint, boolean, text } from 'drizzle-orm/mysql-core'
 
-export const users = sqliteTable('users', {
-  id: text('id').primaryKey(),
-  name: text('name').notNull(),
-  email: text('email').notNull().unique(),
-  passwordHash: text('password_hash').notNull(),
-  role: text('role', { enum: ['admin', 'user'] }).notNull().default('user'),
-  hue: integer('hue').notNull().default(245),
+// Note: timestamps are epoch-millis (Date.now()) → bigint, not int (int overflows).
+// ids are uuids → varchar(36). Short labels are varchar; long content is text.
+
+export const users = mysqlTable('users', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  passwordHash: varchar('password_hash', { length: 255 }).notNull(),
+  role: varchar('role', { length: 16, enum: ['admin', 'user'] }).notNull().default('user'),
+  hue: int('hue').notNull().default(245),
   // Soft-delete flag: deactivated members keep their expense history but cannot
   // log in and are hidden from active member pickers.
-  active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  active: boolean('active').notNull().default(true),
   // Preferred locale (e.g. 'pt-PT'); null = auto-detect from the browser.
-  locale: text('locale'),
-  createdAt: integer('created_at').notNull(),
+  locale: varchar('locale', { length: 16 }),
+  createdAt: bigint('created_at', { mode: 'number' }).notNull(),
 })
 
 // Global key/value app settings (admin-controlled). e.g. forcedLocale.
-export const settings = sqliteTable('settings', {
-  key: text('key').primaryKey(),
+export const settings = mysqlTable('settings', {
+  key: varchar('key', { length: 191 }).primaryKey(),
   value: text('value'),
 })
 
 // Editable categories/subcategories with a name per locale. `active=false` = hidden
 // (reversible), kept so historical expenses keep resolving their names.
-export const categories = sqliteTable('categories', {
-  id: text('id').primaryKey(),
-  hue: integer('hue').notNull().default(200),
-  sort: integer('sort').notNull().default(0),
-  active: integer('active', { mode: 'boolean' }).notNull().default(true),
-  nameEn: text('name_en').notNull().default(''),
-  namePt: text('name_pt').notNull().default(''),
-  nameEs: text('name_es').notNull().default(''),
+export const categories = mysqlTable('categories', {
+  id: varchar('id', { length: 64 }).primaryKey(),
+  hue: int('hue').notNull().default(200),
+  sort: int('sort').notNull().default(0),
+  active: boolean('active').notNull().default(true),
+  nameEn: varchar('name_en', { length: 255 }).notNull().default(''),
+  namePt: varchar('name_pt', { length: 255 }).notNull().default(''),
+  nameEs: varchar('name_es', { length: 255 }).notNull().default(''),
 })
 
-export const subcategories = sqliteTable('subcategories', {
-  id: text('id').primaryKey(),
-  categoryId: text('category_id').notNull().references(() => categories.id, { onDelete: 'cascade' }),
-  sort: integer('sort').notNull().default(0),
-  active: integer('active', { mode: 'boolean' }).notNull().default(true),
-  nameEn: text('name_en').notNull().default(''),
-  namePt: text('name_pt').notNull().default(''),
-  nameEs: text('name_es').notNull().default(''),
+export const subcategories = mysqlTable('subcategories', {
+  id: varchar('id', { length: 64 }).primaryKey(),
+  categoryId: varchar('category_id', { length: 64 }).notNull().references(() => categories.id, { onDelete: 'cascade' }),
+  sort: int('sort').notNull().default(0),
+  active: boolean('active').notNull().default(true),
+  nameEn: varchar('name_en', { length: 255 }).notNull().default(''),
+  namePt: varchar('name_pt', { length: 255 }).notNull().default(''),
+  nameEs: varchar('name_es', { length: 255 }).notNull().default(''),
 })
 
 export type Category = typeof categories.$inferSelect
 export type Subcategory = typeof subcategories.$inferSelect
 
-export const expenses = sqliteTable('expenses', {
-  id: text('id').primaryKey(),
-  date: text('date').notNull(), // ISO yyyy-mm-dd
-  amountCents: integer('amount_cents').notNull(),
-  cat: text('cat').notNull(),
-  sub: text('sub').notNull().default(''),
-  note: text('note').notNull().default(''),
-  method: text('method').notNull().default(''),
-  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  createdAt: integer('created_at').notNull(),
+export const expenses = mysqlTable('expenses', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  date: varchar('date', { length: 10 }).notNull(), // ISO yyyy-mm-dd
+  amountCents: int('amount_cents').notNull(),
+  cat: varchar('cat', { length: 64 }).notNull(),
+  sub: varchar('sub', { length: 64 }).notNull().default(''),
+  note: varchar('note', { length: 500 }).notNull().default(''),
+  method: varchar('method', { length: 64 }).notNull().default(''),
+  userId: varchar('user_id', { length: 36 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: bigint('created_at', { mode: 'number' }).notNull(),
 })
 
-export const chatConversations = sqliteTable('chat_conversations', {
-  id: text('id').primaryKey(),
-  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  title: text('title').notNull().default('Nova conversa'),
-  createdAt: integer('created_at').notNull(),
-  updatedAt: integer('updated_at').notNull(),
+export const chatConversations = mysqlTable('chat_conversations', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  userId: varchar('user_id', { length: 36 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: varchar('title', { length: 255 }).notNull().default('Nova conversa'),
+  createdAt: bigint('created_at', { mode: 'number' }).notNull(),
+  updatedAt: bigint('updated_at', { mode: 'number' }).notNull(),
 })
 
-export const chatMessages = sqliteTable('chat_messages', {
-  id: text('id').primaryKey(),
-  conversationId: text('conversation_id').notNull().references(() => chatConversations.id, { onDelete: 'cascade' }),
-  role: text('role', { enum: ['user', 'assistant', 'tool'] }).notNull(),
-  content: text('content').notNull().default(''),
+export const chatMessages = mysqlTable('chat_messages', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  conversationId: varchar('conversation_id', { length: 36 }).notNull().references(() => chatConversations.id, { onDelete: 'cascade' }),
+  role: varchar('role', { length: 16, enum: ['user', 'assistant', 'tool'] }).notNull(),
+  content: text('content').notNull(),
   toolCalls: text('tool_calls'), // JSON string | null  (assistant tool_calls)
-  toolCallId: text('tool_call_id'), // for role:tool — which call it answers
-  toolName: text('tool_name'), // for role:tool / convenience
+  toolCallId: varchar('tool_call_id', { length: 64 }), // for role:tool — which call it answers
+  toolName: varchar('tool_name', { length: 64 }), // for role:tool / convenience
   cards: text('cards'), // JSON string | null — confirm/chart descriptors attached to an assistant turn
   segments: text('segments'), // JSON string | null — ordered render segments (text/tool/card) for a response
-  createdAt: integer('created_at').notNull(),
+  createdAt: bigint('created_at', { mode: 'number' }).notNull(),
 })
 
-export const sessions = sqliteTable('sessions', {
-  id: text('id').primaryKey(),
-  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  userAgent: text('user_agent').notNull().default(''),
-  ip: text('ip').notNull().default(''),
-  createdAt: integer('created_at').notNull(),
-  lastSeenAt: integer('last_seen_at').notNull(),
-  revokedAt: integer('revoked_at'), // null = active
+export const sessions = mysqlTable('sessions', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  userId: varchar('user_id', { length: 36 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userAgent: varchar('user_agent', { length: 300 }).notNull().default(''),
+  ip: varchar('ip', { length: 64 }).notNull().default(''),
+  createdAt: bigint('created_at', { mode: 'number' }).notNull(),
+  lastSeenAt: bigint('last_seen_at', { mode: 'number' }).notNull(),
+  revokedAt: bigint('revoked_at', { mode: 'number' }), // null = active
 })
 
 export type User = typeof users.$inferSelect

@@ -9,7 +9,7 @@ export default defineEventHandler(async () => {
   if (!import.meta.dev) {
     throw createError({ statusCode: 404, statusMessage: 'Not Found' })
   }
-  if (userCount() > 0) {
+  if (await userCount() > 0) {
     throw createError({ statusCode: 403, statusMessage: 'A base de dados já tem utilizadores.' })
   }
 
@@ -23,7 +23,7 @@ export default defineEventHandler(async () => {
   for (const m of members) {
     const id = randomUUID()
     ids[m.key] = id
-    db.insert(schema.users).values({ id, name: m.name, email: m.email, passwordHash: pw, role: m.role, hue: m.hue, createdAt: Date.now() }).run()
+    await db.insert(schema.users).values({ id, name: m.name, email: m.email, passwordHash: pw, role: m.role, hue: m.hue, createdAt: Date.now() })
   }
 
   const e = (date: string, amount: number, cat: string, sub: string, who: string, note: string, method: string) => ({
@@ -64,6 +64,6 @@ export default defineEventHandler(async () => {
     e('2026-04-06', 68.75, 'alimentacao', 'Casa', 'joao', 'Pingo Doce', 'Cartão'),
     e('2026-04-03', 22.30, 'utilidades', 'Gás', 'maria', 'Galp Gás', 'Débito'),
   ]
-  db.insert(schema.expenses).values(rows).run()
+  await db.insert(schema.expenses).values(rows)
   return { ok: true, members: members.length, expenses: rows.length }
 })

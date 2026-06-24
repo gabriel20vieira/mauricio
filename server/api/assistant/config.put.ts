@@ -12,6 +12,6 @@ const Body = z.object({
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
   const body = await readValidatedBody(event, Body.parse)
-  setAssistantConfig(body)
+  await setAssistantConfig(body)
   return { ok: true }
 })

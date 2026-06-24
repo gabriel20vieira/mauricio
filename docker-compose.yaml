@@ -5,14 +5,49 @@ services:
             - "3000:3000"
         environment:
             - NUXT_SESSION_PASSWORD=${NUXT_SESSION_PASSWORD}
-            - LAR_DB_PATH=/app/data/lar.sqlite
+            - MYSQL_HOST=db
+            - MYSQL_PORT=3306
+            - MYSQL_DATABASE=${MYSQL_DATABASE:-mauricio}
+            - MYSQL_USER=${MYSQL_USER:-mauricio}
+            - MYSQL_PASSWORD=${MYSQL_PASSWORD}
             # Assistente de chat (Ollama). Aponta para a máquina onde o Ollama corre.
             - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://192.168.1.203:11434}
             - OLLAMA_MODEL=${OLLAMA_MODEL:-minimax-m3:cloud}
+        depends_on:
+            db:
+                condition: service_healthy
+        restart: unless-stopped
+
+    db:
+        image: mysql:8
+        ports:
+            # Exposed so host-run `npm run dev` can reach MySQL at localhost:3306.
+            - "3306:3306"
+        environment:
+            - MYSQL_DATABASE=${MYSQL_DATABASE:-mauricio}
+            - MYSQL_USER=${MYSQL_USER:-mauricio}
+            - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+            - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
         volumes:
-            # Persist the SQLite database across container restarts.
-            - lar_data:/app/data
+            - db_data:/var/lib/mysql
+        healthcheck:
+            test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p$MYSQL_ROOT_PASSWORD"]
+            interval: 5s
+            timeout: 5s
+            retries: 20
+        restart: unless-stopped
+
+    phpmyadmin:
+        image: phpmyadmin:latest
+        ports:
+            - "8080:80"
+        environment:
+            - PMA_HOST=db
+            - PMA_PORT=3306
+        depends_on:
+            db:
+                condition: service_healthy
         restart: unless-stopped
 
 volumes:
-    lar_data:
+    db_data:

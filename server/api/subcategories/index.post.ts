@@ -14,12 +14,12 @@ export default defineEventHandler(async (event) => {
   if (!body.names.en && !body.names.pt && !body.names.es) {
     throw createError({ statusCode: 400, statusMessage: 'Indique pelo menos um nome.' })
   }
-  const cat = db.select().from(schema.categories).where(eq(schema.categories.id, body.categoryId)).get()
+  const [cat] = await db.select().from(schema.categories).where(eq(schema.categories.id, body.categoryId)).limit(1)
   if (!cat) throw createError({ statusCode: 400, statusMessage: 'Categoria inválida.' })
 
-  const maxSort = db.select().from(schema.subcategories).all()
+  const maxSort = (await db.select().from(schema.subcategories))
     .filter(s => s.categoryId === body.categoryId).reduce((m, s) => Math.max(m, s.sort), -1)
   const row = { id: randomUUID(), categoryId: body.categoryId, sort: maxSort + 1, active: true, nameEn: body.names.en, namePt: body.names.pt, nameEs: body.names.es }
-  db.insert(schema.subcategories).values(row).run()
+  await db.insert(schema.subcategories).values(row)
   return row
 })

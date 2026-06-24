@@ -4,10 +4,10 @@
 FROM node:24-slim AS base
 WORKDIR /usr/src/app
 
-# ---- install (build native deps: better-sqlite3 needs python/make/g++) ----
+# ---- install (mysql2 is pure JS — no native build toolchain needed) ----
 FROM base AS install
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends python3 make g++ ca-certificates \
+    && apt-get install -y --no-install-recommends ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json ./
 RUN npm ci
@@ -26,11 +26,8 @@ RUN apt-get update \
     && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production
-# SQLite file lives on a mounted volume; created on first run.
-ENV LAR_DB_PATH=/app/data/lar.sqlite
+# Database is MySQL (see docker-compose); connection via MYSQL_* env vars.
 COPY --from=prerelease /usr/src/app/.output ./.output
-# node_modules carries the compiled better-sqlite3 native binding.
-COPY --from=install /usr/src/app/node_modules ./node_modules
 COPY --from=prerelease /usr/src/app/package.json ./package.json
 EXPOSE 3000
 CMD ["node", ".output/server/index.mjs"]

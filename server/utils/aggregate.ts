@@ -41,9 +41,9 @@ export interface AggResult {
 
 const TEMPORAL: Dimension[] = ['dia', 'mes', 'ano']
 
-function members(): User[] { return db.select().from(schema.users).all() }
-function expenses(): Expense[] {
-  return db.select().from(schema.expenses).orderBy(desc(schema.expenses.date)).all()
+function members(): Promise<User[]> { return db.select().from(schema.users) }
+function expenses(): Promise<Expense[]> {
+  return db.select().from(schema.expenses).orderBy(desc(schema.expenses.date))
 }
 
 function resolveWho(ms: User[], who?: string): User | undefined {
@@ -104,12 +104,12 @@ function dimOf(dim: Dimension, e: Expense, ms: User[], catMap: Record<string, st
   }
 }
 
-export function aggregate(q: AggQuery, locale?: string): AggResult {
-  const ms = members()
-  const catMap = catNameMap(locale)
-  const subMap = subNameMap(locale)
+export async function aggregate(q: AggQuery, locale?: string): Promise<AggResult> {
+  const [ms, allExpenses, catMap, subMap] = await Promise.all([
+    members(), expenses(), catNameMap(locale), subNameMap(locale),
+  ])
   const measure: Measure = q.measure || 'soma'
-  const rows = applyFilters(expenses(), q.filters, ms)
+  const rows = applyFilters(allExpenses, q.filters, ms)
 
   // Collect cells keyed by primary + series.
   const primaries = new Map<string, { label: string, sort: string }>()

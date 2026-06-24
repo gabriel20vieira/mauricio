@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
   const body = await readValidatedBody(event, Body.parse)
   const email = body.email.toLowerCase()
 
-  const user = db.select().from(schema.users).where(eq(schema.users.email, email)).get()
+  const [user] = await db.select().from(schema.users).where(eq(schema.users.email, email)).limit(1)
   const ok = user && (await verifyPassword(user.passwordHash, body.password))
   if (!user || !ok) {
     throw createError({ statusCode: 401, statusMessage: 'Email ou password incorretos' })

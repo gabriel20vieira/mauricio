@@ -10,6 +10,6 @@ export default defineEventHandler(async (event) => {
   if (locale !== null && !isLocale(locale)) {
     throw createError({ statusCode: 400, statusMessage: 'Língua inválida.' })
   }
-  setSetting('forcedLocale', locale)
+  await setSetting('forcedLocale', locale)
   return { ok: true, forced: locale }
 })

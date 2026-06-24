@@ -4,5 +4,5 @@ import { getAssistantConfig } from '../../utils/settings'
 // assistant in the nav and allow the page.
 export default defineEventHandler(async (event) => {
   await requireUserSession(event)
-  return { enabled: getAssistantConfig().enabled }
+  return { enabled: (await getAssistantConfig()).enabled }
 })

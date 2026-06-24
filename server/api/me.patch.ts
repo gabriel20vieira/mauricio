@@ -17,10 +17,10 @@ export default defineEventHandler(async (event) => {
   if (body.name !== undefined) patch.name = body.name
   if (body.password !== undefined) patch.passwordHash = await hashPassword(body.password)
   if (body.locale !== undefined) patch.locale = isLocale(body.locale) ? body.locale : null
-  if (Object.keys(patch).length) db.update(schema.users).set(patch).where(eq(schema.users.id, user.id)).run()
+  if (Object.keys(patch).length) await db.update(schema.users).set(patch).where(eq(schema.users.id, user.id))
 
-  const updated = db.select().from(schema.users).where(eq(schema.users.id, user.id)).get()!
-  await refreshSessionUser(event, toSessionUser(updated))
-  const { passwordHash: _, ...safe } = updated
+  const [updated] = await db.select().from(schema.users).where(eq(schema.users.id, user.id)).limit(1)
+  await refreshSessionUser(event, toSessionUser(updated!))
+  const { passwordHash: _, ...safe } = updated!
   return safe
 })

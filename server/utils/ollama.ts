@@ -34,7 +34,7 @@ export async function ollamaChat(
   onToken: (t: string) => void,
   opts: { signal?: AbortSignal } = {},
 ): Promise<ChatResult> {
-  const cfg = getAssistantConfig()
+  const cfg = await getAssistantConfig()
   const res = await fetch(`${cfg.baseUrl}/api/chat`, {
     method: 'POST',
     headers: ollamaHeaders(cfg),
@@ -93,7 +93,7 @@ function ollamaHeaders(cfg: { useCloud: boolean, token: string }): Record<string
 
 /** Single non-streaming completion (no tools). Used for short tasks like titling. */
 export async function ollamaComplete(messages: OllamaMessage[], opts: { signal?: AbortSignal } = {}): Promise<string> {
-  const cfg = getAssistantConfig()
+  const cfg = await getAssistantConfig()
   const res = await fetch(`${cfg.baseUrl}/api/chat`, {
     method: 'POST',
     headers: ollamaHeaders(cfg),

@@ -9,8 +9,8 @@ export default defineEventHandler(async (event) => {
   const session = await getUserSession(event) as { user?: { id: string } }
   let userLocale: string | null = null
   if (session?.user?.id) {
-    const u = db.select().from(schema.users).where(eq(schema.users.id, session.user.id)).get()
+    const [u] = await db.select().from(schema.users).where(eq(schema.users.id, session.user.id)).limit(1)
     userLocale = u?.locale ?? null
   }
-  return { forced: getForcedLocale(), userLocale }
+  return { forced: await getForcedLocale(), userLocale }
 })

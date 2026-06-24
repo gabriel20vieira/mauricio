@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
   await requireAdmin(event)
   const id = getRouterParam(event, 'id')!
   const body = await readValidatedBody(event, Body.parse)
-  const target = db.select().from(schema.categories).where(eq(schema.categories.id, id)).get()
+  const [target] = await db.select().from(schema.categories).where(eq(schema.categories.id, id)).limit(1)
   if (!target) throw createError({ statusCode: 404, statusMessage: 'Categoria não encontrada' })
 
   const patch: Record<string, unknown> = {}
@@ -22,6 +22,6 @@ export default defineEventHandler(async (event) => {
   if (body.names?.pt !== undefined) patch.namePt = body.names.pt
   if (body.names?.es !== undefined) patch.nameEs = body.names.es
 
-  if (Object.keys(patch).length) db.update(schema.categories).set(patch).where(eq(schema.categories.id, id)).run()
+  if (Object.keys(patch).length) await db.update(schema.categories).set(patch).where(eq(schema.categories.id, id))
   return { ok: true }
 })

@@ -1,5 +1,6 @@
-import { sql } from 'drizzle-orm'
-import type BetterSqlite3 from 'better-sqlite3'
+import { and, eq, sql } from 'drizzle-orm'
+import type { MySql2Database } from 'drizzle-orm/mysql2'
+import * as schema from '../db/schema'
 
 // One-time seed of the default household categories + subcategories (names per
 // locale), run when the categories table is still empty. Also migrates legacy
@@ -17,24 +18,28 @@ const SEED: SeedCat[] = [
   { id: 'reparacoes', hue: 25, en: 'Repairs', pt: 'Reparações', es: 'Reparaciones', subs: [{ en: 'Home', pt: 'Casa', es: 'Hogar' }, { en: 'Cars', pt: 'Carros', es: 'Coches' }] },
 ]
 
-export function seedCategoriesIfEmpty(sqlite: BetterSqlite3.Database) {
-  const count = (sqlite.prepare('SELECT COUNT(*) AS c FROM categories').get() as { c: number }).c
-  if (count > 0) return
+export async function seedCategoriesIfEmpty(db: MySql2Database<typeof schema>) {
+  const [{ c }] = await db.select({ c: sql<number>`COUNT(*)` }).from(schema.categories)
+  if (Number(c) > 0) return
 
-  const insCat = sqlite.prepare('INSERT INTO categories (id, hue, sort, active, name_en, name_pt, name_es) VALUES (?, ?, ?, 1, ?, ?, ?)')
-  const insSub = sqlite.prepare('INSERT INTO subcategories (id, category_id, sort, active, name_en, name_pt, name_es) VALUES (?, ?, ?, 1, ?, ?, ?)')
-  const migrateSub = sqlite.prepare('UPDATE expenses SET sub = ? WHERE cat = ? AND sub = ?')
-
-  const tx = sqlite.transaction(() => {
-    SEED.forEach((c, ci) => {
-      insCat.run(c.id, c.hue, ci, c.en, c.pt, c.es)
-      c.subs.forEach((s, si) => {
-        const subId = `${c.id}-${si + 1}`
-        insSub.run(subId, c.id, si, s.en, s.pt, s.es)
-        // Legacy expenses stored the PT label in `sub`; point them at the new id.
-        migrateSub.run(subId, c.id, s.pt)
+  await db.transaction(async (tx) => {
+    for (let ci = 0; ci < SEED.length; ci++) {
+      const cat = SEED[ci]
+      await tx.insert(schema.categories).values({
+        id: cat.id, hue: cat.hue, sort: ci, active: true,
+        nameEn: cat.en, namePt: cat.pt, nameEs: cat.es,
       })
-    })
+      for (let si = 0; si < cat.subs.length; si++) {
+        const s = cat.subs[si]
+        const subId = `${cat.id}-${si + 1}`
+        await tx.insert(schema.subcategories).values({
+          id: subId, categoryId: cat.id, sort: si, active: true,
+          nameEn: s.en, namePt: s.pt, nameEs: s.es,
+        })
+        // Legacy expenses stored the PT label in `sub`; point them at the new id.
+        await tx.update(schema.expenses).set({ sub: subId })
+          .where(and(eq(schema.expenses.cat, cat.id), eq(schema.expenses.sub, s.pt)))
+      }
+    }
   })
-  tx()
 }

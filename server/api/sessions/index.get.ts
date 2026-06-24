@@ -12,8 +12,8 @@ export default defineEventHandler(async (event) => {
     ? isNull(schema.sessions.revokedAt)
     : and(eq(schema.sessions.userId, user.id), isNull(schema.sessions.revokedAt))
 
-  const rows = db.select().from(schema.sessions).where(where).orderBy(desc(schema.sessions.lastSeenAt)).all()
-  const names = all ? Object.fromEntries(db.select().from(schema.users).all().map(u => [u.id, u.name])) : {}
+  const rows = await db.select().from(schema.sessions).where(where).orderBy(desc(schema.sessions.lastSeenAt))
+  const names = all ? Object.fromEntries((await db.select().from(schema.users)).map(u => [u.id, u.name])) : {}
 
   return rows.map(s => ({
     id: s.id,

@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
 
   // Validate the target member exists and is active (clear 400 instead of FK 500).
   if (userId !== user.id) {
-    const target = db.select().from(schema.users).where(eq(schema.users.id, userId)).get()
+    const [target] = await db.select().from(schema.users).where(eq(schema.users.id, userId)).limit(1)
     if (!target || !target.active) throw createError({ statusCode: 400, statusMessage: 'Membro inválido.' })
   }
 
@@ -37,6 +37,6 @@ export default defineEventHandler(async (event) => {
     userId,
     createdAt: Date.now(),
   }
-  db.insert(schema.expenses).values(row).run()
+  await db.insert(schema.expenses).values(row)
   return row
 })

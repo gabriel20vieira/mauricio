@@ -17,17 +17,17 @@ export function subName(s: Subcategory, locale?: string): string {
   return (k === 'pt' ? s.namePt : k === 'es' ? s.nameEs : s.nameEn) || s.nameEn || s.namePt || s.id
 }
 
-export function loadCategories(): Category[] {
-  return db.select().from(schema.categories).orderBy(asc(schema.categories.sort)).all()
+export function loadCategories(): Promise<Category[]> {
+  return db.select().from(schema.categories).orderBy(asc(schema.categories.sort))
 }
-export function loadSubcategories(): Subcategory[] {
-  return db.select().from(schema.subcategories).orderBy(asc(schema.subcategories.sort)).all()
+export function loadSubcategories(): Promise<Subcategory[]> {
+  return db.select().from(schema.subcategories).orderBy(asc(schema.subcategories.sort))
 }
 
 // Map of category/sub id -> localized name (active + inactive, for historical display).
-export function catNameMap(locale?: string): Record<string, string> {
-  return Object.fromEntries(loadCategories().map(c => [c.id, catName(c, locale)]))
+export async function catNameMap(locale?: string): Promise<Record<string, string>> {
+  return Object.fromEntries((await loadCategories()).map(c => [c.id, catName(c, locale)]))
 }
-export function subNameMap(locale?: string): Record<string, string> {
-  return Object.fromEntries(loadSubcategories().map(s => [s.id, subName(s, locale)]))
+export async function subNameMap(locale?: string): Promise<Record<string, string>> {
+  return Object.fromEntries((await loadSubcategories()).map(s => [s.id, subName(s, locale)]))
 }

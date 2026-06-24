@@ -136,11 +136,11 @@ function buildQuery(args: Record<string, any>): AggQuery {
 }
 
 // ---------------------------------------------------------------- helpers
-function loadMembers(): User[] {
-  return db.select().from(schema.users).all()
+function loadMembers(): Promise<User[]> {
+  return db.select().from(schema.users)
 }
-function loadExpenses(): Expense[] {
-  return db.select().from(schema.expenses).orderBy(desc(schema.expenses.date), desc(schema.expenses.createdAt)).all()
+function loadExpenses(): Promise<Expense[]> {
+  return db.select().from(schema.expenses).orderBy(desc(schema.expenses.date), desc(schema.expenses.createdAt))
 }
 function resolveMember(members: User[], who?: string): User | undefined {
   if (!who) return undefined
@@ -169,20 +169,19 @@ function expenseView(e: Expense, members: User[], catMap: Record<string, string>
 
 // ---------------------------------------------------------------- executor
 export async function runTool(name: string, args: Record<string, any>, user: User, _event: H3Event, locale?: string): Promise<ToolOutcome> {
-  const members = loadMembers()
-  const expenses = loadExpenses()
-  const catMap = catNameMap(locale)
-  const subMap = subNameMap(locale)
+  const [members, expenses, catMap, subMap] = await Promise.all([
+    loadMembers(), loadExpenses(), catNameMap(locale), subNameMap(locale),
+  ])
 
   switch (name) {
     case 'list_members':
       return { label: 'Listou membros', result: members.map(m => ({ id: m.id, nome: m.name, papel: m.role })) }
 
     case 'get_categories': {
-      const subsAll = loadSubcategories()
+      const [cats, subsAll] = await Promise.all([loadCategories(), loadSubcategories()])
       return {
         label: 'Listou categorias',
-        result: loadCategories().filter(c => c.active).map(c => ({
+        result: cats.filter(c => c.active).map(c => ({
           id: c.id, label: catName(c, locale),
           subs: subsAll.filter(s => s.categoryId === c.id && s.active).map(s => ({ id: s.id, label: subName(s, locale) })),
         })),
@@ -310,7 +309,7 @@ export async function runTool(name: string, args: Record<string, any>, user: Use
     }
 
     case 'aggregate': {
-      const agg = aggregate(buildQuery(args), locale)
+      const agg = await aggregate(buildQuery(args), locale)
       // Compact view for the model to read/reason about (e.g. who spent most).
       const ranking = agg.categories.map((label, i) => ({
         label,
@@ -320,7 +319,7 @@ export async function runTool(name: string, args: Record<string, any>, user: Use
     }
 
     case 'make_chart': {
-      const agg = aggregate(buildQuery(args), locale)
+      const agg = await aggregate(buildQuery(args), locale)
       const type = CHART_TYPE_MAP[args.chartType] || 'column'
       return {
         label: `Gerou gráfico (${args.chartType})`,
@@ -341,16 +340,16 @@ const LANG_DIRECTIVE: Record<string, string> = {
   'en-US': 'Always respond in American English, briefly and helpfully.',
 }
 
-export function systemPrompt(user: User, locale?: string): string {
+export async function systemPrompt(user: User, locale?: string): Promise<string> {
   const loc = locale && LANG_DIRECTIVE[locale] ? locale : 'en-US'
   const appName = useRuntimeConfig().public.appName
   const today = new Date().toISOString().slice(0, 10)
-  const subsAll = loadSubcategories()
-  const cats = loadCategories().filter(c => c.active).map((c) => {
+  const [catRows, subsAll, memberRows] = await Promise.all([loadCategories(), loadSubcategories(), loadMembers()])
+  const cats = catRows.filter(c => c.active).map((c) => {
     const subs = subsAll.filter(s => s.categoryId === c.id && s.active)
     return `${c.id} (${catName(c, loc)}${subs.length ? `: ${subs.map(s => `${subName(s, loc)}[${s.id}]`).join('/')}` : ''})`
   }).join(', ')
-  const members = loadMembers().map(m => `${m.name} [${m.id}]${m.role === 'admin' ? ' (admin)' : ''}`).join(', ')
+  const members = memberRows.map(m => `${m.name} [${m.id}]${m.role === 'admin' ? ' (admin)' : ''}`).join(', ')
   return [
     `You are the assistant of the household-accounts app "${appName}". ${LANG_DIRECTIVE[loc]}`,
     `Hoje é ${today}. O ano corrente é ${today.slice(0, 4)}. Quando o utilizador disser um mês sem ano, assume o ano corrente.`,

@@ -10,7 +10,7 @@ const Body = z.object({
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
   const id = getRouterParam(event, 'id')!
-  const target = db.select().from(schema.subcategories).where(eq(schema.subcategories.id, id)).get()
+  const [target] = await db.select().from(schema.subcategories).where(eq(schema.subcategories.id, id)).limit(1)
   if (!target) throw createError({ statusCode: 404, statusMessage: 'Subcategoria não encontrada' })
 
   const body = await readValidatedBody(event, Body.parse)
@@ -20,6 +20,6 @@ export default defineEventHandler(async (event) => {
   if (body.names?.pt !== undefined) patch.namePt = body.names.pt
   if (body.names?.es !== undefined) patch.nameEs = body.names.es
 
-  if (Object.keys(patch).length) db.update(schema.subcategories).set(patch).where(eq(schema.subcategories.id, id)).run()
+  if (Object.keys(patch).length) await db.update(schema.subcategories).set(patch).where(eq(schema.subcategories.id, id))
   return { ok: true }
 })

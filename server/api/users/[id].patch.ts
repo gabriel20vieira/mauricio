@@ -10,9 +10,9 @@ const Body = z.object({
 })
 
 // Number of OTHER active admins (excludes the given id).
-function otherActiveAdmins(id: string): number {
-  return db.select().from(schema.users)
-    .where(and(eq(schema.users.role, 'admin'), eq(schema.users.active, true), ne(schema.users.id, id))).all().length
+async function otherActiveAdmins(id: string): Promise<number> {
+  return (await db.select().from(schema.users)
+    .where(and(eq(schema.users.role, 'admin'), eq(schema.users.active, true), ne(schema.users.id, id)))).length
 }
 
 export default defineEventHandler(async (event) => {
@@ -20,13 +20,13 @@ export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')!
   const body = await readValidatedBody(event, Body.parse)
 
-  const target = db.select().from(schema.users).where(eq(schema.users.id, id)).get()
+  const [target] = await db.select().from(schema.users).where(eq(schema.users.id, id)).limit(1)
   if (!target) throw createError({ statusCode: 404, statusMessage: 'Membro não encontrado' })
 
   // Guard: keep at least one active admin (demotion or blocking).
   const demoting = body.role === 'user' && target.role === 'admin'
   const blocking = body.active === false && target.active
-  if ((demoting || blocking) && target.role === 'admin' && otherActiveAdmins(id) === 0) {
+  if ((demoting || blocking) && target.role === 'admin' && (await otherActiveAdmins(id)) === 0) {
     throw createError({ statusCode: 400, statusMessage: 'Tem de existir pelo menos um administrador ativo.' })
   }
   if (blocking && admin.id === id) {
@@ -39,18 +39,18 @@ export default defineEventHandler(async (event) => {
   if (body.password !== undefined) patch.passwordHash = await hashPassword(body.password)
   if (body.active !== undefined) patch.active = body.active
 
-  if (Object.keys(patch).length) db.update(schema.users).set(patch).where(eq(schema.users.id, id)).run()
+  if (Object.keys(patch).length) await db.update(schema.users).set(patch).where(eq(schema.users.id, id))
 
   // Blocking immediately revokes all of the member's open sessions.
-  if (blocking) revokeAllForUser(id)
+  if (blocking) await revokeAllForUser(id)
 
   // Keep the session fresh if an admin edited their own record.
   if (admin.id === id && (body.name || body.role)) {
-    const updated = db.select().from(schema.users).where(eq(schema.users.id, id)).get()!
-    await refreshSessionUser(event, toSessionUser(updated))
+    const [self] = await db.select().from(schema.users).where(eq(schema.users.id, id)).limit(1)
+    await refreshSessionUser(event, toSessionUser(self!))
   }
 
-  const updated = db.select().from(schema.users).where(eq(schema.users.id, id)).get()!
-  const { passwordHash: _, ...safe } = updated
+  const [updated] = await db.select().from(schema.users).where(eq(schema.users.id, id)).limit(1)
+  const { passwordHash: _, ...safe } = updated!
   return safe
 })

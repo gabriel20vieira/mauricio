@@ -28,7 +28,7 @@ async function generateTitle(message: string, reply: string, locale?: string): P
 
 export default defineEventHandler(async (event) => {
   const user = await requireDbUser(event)
-  if (!getAssistantConfig().enabled) throw createError({ statusCode: 403, statusMessage: 'O assistente está desativado.' })
+  if (!(await getAssistantConfig()).enabled) throw createError({ statusCode: 403, statusMessage: 'O assistente está desativado.' })
   // Each message fans out to several Ollama calls — throttle to limit cost/abuse.
   rateLimit(event, { key: 'chat', limit: 20, windowMs: 60_000 })
   const body = await readValidatedBody(event, Body.parse)
@@ -38,29 +38,29 @@ export default defineEventHandler(async (event) => {
   let convId = body.conversationId
   const isNewConversation = !convId
   if (convId) {
-    const owned = db.select().from(schema.chatConversations)
-      .where(eq(schema.chatConversations.id, convId)).get()
+    const [owned] = await db.select().from(schema.chatConversations)
+      .where(eq(schema.chatConversations.id, convId)).limit(1)
     if (!owned || owned.userId !== user.id) throw createError({ statusCode: 404, statusMessage: 'Conversa não encontrada.' })
   } else {
     convId = randomUUID()
-    db.insert(schema.chatConversations).values({
+    await db.insert(schema.chatConversations).values({
       id: convId, userId: user.id,
       // Fallback title (truncated first message); replaced by an AI title below.
       title: body.message.slice(0, 60), createdAt: now, updatedAt: now,
-    }).run()
+    })
   }
 
   // Persist the user turn.
-  db.insert(schema.chatMessages).values({
+  await db.insert(schema.chatMessages).values({
     id: randomUUID(), conversationId: convId, role: 'user', content: body.message, createdAt: Date.now(),
-  }).run()
+  })
 
   // Build model history from stored turns (cap to recent).
-  const stored = db.select().from(schema.chatMessages)
+  const stored = await db.select().from(schema.chatMessages)
     .where(eq(schema.chatMessages.conversationId, convId))
-    .orderBy(asc(schema.chatMessages.createdAt)).all()
+    .orderBy(asc(schema.chatMessages.createdAt))
   const recent = stored.slice(-40)
-  const messages: OllamaMessage[] = [{ role: 'system', content: systemPrompt(user as any, body.locale) }]
+  const messages: OllamaMessage[] = [{ role: 'system', content: await systemPrompt(user as any, body.locale) }]
   for (const m of recent) {
     if (m.role === 'assistant') {
       messages.push({ role: 'assistant', content: m.content, tool_calls: m.toolCalls ? JSON.parse(m.toolCalls) : undefined })
@@ -94,10 +94,10 @@ export default defineEventHandler(async (event) => {
       // Persist + echo the assistant turn.
       const aId = randomUUID()
       lastAssistantId = aId
-      db.insert(schema.chatMessages).values({
+      await db.insert(schema.chatMessages).values({
         id: aId, conversationId: convId, role: 'assistant', content,
         toolCalls: toolCalls.length ? JSON.stringify(toolCalls) : null, createdAt: Date.now(),
-      }).run()
+      })
       messages.push({ role: 'assistant', content, tool_calls: toolCalls.length ? toolCalls : undefined })
       if (content) segments.push({ type: 'text', text: content })
 
@@ -111,10 +111,10 @@ export default defineEventHandler(async (event) => {
         segments.push({ type: 'tool', name: tc.function.name, label: outcome.label })
         if (outcome.card) { cards.push(outcome.card); segments.push({ type: 'card', card: outcome.card }); send({ type: 'card', card: outcome.card }) }
         const toolContent = JSON.stringify(outcome.result)
-        db.insert(schema.chatMessages).values({
+        await db.insert(schema.chatMessages).values({
           id: randomUUID(), conversationId: convId, role: 'tool', content: toolContent,
           toolCallId: tc.id || null, toolName: tc.function.name, createdAt: Date.now(),
-        }).run()
+        })
         messages.push({ role: 'tool', content: toolContent, tool_name: tc.function.name })
       }
 
@@ -125,18 +125,18 @@ export default defineEventHandler(async (event) => {
 
     // Store the ordered segments + cards on the last assistant row (the render record).
     if (lastAssistantId) {
-      db.update(schema.chatMessages)
+      await db.update(schema.chatMessages)
         .set({ segments: JSON.stringify(segments), cards: cards.length ? JSON.stringify(cards) : null, content: finalContent })
-        .where(eq(schema.chatMessages.id, lastAssistantId)).run()
+        .where(eq(schema.chatMessages.id, lastAssistantId))
     }
-    db.update(schema.chatConversations).set({ updatedAt: Date.now() }).where(eq(schema.chatConversations.id, convId)).run()
+    await db.update(schema.chatConversations).set({ updatedAt: Date.now() }).where(eq(schema.chatConversations.id, convId))
 
     // AI-generated title for new conversations (falls back to the truncated first
     // message already stored if generation fails).
     if (isNewConversation) {
       const title = await generateTitle(body.message, finalContent, body.locale).catch(() => '')
       if (title) {
-        db.update(schema.chatConversations).set({ title }).where(eq(schema.chatConversations.id, convId)).run()
+        await db.update(schema.chatConversations).set({ title }).where(eq(schema.chatConversations.id, convId))
         send({ type: 'title', conversationId: convId, title })
       }
     }

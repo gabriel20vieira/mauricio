@@ -7,14 +7,14 @@ export default defineEventHandler(async (event) => {
   const user = await requireDbUser(event)
   const id = getRouterParam(event, 'id')!
 
-  const target = db.select().from(schema.sessions).where(eq(schema.sessions.id, id)).get()
+  const [target] = await db.select().from(schema.sessions).where(eq(schema.sessions.id, id)).limit(1)
   if (!target) throw createError({ statusCode: 404, statusMessage: 'Sessão não encontrada.' })
   if (user.role !== 'admin' && target.userId !== user.id) {
     throw createError({ statusCode: 403, statusMessage: 'Só pode terminar as suas sessões.' })
   }
 
   if (!target.revokedAt) {
-    db.update(schema.sessions).set({ revokedAt: Date.now() }).where(eq(schema.sessions.id, id)).run()
+    await db.update(schema.sessions).set({ revokedAt: Date.now() }).where(eq(schema.sessions.id, id))
   }
 
   const current = await getUserSession(event) as { sid?: string }

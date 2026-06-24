@@ -10,7 +10,7 @@ import type { User } from '../db/schema'
  */
 export async function requireDbUser(event: H3Event): Promise<User> {
   const { user } = await requireUserSession(event)
-  const row = db.select().from(schema.users).where(eq(schema.users.id, user.id)).get()
+  const [row] = await db.select().from(schema.users).where(eq(schema.users.id, user.id)).limit(1)
   if (!row || !row.active) {
     await clearUserSession(event)
     throw createError({ statusCode: 401, statusMessage: 'Sessão inválida. Inicie sessão novamente.' })

@@ -6,6 +6,6 @@ export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')!
   await requireConversation(event, id)
   // chat_messages cascade via FK.
-  db.delete(schema.chatConversations).where(eq(schema.chatConversations.id, id)).run()
+  await db.delete(schema.chatConversations).where(eq(schema.chatConversations.id, id))
   return { ok: true }
 })

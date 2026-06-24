@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')!
   const body = await readValidatedBody(event, Body.parse)
 
-  const existing = db.select().from(schema.expenses).where(eq(schema.expenses.id, id)).get()
+  const [existing] = await db.select().from(schema.expenses).where(eq(schema.expenses.id, id)).limit(1)
   if (!existing) throw createError({ statusCode: 404, statusMessage: 'Gasto não encontrado' })
 
   // Permission: a normal user may only edit their own expenses.
@@ -33,11 +33,12 @@ export default defineEventHandler(async (event) => {
   if (body.note !== undefined) patch.note = body.note
   if (body.method !== undefined) patch.method = body.method
   if (user.role === 'admin' && body.who !== undefined) {
-    const target = db.select().from(schema.users).where(eq(schema.users.id, body.who)).get()
+    const [target] = await db.select().from(schema.users).where(eq(schema.users.id, body.who)).limit(1)
     if (!target || !target.active) throw createError({ statusCode: 400, statusMessage: 'Membro inválido.' })
     patch.userId = body.who
   }
 
-  if (Object.keys(patch).length) db.update(schema.expenses).set(patch).where(eq(schema.expenses.id, id)).run()
-  return db.select().from(schema.expenses).where(eq(schema.expenses.id, id)).get()
+  if (Object.keys(patch).length) await db.update(schema.expenses).set(patch).where(eq(schema.expenses.id, id))
+  const [updated] = await db.select().from(schema.expenses).where(eq(schema.expenses.id, id)).limit(1)
+  return updated
 })

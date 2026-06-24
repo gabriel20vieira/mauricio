@@ -9,7 +9,7 @@ const Body = z.object({
 // Fill the missing language names from the one(s) provided, using the LLM.
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
-  if (!getAssistantConfig().enabled) {
+  if (!(await getAssistantConfig()).enabled) {
     throw createError({ statusCode: 400, statusMessage: 'O assistente está desativado.' })
   }
   const { names } = await readValidatedBody(event, Body.parse)
