@@ -233,6 +233,8 @@
     "amount": "Amount",
     "category": "Category",
     "subcategory": "Subcategory",
+    "searchCategory": "Search category…",
+    "noCategory": "No categories.",
     "date": "Date",
     "method": "Method",
     "paidBy": "Paid by",

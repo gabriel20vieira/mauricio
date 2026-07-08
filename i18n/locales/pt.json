@@ -233,6 +233,8 @@
     "amount": "Valor",
     "category": "Categoria",
     "subcategory": "Subcategoria",
+    "searchCategory": "Procurar categoria…",
+    "noCategory": "Sem categorias.",
     "date": "Data",
     "method": "Método",
     "paidBy": "Pago por",

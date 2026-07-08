@@ -233,6 +233,8 @@
     "amount": "Importe",
     "category": "Categoría",
     "subcategory": "Subcategoría",
+    "searchCategory": "Buscar categoría…",
+    "noCategory": "Sin categorías.",
     "date": "Fecha",
     "method": "Método",
     "paidBy": "Pagado por",

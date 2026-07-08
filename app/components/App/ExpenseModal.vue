@@ -5,6 +5,9 @@ const { t } = useI18n()
 const { expenseModal, closeExpense } = useAppUi()
 const store = useStore()
 const cats = useCategories()
+// Top-level binding so Vue auto-unwraps the ref in the template (`cats.active`
+// is a nested ref on a plain object and would NOT unwrap in v-for).
+const activeCats = cats.active
 const { user } = useUserSession()
 const { isDark } = useTweaks()
 
@@ -23,6 +26,7 @@ const saving = ref(false)
 watch(open, (o) => {
   if (!o) return
   error.value = ''
+  catQuery.value = ''
   const e = editing.value
   if (e) {
     form.amount = (e.amountCents / 100).toFixed(2)
@@ -32,6 +36,15 @@ watch(open, (o) => {
     form.amount = ''; form.cat = defaultCat(); form.sub = ''; form.date = today
     form.who = user.value?.id ?? ''; form.method = 'Cartão'; form.note = ''
   }
+})
+
+// Category search — filter the chips by localized name (helps when there are many).
+const catQuery = ref('')
+const filteredCats = computed(() => {
+  const q = catQuery.value.trim().toLowerCase()
+  const list = activeCats.value
+  if (!q) return list
+  return list.filter(c => cats.catLabel(c.id).toLowerCase().includes(q))
 })
 
 const subs = computed(() => cats.activeSubs(form.cat))
@@ -106,11 +119,14 @@ async function remove() {
       </div>
 
       <UiField :label="$t('expenseModal.category')" style="margin-bottom: 14px">
-        <div style="display: flex; flex-wrap: wrap; gap: 8px">
-          <button v-for="c in cats.active" :key="c.id" type="button" :disabled="lockedOther"
+        <UiInput v-if="activeCats.length > 6" v-model="catQuery" :disabled="lockedOther"
+          :placeholder="$t('expenseModal.searchCategory')" style="margin-bottom: 8px" />
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; max-height: 168px; overflow-y: auto">
+          <button v-for="c in filteredCats" :key="c.id" type="button" :disabled="lockedOther"
             :style="chipStyle(form.cat === c.id, c.hue)" @click="form.cat = c.id">
             <span :style="{ width: '8px', height: '8px', borderRadius: '50%', background: catColor(c.hue, isDark) }" />{{ cats.catLabel(c.id) }}
           </button>
+          <span v-if="!filteredCats.length" style="font-size: 13px; color: var(--muted); padding: 6px 2px">{{ $t('expenseModal.noCategory') }}</span>
         </div>
       </UiField>
 

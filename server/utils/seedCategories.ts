@@ -13,9 +13,19 @@ const SEED: SeedCat[] = [
   { id: 'transportes', hue: 245, en: 'Transport', pt: 'Transportes', es: 'Transporte', subs: [{ en: 'Car', pt: 'Carro', es: 'Coche' }, { en: 'Public', pt: 'Públicos', es: 'Público' }] },
   { id: 'casa', hue: 155, en: 'Home', pt: 'Casa', es: 'Hogar', subs: [{ en: 'Rent', pt: 'Renda', es: 'Alquiler' }, { en: 'Maintenance', pt: 'Manutenção', es: 'Mantenimiento' }] },
   { id: 'utilidades', hue: 205, en: 'Water/Power/Gas', pt: 'Água/Luz/Gás', es: 'Agua/Luz/Gas', subs: [{ en: 'Water', pt: 'Água', es: 'Agua' }, { en: 'Power', pt: 'Luz', es: 'Luz' }, { en: 'Gas', pt: 'Gás', es: 'Gas' }] },
-  { id: 'lazer', hue: 305, en: 'Leisure', pt: 'Lazer', es: 'Ocio', subs: [] },
+  { id: 'lazer', hue: 305, en: 'Leisure', pt: 'Lazer', es: 'Ocio', subs: [{ en: 'Holidays', pt: 'Férias', es: 'Vacaciones' }, { en: 'Sport', pt: 'Desporto', es: 'Deporte' }] },
   { id: 'higiene', hue: 345, en: 'Hygiene', pt: 'Higiene', es: 'Higiene', subs: [] },
   { id: 'reparacoes', hue: 25, en: 'Repairs', pt: 'Reparações', es: 'Reparaciones', subs: [{ en: 'Home', pt: 'Casa', es: 'Hogar' }, { en: 'Cars', pt: 'Carros', es: 'Coches' }] },
+  { id: 'equipamentos', hue: 95, en: 'Equipment', pt: 'Equipamentos', es: 'Equipamiento', subs: [{ en: 'Electronics', pt: 'Eletrónicos', es: 'Electrónica' }, { en: 'Mechanical', pt: 'Mecânicos', es: 'Mecánicos' }, { en: 'Kitchen', pt: 'Cozinha', es: 'Cocina' }] },
+  { id: 'saude', hue: 175, en: 'Health', pt: 'Saúde', es: 'Salud', subs: [{ en: 'Dentist', pt: 'Dentista', es: 'Dentista' }, { en: 'Hospital', pt: 'Hospital', es: 'Hospital' }, { en: 'Doctor', pt: 'Médico', es: 'Médico' }] },
+  { id: 'educacao', hue: 260, en: 'Education', pt: 'Educação', es: 'Educación', subs: [{ en: 'School', pt: 'Escola', es: 'Escuela' }, { en: 'Books', pt: 'Livros', es: 'Libros' }, { en: 'Courses', pt: 'Cursos', es: 'Cursos' }] },
+  { id: 'vestuario', hue: 320, en: 'Clothing', pt: 'Vestuário', es: 'Ropa', subs: [{ en: 'Clothes', pt: 'Roupa', es: 'Ropa' }, { en: 'Footwear', pt: 'Calçado', es: 'Calzado' }, { en: 'Accessories', pt: 'Acessórios', es: 'Accesorios' }] },
+  { id: 'animais', hue: 130, en: 'Pets', pt: 'Animais', es: 'Mascotas', subs: [{ en: 'Vet', pt: 'Veterinário', es: 'Veterinario' }, { en: 'Food', pt: 'Comida', es: 'Comida' }, { en: 'Accessories', pt: 'Acessórios', es: 'Accesorios' }] },
+  { id: 'subscricoes', hue: 190, en: 'Subscriptions', pt: 'Subscrições', es: 'Suscripciones', subs: [{ en: 'Streaming', pt: 'Streaming', es: 'Streaming' }, { en: 'Software', pt: 'Software', es: 'Software' }, { en: 'Gym', pt: 'Ginásio', es: 'Gimnasio' }] },
+  { id: 'seguros', hue: 220, en: 'Insurance', pt: 'Seguros', es: 'Seguros', subs: [{ en: 'Home', pt: 'Casa', es: 'Hogar' }, { en: 'Car', pt: 'Carro', es: 'Coche' }, { en: 'Health', pt: 'Saúde', es: 'Salud' }, { en: 'Life', pt: 'Vida', es: 'Vida' }] },
+  { id: 'impostos', hue: 15, en: 'Taxes', pt: 'Impostos', es: 'Impuestos', subs: [{ en: 'IMI', pt: 'IMI', es: 'IMI' }, { en: 'IUC', pt: 'IUC', es: 'IUC' }, { en: 'IRS', pt: 'IRS', es: 'IRS' }] },
+  { id: 'presentes', hue: 350, en: 'Gifts', pt: 'Presentes', es: 'Regalos', subs: [] },
+  { id: 'poupanca', hue: 165, en: 'Savings', pt: 'Poupança', es: 'Ahorro', subs: [{ en: 'Investment', pt: 'Investimento', es: 'Inversión' }, { en: 'Emergency', pt: 'Emergência', es: 'Emergencia' }] },
 ]
 
 export async function seedCategoriesIfEmpty(db: MySql2Database<typeof schema>) {
