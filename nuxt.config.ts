@@ -26,6 +26,9 @@ export default defineNuxtConfig({
     // Public (client-readable) settings. App name is adjustable via NUXT_PUBLIC_APP_NAME.
     public: {
       appName: process.env.NUXT_PUBLIC_APP_NAME || 'Maurício',
+      // Websocket endpoint. Empty → client derives ws(s)://<host>:5003 (dev / direct
+      // port). In production behind TLS, set e.g. wss://your-domain/ws (reverse proxy).
+      wsUrl: process.env.NUXT_PUBLIC_WS_URL || '',
     },
     // nuxt-auth-utils session hardening (password comes from NUXT_SESSION_PASSWORD).
     session: {

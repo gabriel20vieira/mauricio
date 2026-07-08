@@ -1,5 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { db, schema } from '../../utils/db'
+import { broadcastCategoryUpsert } from '../../utils/realtime'
+import { loadCategoryDTO } from '../../utils/categories'
 
 // Soft-delete: hide the category (reversible). Historical expenses keep resolving
 // their category name. Subcategories are hidden with it.
@@ -9,5 +11,7 @@ export default defineEventHandler(async (event) => {
   const [target] = await db.select().from(schema.categories).where(eq(schema.categories.id, id)).limit(1)
   if (!target) throw createError({ statusCode: 404, statusMessage: 'Categoria não encontrada' })
   await db.update(schema.categories).set({ active: false }).where(eq(schema.categories.id, id))
+  const dto = await loadCategoryDTO(id)
+  if (dto) broadcastCategoryUpsert(dto)
   return { ok: true }
 })

@@ -114,6 +114,23 @@ export function useStore() {
     await $fetch(`/api/subcategories/${id}`, { method: 'DELETE' }); await refreshCategories()
   }
 
+  // ---- realtime apply (from websocket events; no refetch) ----
+  function applyExpense(e: Expense) {
+    const has = expenses.value.some(x => x.id === e.id)
+    expenses.value = has ? expenses.value.map(x => x.id === e.id ? e : x) : [e, ...expenses.value]
+  }
+  function applyExpenseRemove(id: string) {
+    expenses.value = expenses.value.filter(x => x.id !== id)
+  }
+  function applyMember(u: Member) {
+    const has = members.value.some(m => m.id === u.id)
+    members.value = has ? members.value.map(m => m.id === u.id ? u : m) : [...members.value, u]
+  }
+  function applyCategory(c: CategoryT) {
+    const has = categories.value.some(x => x.id === c.id)
+    categories.value = has ? categories.value.map(x => x.id === c.id ? c : x) : [...categories.value, c]
+  }
+
   // ---- sessions ----
   function fetchSessions(all = false) {
     return $fetch<SessionInfo[]>('/api/sessions', { query: all ? { all: 1 } : {} })
@@ -130,6 +147,7 @@ export function useStore() {
     addCategory, updateCategory, hideCategory,
     addSubcategory, updateSubcategory, hideSubcategory,
     fetchSessions, revokeSession,
+    applyExpense, applyExpenseRemove, applyMember, applyCategory,
   }
 }
 

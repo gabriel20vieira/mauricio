@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import { db, schema } from '../../utils/db'
+import { broadcastCategoryUpsert } from '../../utils/realtime'
+import { loadCategoryDTO } from '../../utils/categories'
 
 const Body = z.object({
   hue: z.number().int().min(0).max(360).default(200),
@@ -17,5 +19,7 @@ export default defineEventHandler(async (event) => {
   const maxSort = (await db.select().from(schema.categories)).reduce((m, c) => Math.max(m, c.sort), -1)
   const row = { id: randomUUID(), hue: body.hue, sort: maxSort + 1, active: true, nameEn: body.names.en, namePt: body.names.pt, nameEs: body.names.es, description: body.description }
   await db.insert(schema.categories).values(row)
+  const dto = await loadCategoryDTO(row.id)
+  if (dto) broadcastCategoryUpsert(dto)
   return row
 })

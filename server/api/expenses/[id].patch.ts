@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { db, schema } from '../../utils/db'
+import { broadcastExpenseUpsert } from '../../utils/realtime'
 
 const Body = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -40,5 +41,6 @@ export default defineEventHandler(async (event) => {
 
   if (Object.keys(patch).length) await db.update(schema.expenses).set(patch).where(eq(schema.expenses.id, id))
   const [updated] = await db.select().from(schema.expenses).where(eq(schema.expenses.id, id)).limit(1)
+  if (updated) broadcastExpenseUpsert(updated)
   return updated
 })

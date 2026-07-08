@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { db, schema } from '../../utils/db'
+import { broadcastCategoryUpsert } from '../../utils/realtime'
+import { loadCategoryDTO } from '../../utils/categories'
 
 const Body = z.object({
   categoryId: z.string().min(1),
@@ -22,5 +24,7 @@ export default defineEventHandler(async (event) => {
     .filter(s => s.categoryId === body.categoryId).reduce((m, s) => Math.max(m, s.sort), -1)
   const row = { id: randomUUID(), categoryId: body.categoryId, sort: maxSort + 1, active: true, nameEn: body.names.en, namePt: body.names.pt, nameEs: body.names.es, description: body.description }
   await db.insert(schema.subcategories).values(row)
+  const dto = await loadCategoryDTO(body.categoryId)
+  if (dto) broadcastCategoryUpsert(dto)
   return row
 })

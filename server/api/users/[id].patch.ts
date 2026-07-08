@@ -1,6 +1,7 @@
 import { eq, and, ne } from 'drizzle-orm'
 import { z } from 'zod'
 import { db, schema } from '../../utils/db'
+import { broadcastMemberUpsert } from '../../utils/realtime'
 
 const Body = z.object({
   name: z.string().trim().min(2).optional(),
@@ -52,5 +53,6 @@ export default defineEventHandler(async (event) => {
 
   const [updated] = await db.select().from(schema.users).where(eq(schema.users.id, id)).limit(1)
   const { passwordHash: _, ...safe } = updated!
+  broadcastMemberUpsert(safe)
   return safe
 })

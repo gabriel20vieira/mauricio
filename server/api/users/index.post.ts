@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { db, schema } from '../../utils/db'
+import { broadcastMemberUpsert } from '../../utils/realtime'
 import { MEMBER_HUES } from '../../../shared/config'
 
 const Body = z.object({
@@ -26,7 +27,9 @@ export default defineEventHandler(async (event) => {
   if (dup && !dup.active) {
     await db.update(schema.users).set({ name: body.name, role: body.role, passwordHash, active: true })
       .where(eq(schema.users.id, dup.id))
-    return { id: dup.id, name: body.name, email, role: body.role, hue: dup.hue, active: true, createdAt: dup.createdAt }
+    const reactivated = { id: dup.id, name: body.name, email, role: body.role, hue: dup.hue, active: true, createdAt: dup.createdAt }
+    broadcastMemberUpsert(reactivated)
+    return reactivated
   }
 
   const count = (await db.select().from(schema.users)).length
@@ -42,5 +45,6 @@ export default defineEventHandler(async (event) => {
   }
   await db.insert(schema.users).values(user)
   const { passwordHash: _, ...safe } = user
+  broadcastMemberUpsert(safe)
   return safe
 })

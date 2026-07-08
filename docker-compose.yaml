@@ -3,6 +3,9 @@ services:
         build: .
         ports:
             - "3003:3000"
+            # WebSocket server (real-time updates). In production, prefer a reverse
+            # proxy exposing wss://<domain>/ws → this port, with NUXT_PUBLIC_WS_URL set.
+            - "5003:5003"
         environment:
             - NUXT_SESSION_PASSWORD=${NUXT_SESSION_PASSWORD}
             - MYSQL_HOST=db

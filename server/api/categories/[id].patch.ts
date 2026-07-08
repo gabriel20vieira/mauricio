@@ -1,6 +1,8 @@
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { db, schema } from '../../utils/db'
+import { broadcastCategoryUpsert } from '../../utils/realtime'
+import { loadCategoryDTO } from '../../utils/categories'
 
 const Body = z.object({
   hue: z.number().int().min(0).max(360).optional(),
@@ -25,5 +27,7 @@ export default defineEventHandler(async (event) => {
   if (body.description !== undefined) patch.description = body.description
 
   if (Object.keys(patch).length) await db.update(schema.categories).set(patch).where(eq(schema.categories.id, id))
+  const dto = await loadCategoryDTO(id)
+  if (dto) broadcastCategoryUpsert(dto)
   return { ok: true }
 })

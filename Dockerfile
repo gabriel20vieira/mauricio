@@ -29,5 +29,5 @@ ENV NODE_ENV=production
 # Database is MySQL (see docker-compose); connection via MYSQL_* env vars.
 COPY --from=prerelease /usr/src/app/.output ./.output
 COPY --from=prerelease /usr/src/app/package.json ./package.json
-EXPOSE 3000
+EXPOSE 3000 5003
 CMD ["node", ".output/server/index.mjs"]

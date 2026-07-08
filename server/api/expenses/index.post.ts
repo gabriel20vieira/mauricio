@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { db, schema } from '../../utils/db'
+import { broadcastExpenseUpsert } from '../../utils/realtime'
 
 const Body = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida'),
@@ -38,5 +39,6 @@ export default defineEventHandler(async (event) => {
     createdAt: Date.now(),
   }
   await db.insert(schema.expenses).values(row)
+  broadcastExpenseUpsert(row)
   return row
 })

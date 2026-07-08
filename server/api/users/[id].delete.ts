@@ -1,5 +1,6 @@
 import { eq, and, ne } from 'drizzle-orm'
 import { db, schema } from '../../utils/db'
+import { broadcastMemberUpsert } from '../../utils/realtime'
 
 export default defineEventHandler(async (event) => {
   const admin = await requireAdmin(event)
@@ -20,5 +21,7 @@ export default defineEventHandler(async (event) => {
   // hidden from active member pickers.
   await db.update(schema.users).set({ active: false }).where(eq(schema.users.id, id))
   await revokeAllForUser(id) // cut off any open sessions immediately
+  const [updatedUser] = await db.select().from(schema.users).where(eq(schema.users.id, id)).limit(1)
+  if (updatedUser) { const { passwordHash: _pw, ...safeUser } = updatedUser; broadcastMemberUpsert(safeUser) }
   return { ok: true }
 })

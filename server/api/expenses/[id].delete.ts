@@ -1,5 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { db, schema } from '../../utils/db'
+import { broadcastExpenseDelete } from '../../utils/realtime'
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
@@ -12,5 +13,6 @@ export default defineEventHandler(async (event) => {
   }
 
   await db.delete(schema.expenses).where(eq(schema.expenses.id, id))
+  broadcastExpenseDelete(id)
   return { ok: true }
 })
