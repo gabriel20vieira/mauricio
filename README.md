@@ -21,12 +21,13 @@ Multi-language (English, Portuguese, Spanish), light/dark theme, Euro.
 ```bash
 npm install
 cp .env.example .env        # set NUXT_SESSION_PASSWORD + MYSQL_* vars
-docker compose up -d db     # start MySQL (exposes localhost:3306) — or use your own
 npm run dev                 # http://localhost:3000
 ```
 
 The schema (tables + default categories) is created automatically on first boot —
-no separate migrate step. Point `MYSQL_*` at the docker `db` service or any MySQL 8.
+no separate migrate step. Point `MYSQL_*` at any local MySQL 8. Note: the docker `db`
+service is **not** exposed to the host, so for host-run `npm run dev` use your own MySQL
+(or temporarily add a `ports: ["3306:3306"]` to the `db` service).
 
 ## Authentication flow
 
@@ -103,16 +104,17 @@ Creates the "Casa Silva" family (Apr–Jun 2026). Everyone signs in with `demo12
 
 ## Docker
 
-`docker compose` runs three services: the **app** (Nuxt, port 3000), **MySQL 8**
-(`db`, persisted in the `db_data` volume), and **phpMyAdmin** (port 8080).
+`docker compose` runs three services: the **app** (Nuxt, port 3003), **MySQL 8**
+(`db`, not exposed to the host, persisted in the `db_data` volume), and **phpMyAdmin**
+(port 4003).
 
 ```bash
 cp .env.example .env         # set NUXT_SESSION_PASSWORD + MYSQL_PASSWORD + MYSQL_ROOT_PASSWORD
-docker compose up -d --build # app → :3000   ·   phpMyAdmin → :8080
+docker compose up -d --build # app → :3003   ·   phpMyAdmin → :4003
 ```
 
-- App: http://localhost:3000
-- phpMyAdmin: http://localhost:8080 (log in with the MySQL user/password)
+- App: http://localhost:3003
+- phpMyAdmin: http://localhost:4003 (log in with the MySQL user/password)
 
 > Production boot **fails** if `NUXT_SESSION_PASSWORD` is left at the example value or
 > is shorter than 32 chars (session-forgery protection).

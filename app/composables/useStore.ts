@@ -30,8 +30,8 @@ export interface ExpenseInput {
 }
 
 export interface CatNames { en: string; pt: string; es: string }
-export interface SubcategoryT { id: string; sort: number; active: boolean; names: CatNames }
-export interface CategoryT { id: string; hue: number; sort: number; active: boolean; names: CatNames; subs: SubcategoryT[] }
+export interface SubcategoryT { id: string; sort: number; active: boolean; names: CatNames; description: string }
+export interface CategoryT { id: string; hue: number; sort: number; active: boolean; names: CatNames; subs: SubcategoryT[]; description: string }
 
 export function useStore() {
   const expenses = useState<Expense[]>('expenses', () => [])
@@ -95,19 +95,19 @@ export function useStore() {
   }
 
   // ---- categories / subcategories ----
-  async function addCategory(body: { names: CatNames; hue: number }) {
+  async function addCategory(body: { names: CatNames; hue: number; description?: string }) {
     await $fetch('/api/categories', { method: 'POST', body }); await refreshCategories()
   }
-  async function updateCategory(id: string, body: { names?: Partial<CatNames>; hue?: number; active?: boolean }) {
+  async function updateCategory(id: string, body: { names?: Partial<CatNames>; hue?: number; active?: boolean; description?: string }) {
     await $fetch(`/api/categories/${id}`, { method: 'PATCH', body }); await refreshCategories()
   }
   async function hideCategory(id: string) {
     await $fetch(`/api/categories/${id}`, { method: 'DELETE' }); await refreshCategories()
   }
-  async function addSubcategory(body: { categoryId: string; names: CatNames }) {
+  async function addSubcategory(body: { categoryId: string; names: CatNames; description?: string }) {
     await $fetch('/api/subcategories', { method: 'POST', body }); await refreshCategories()
   }
-  async function updateSubcategory(id: string, body: { names?: Partial<CatNames>; active?: boolean }) {
+  async function updateSubcategory(id: string, body: { names?: Partial<CatNames>; active?: boolean; description?: string }) {
     await $fetch(`/api/subcategories/${id}`, { method: 'PATCH', body }); await refreshCategories()
   }
   async function hideSubcategory(id: string) {

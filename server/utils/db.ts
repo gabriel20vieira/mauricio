@@ -43,7 +43,8 @@ const DDL = [
     active TINYINT(1) NOT NULL DEFAULT 1,
     name_en VARCHAR(255) NOT NULL DEFAULT '',
     name_pt VARCHAR(255) NOT NULL DEFAULT '',
-    name_es VARCHAR(255) NOT NULL DEFAULT ''
+    name_es VARCHAR(255) NOT NULL DEFAULT '',
+    description VARCHAR(255) NOT NULL DEFAULT ''
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
   `CREATE TABLE IF NOT EXISTS subcategories (
     id VARCHAR(64) PRIMARY KEY,
@@ -53,6 +54,7 @@ const DDL = [
     name_en VARCHAR(255) NOT NULL DEFAULT '',
     name_pt VARCHAR(255) NOT NULL DEFAULT '',
     name_es VARCHAR(255) NOT NULL DEFAULT '',
+    description VARCHAR(255) NOT NULL DEFAULT '',
     CONSTRAINT fk_sub_cat FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
   `CREATE TABLE IF NOT EXISTS expenses (
@@ -131,6 +133,8 @@ async function doInit() {
   await ensureColumn('users', 'active', 'active TINYINT(1) NOT NULL DEFAULT 1')
   await ensureColumn('users', 'locale', 'locale VARCHAR(16) NULL')
   await ensureColumn('chat_messages', 'segments', 'segments TEXT NULL')
+  await ensureColumn('categories', 'description', "description VARCHAR(255) NOT NULL DEFAULT ''")
+  await ensureColumn('subcategories', 'description', "description VARCHAR(255) NOT NULL DEFAULT ''")
   await seedCategoriesIfEmpty(db)
 }
 

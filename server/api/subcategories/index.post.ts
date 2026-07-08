@@ -6,6 +6,7 @@ import { db, schema } from '../../utils/db'
 const Body = z.object({
   categoryId: z.string().min(1),
   names: z.object({ en: z.string().trim().default(''), pt: z.string().trim().default(''), es: z.string().trim().default('') }),
+  description: z.string().trim().max(255).default(''),
 })
 
 export default defineEventHandler(async (event) => {
@@ -19,7 +20,7 @@ export default defineEventHandler(async (event) => {
 
   const maxSort = (await db.select().from(schema.subcategories))
     .filter(s => s.categoryId === body.categoryId).reduce((m, s) => Math.max(m, s.sort), -1)
-  const row = { id: randomUUID(), categoryId: body.categoryId, sort: maxSort + 1, active: true, nameEn: body.names.en, namePt: body.names.pt, nameEs: body.names.es }
+  const row = { id: randomUUID(), categoryId: body.categoryId, sort: maxSort + 1, active: true, nameEn: body.names.en, namePt: body.names.pt, nameEs: body.names.es, description: body.description }
   await db.insert(schema.subcategories).values(row)
   return row
 })

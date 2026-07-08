@@ -34,6 +34,8 @@ export const categories = mysqlTable('categories', {
   nameEn: varchar('name_en', { length: 255 }).notNull().default(''),
   namePt: varchar('name_pt', { length: 255 }).notNull().default(''),
   nameEs: varchar('name_es', { length: 255 }).notNull().default(''),
+  // Free-text hint (one language) so the chat assistant can infer what belongs here.
+  description: varchar('description', { length: 255 }).notNull().default(''),
 })
 
 export const subcategories = mysqlTable('subcategories', {
@@ -44,6 +46,7 @@ export const subcategories = mysqlTable('subcategories', {
   nameEn: varchar('name_en', { length: 255 }).notNull().default(''),
   namePt: varchar('name_pt', { length: 255 }).notNull().default(''),
   nameEs: varchar('name_es', { length: 255 }).notNull().default(''),
+  description: varchar('description', { length: 255 }).notNull().default(''),
 })
 
 export type Category = typeof categories.$inferSelect

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { catColor, deviceLabel, relativeTime } from '~~/shared/config'
+import { catColor, deviceLabel, relativeTime, CATEGORY_PALETTE } from '~~/shared/config'
 import type { SessionInfo } from '~/composables/useStore'
 
 definePageMeta({ titleKey: 'nav.admin', subtitleKey: 'pageSub.admin' })
@@ -27,16 +27,16 @@ async function changeForced(val: string) {
 
 // --- categories / subcategories management ---
 const cats = useCategories()
-const catModal = reactive({ open: false, id: '', hue: 200, names: { en: '', pt: '', es: '' }, error: '' })
-function openCatNew() { Object.assign(catModal, { open: true, id: '', hue: 200, names: { en: '', pt: '', es: '' }, error: '' }) }
-function openCatEdit(c: any) { Object.assign(catModal, { open: true, id: c.id, hue: c.hue, names: { ...c.names }, error: '' }) }
+const catModal = reactive({ open: false, id: '', hue: 200, names: { en: '', pt: '', es: '' }, description: '', error: '' })
+function openCatNew() { Object.assign(catModal, { open: true, id: '', hue: 200, names: { en: '', pt: '', es: '' }, description: '', error: '' }) }
+function openCatEdit(c: any) { Object.assign(catModal, { open: true, id: c.id, hue: c.hue, names: { ...c.names }, description: c.description || '', error: '' }) }
 const catNameEmpty = computed(() => !catModal.names.en && !catModal.names.pt && !catModal.names.es)
 async function saveCat() {
   catModal.error = ''
   if (catNameEmpty.value) return
   try {
-    if (catModal.id) await store.updateCategory(catModal.id, { names: catModal.names, hue: catModal.hue })
-    else await store.addCategory({ names: catModal.names, hue: catModal.hue })
+    if (catModal.id) await store.updateCategory(catModal.id, { names: catModal.names, hue: catModal.hue, description: catModal.description })
+    else await store.addCategory({ names: catModal.names, hue: catModal.hue, description: catModal.description })
     catModal.open = false
   } catch (e: any) { catModal.error = e?.data?.statusMessage || 'Erro' }
 }
@@ -45,15 +45,15 @@ async function toggleCat(c: any) {
   else await store.updateCategory(c.id, { active: true })
 }
 
-const subModal = reactive({ open: false, id: '', categoryId: '', names: { en: '', pt: '', es: '' }, error: '' })
-function openSubNew(categoryId: string) { Object.assign(subModal, { open: true, id: '', categoryId, names: { en: '', pt: '', es: '' }, error: '' }) }
-function openSubEdit(s: any, categoryId: string) { Object.assign(subModal, { open: true, id: s.id, categoryId, names: { ...s.names }, error: '' }) }
+const subModal = reactive({ open: false, id: '', categoryId: '', names: { en: '', pt: '', es: '' }, description: '', error: '' })
+function openSubNew(categoryId: string) { Object.assign(subModal, { open: true, id: '', categoryId, names: { en: '', pt: '', es: '' }, description: '', error: '' }) }
+function openSubEdit(s: any, categoryId: string) { Object.assign(subModal, { open: true, id: s.id, categoryId, names: { ...s.names }, description: s.description || '', error: '' }) }
 async function saveSub() {
   subModal.error = ''
   if (!subModal.names.en && !subModal.names.pt && !subModal.names.es) { subModal.error = '!'; return }
   try {
-    if (subModal.id) await store.updateSubcategory(subModal.id, { names: subModal.names })
-    else await store.addSubcategory({ categoryId: subModal.categoryId, names: subModal.names })
+    if (subModal.id) await store.updateSubcategory(subModal.id, { names: subModal.names, description: subModal.description })
+    else await store.addSubcategory({ categoryId: subModal.categoryId, names: subModal.names, description: subModal.description })
     subModal.open = false
   } catch (e: any) { subModal.error = e?.data?.statusMessage || '!' }
 }
@@ -308,10 +308,16 @@ async function removeMember(id: string) {
         <div v-if="assistantEnabled" style="margin-bottom: 14px">
           <UiButton variant="subtle" size="sm" icon="sparkles" type="button" :disabled="catNameEmpty || translating" @click="translateNames(catModal)">{{ translating ? $t('common.processing') : $t('admin.autoTranslate') }}</UiButton>
         </div>
+        <UiField :label="$t('admin.description')" :hint="$t('admin.descriptionHint')" style="margin-bottom: 14px">
+          <textarea v-model="catModal.description" rows="2" :placeholder="$t('admin.descriptionPlaceholder')"
+            style="width: 100%; resize: vertical; font-family: inherit; font-size: 14px; padding: 9px 11px; border: 1px solid var(--border-2); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink)" />
+        </UiField>
         <UiField :label="$t('admin.color')" style="margin-bottom: 18px">
-          <div style="display: flex; align-items: center; gap: 12px">
-            <input v-model.number="catModal.hue" type="range" min="0" max="360" style="flex: 1" />
-            <span :style="{ width: '26px', height: '26px', borderRadius: '50%', background: catColor(catModal.hue, isDark), flexShrink: 0 }" />
+          <div style="display: flex; flex-direction: column; gap: 7px">
+            <div v-for="(row, ri) in CATEGORY_PALETTE" :key="ri" style="display: flex; gap: 7px">
+              <button v-for="h in row" :key="h" type="button" :title="`${h}°`" @click="catModal.hue = h"
+                :style="{ width: '28px', height: '28px', borderRadius: '50%', background: catColor(h, isDark), cursor: 'pointer', flexShrink: 0, border: catModal.hue === h ? '2px solid var(--ink)' : '2px solid transparent', boxShadow: catModal.hue === h ? '0 0 0 1px var(--border-2)' : 'none' }" />
+            </div>
           </div>
         </UiField>
         <div style="display: flex; gap: 10px; justify-content: flex-end">
@@ -330,6 +336,10 @@ async function removeMember(id: string) {
         <div v-if="assistantEnabled" style="margin-bottom: 14px">
           <UiButton variant="subtle" size="sm" icon="sparkles" type="button" :disabled="subNameEmpty || translating" @click="translateNames(subModal)">{{ translating ? $t('common.processing') : $t('admin.autoTranslate') }}</UiButton>
         </div>
+        <UiField :label="$t('admin.description')" :hint="$t('admin.descriptionHint')" style="margin-bottom: 16px">
+          <textarea v-model="subModal.description" rows="2" :placeholder="$t('admin.descriptionPlaceholder')"
+            style="width: 100%; resize: vertical; font-family: inherit; font-size: 14px; padding: 9px 11px; border: 1px solid var(--border-2); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink)" />
+        </UiField>
         <div style="display: flex; gap: 10px; justify-content: flex-end">
           <UiButton variant="ghost" type="button" @click="subModal.open = false">{{ $t('common.cancel') }}</UiButton>
           <UiButton type="submit" icon="check" :disabled="subNameEmpty">{{ $t('common.save') }}</UiButton>

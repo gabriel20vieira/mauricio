@@ -5,6 +5,7 @@ import { db, schema } from '../../utils/db'
 const Body = z.object({
   hue: z.number().int().min(0).max(360).default(200),
   names: z.object({ en: z.string().trim().default(''), pt: z.string().trim().default(''), es: z.string().trim().default('') }),
+  description: z.string().trim().max(255).default(''),
 })
 
 export default defineEventHandler(async (event) => {
@@ -14,7 +15,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Indique pelo menos um nome.' })
   }
   const maxSort = (await db.select().from(schema.categories)).reduce((m, c) => Math.max(m, c.sort), -1)
-  const row = { id: randomUUID(), hue: body.hue, sort: maxSort + 1, active: true, nameEn: body.names.en, namePt: body.names.pt, nameEs: body.names.es }
+  const row = { id: randomUUID(), hue: body.hue, sort: maxSort + 1, active: true, nameEn: body.names.en, namePt: body.names.pt, nameEs: body.names.es, description: body.description }
   await db.insert(schema.categories).values(row)
   return row
 })

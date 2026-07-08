@@ -2,7 +2,7 @@ services:
     app:
         build: .
         ports:
-            - "3000:3000"
+            - "3003:3000"
         environment:
             - NUXT_SESSION_PASSWORD=${NUXT_SESSION_PASSWORD}
             - MYSQL_HOST=db
@@ -20,9 +20,7 @@ services:
 
     db:
         image: mysql:8
-        ports:
-            # Exposed so host-run `npm run dev` can reach MySQL at localhost:3306.
-            - "3306:3306"
+        # Not exposed to the host — only reachable by app/phpmyadmin on the compose network.
         environment:
             - MYSQL_DATABASE=${MYSQL_DATABASE:-mauricio}
             - MYSQL_USER=${MYSQL_USER:-mauricio}
@@ -40,7 +38,7 @@ services:
     phpmyadmin:
         image: phpmyadmin:latest
         ports:
-            - "8080:80"
+            - "4003:80"
         environment:
             - PMA_HOST=db
             - PMA_PORT=3306

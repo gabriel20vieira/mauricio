@@ -5,6 +5,7 @@ import { db, schema } from '../../utils/db'
 const Body = z.object({
   active: z.boolean().optional(),
   names: z.object({ en: z.string().trim(), pt: z.string().trim(), es: z.string().trim() }).partial().optional(),
+  description: z.string().trim().max(255).optional(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -19,6 +20,7 @@ export default defineEventHandler(async (event) => {
   if (body.names?.en !== undefined) patch.nameEn = body.names.en
   if (body.names?.pt !== undefined) patch.namePt = body.names.pt
   if (body.names?.es !== undefined) patch.nameEs = body.names.es
+  if (body.description !== undefined) patch.description = body.description
 
   if (Object.keys(patch).length) await db.update(schema.subcategories).set(patch).where(eq(schema.subcategories.id, id))
   return { ok: true }

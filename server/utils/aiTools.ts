@@ -182,8 +182,8 @@ export async function runTool(name: string, args: Record<string, any>, user: Use
       return {
         label: 'Listou categorias',
         result: cats.filter(c => c.active).map(c => ({
-          id: c.id, label: catName(c, locale),
-          subs: subsAll.filter(s => s.categoryId === c.id && s.active).map(s => ({ id: s.id, label: subName(s, locale) })),
+          id: c.id, label: catName(c, locale), desc: c.description || undefined,
+          subs: subsAll.filter(s => s.categoryId === c.id && s.active).map(s => ({ id: s.id, label: subName(s, locale), desc: s.description || undefined })),
         })),
       }
     }
@@ -347,7 +347,8 @@ export async function systemPrompt(user: User, locale?: string): Promise<string>
   const [catRows, subsAll, memberRows] = await Promise.all([loadCategories(), loadSubcategories(), loadMembers()])
   const cats = catRows.filter(c => c.active).map((c) => {
     const subs = subsAll.filter(s => s.categoryId === c.id && s.active)
-    return `${c.id} (${catName(c, loc)}${subs.length ? `: ${subs.map(s => `${subName(s, loc)}[${s.id}]`).join('/')}` : ''})`
+    const subTxt = subs.map(s => `${subName(s, loc)}[${s.id}]${s.description ? ` {${s.description}}` : ''}`).join('/')
+    return `${c.id} (${catName(c, loc)}${c.description ? ` — ${c.description}` : ''}${subs.length ? `: ${subTxt}` : ''})`
   }).join(', ')
   const members = memberRows.map(m => `${m.name} [${m.id}]${m.role === 'admin' ? ' (admin)' : ''}`).join(', ')
   return [
@@ -355,6 +356,7 @@ export async function systemPrompt(user: User, locale?: string): Promise<string>
     `Hoje é ${today}. O ano corrente é ${today.slice(0, 4)}. Quando o utilizador disser um mês sem ano, assume o ano corrente.`,
     'Moeda: euro (€).',
     `Categorias válidas (usa SEMPRE o id): ${cats}.`,
+    'Nas categorias, o texto após "—" descreve o que a categoria abrange e o texto em {chavetas} descreve a subcategoria — usa-o para escolher a categoria/subcategoria certa.',
     `Membros da casa: ${members}.`,
     `Estás a falar com ${user.name} (papel: ${user.role}).`,
     '',

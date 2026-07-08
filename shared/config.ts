@@ -34,6 +34,19 @@ export function catSoft(hue: number, dark: boolean) {
   return dark ? `oklch(0.34 0.045 ${hue})` : `oklch(0.94 0.035 ${hue})`
 }
 
+// Curated category color palette for the admin picker (a swatch grid instead of a
+// raw hue slider). Rows are hue families; columns are tonal-ish variants. Colours
+// are hue-only (see catColor), so each swatch is just a hue value.
+export const CATEGORY_PALETTE: number[][] = [
+  [15, 25, 35], // reds
+  [45, 60, 75], // amber / yellow
+  [130, 150, 165], // greens
+  [175, 190, 205], // teal / cyan
+  [220, 235, 250], // blues
+  [265, 285, 300], // violet
+  [320, 335, 350], // pink / magenta
+]
+
 // Friendly device label from a User-Agent string (best-effort).
 export function deviceLabel(ua: string): string {
   if (!ua) return 'Dispositivo desconhecido'
