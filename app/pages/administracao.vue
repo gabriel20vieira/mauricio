@@ -151,6 +151,76 @@ async function removeMember(id: string) {
   try { await store.deleteMember(id); edit.open = false }
   catch (e: any) { editError.value = e?.data?.statusMessage || t('admin.errRemove') }
 }
+
+// --- export / import (JSON backup) ---
+const importInput = ref<HTMLInputElement | null>(null)
+const imp = reactive<{
+  open: boolean
+  kind: 'total' | 'parcial'
+  payload: any
+  counts: { label: string, n: number }[]
+  error: string
+  result: string
+  busy: boolean
+}>({ open: false, kind: 'parcial', payload: null, counts: [], error: '', result: '', busy: false })
+
+async function exportData(scope: 'total' | 'parcial') {
+  const env = await $fetch<any>('/api/data/export', { query: { scope } })
+  const blob = new Blob([JSON.stringify(env, null, 2)], { type: 'application/json' })
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = `mauricio-${scope === 'total' ? 'total' : 'movimentos'}-${new Date().toISOString().slice(0, 10)}.json`
+  a.click()
+  URL.revokeObjectURL(a.href)
+}
+
+function pickImport(kind: 'total' | 'parcial') {
+  imp.kind = kind
+  importInput.value?.click()
+}
+
+async function onImportFile(ev: Event) {
+  const input = ev.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = '' // allow re-picking the same file
+  if (!file) return
+  imp.error = ''; imp.result = ''; imp.payload = null; imp.counts = []
+  try {
+    const parsed = JSON.parse(await file.text())
+    if (parsed?.app !== 'mauricio' || parsed?.version !== 1) { imp.error = t('admin.importInvalidFile'); imp.open = true; return }
+    if (parsed.kind !== imp.kind) { imp.error = t('admin.importKindMismatch'); imp.open = true; return }
+    imp.payload = parsed
+    const d = parsed.data || {}
+    const count = (k: string, label: string) => Array.isArray(d[k]) && d[k].length ? [{ label, n: d[k].length }] : []
+    imp.counts = [
+      ...count('users', t('admin.members')),
+      ...count('categories', t('admin.categories')),
+      ...count('expenses', t('nav.expenses')),
+      ...count('incomes', t('balance.income')),
+      ...count('chatConversations', t('admin.conversations')),
+    ]
+    imp.open = true
+  } catch {
+    imp.error = t('admin.importInvalidFile'); imp.open = true
+  }
+}
+
+async function confirmImport() {
+  if (!imp.payload) return
+  imp.busy = true; imp.error = ''
+  try {
+    const r = await $fetch<any>('/api/data/import', { method: 'POST', body: imp.payload })
+    if (imp.kind === 'total') {
+      await navigateTo('/login') // all sessions were wiped, importer included
+      return
+    }
+    imp.result = t('admin.importPartialDone', { e: r.added.expenses, i: r.added.incomes, s: r.skipped })
+    imp.payload = null; imp.counts = []
+    await store.refresh()
+  } catch (e: any) {
+    imp.error = e?.data?.statusMessage || e?.statusMessage || t('admin.importFailed')
+  } finally { imp.busy = false }
+}
 </script>
 
 <template>
@@ -356,6 +426,64 @@ async function removeMember(id: string) {
         </UiSelect>
       </div>
     </UiCard>
+
+    <!-- Data export / import -->
+    <UiCard :pad="22">
+      <UiSectionTitle>{{ $t('admin.dataTitle') }}</UiSectionTitle>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 14px">{{ $t('admin.dataSub') }}</p>
+
+      <div style="display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 2px; border-top: 1px solid var(--border)">
+          <div style="flex: 1; min-width: 220px">
+            <div style="font-weight: 600; font-size: 14px">{{ $t('admin.dataTotal') }}</div>
+            <div style="font-size: 12.5px; color: var(--muted); margin-top: 2px">{{ $t('admin.dataTotalSub') }}</div>
+          </div>
+          <UiButton variant="outline" size="sm" icon="logout" @click="exportData('total')">{{ $t('admin.export') }}</UiButton>
+          <UiButton variant="danger" size="sm" icon="plus" @click="pickImport('total')">{{ $t('admin.import') }}</UiButton>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 2px; border-top: 1px solid var(--border)">
+          <div style="flex: 1; min-width: 220px">
+            <div style="font-weight: 600; font-size: 14px">{{ $t('admin.dataPartial') }}</div>
+            <div style="font-size: 12.5px; color: var(--muted); margin-top: 2px">{{ $t('admin.dataPartialSub') }}</div>
+          </div>
+          <UiButton variant="outline" size="sm" icon="logout" @click="exportData('parcial')">{{ $t('admin.export') }}</UiButton>
+          <UiButton variant="outline" size="sm" icon="plus" @click="pickImport('parcial')">{{ $t('admin.import') }}</UiButton>
+        </div>
+      </div>
+      <p style="font-size: 12px; color: var(--faint); margin-top: 12px">{{ $t('admin.dataSensitive') }}</p>
+      <input ref="importInput" type="file" accept="application/json,.json" style="display: none" @change="onImportFile" />
+    </UiCard>
+
+    <!-- Import confirm modal -->
+    <UiModal :open="imp.open" :title="imp.kind === 'total' ? $t('admin.importTotalTitle') : $t('admin.importPartialTitle')" :width="480" @close="imp.open = false">
+      <div style="padding: 22px">
+        <template v-if="imp.payload">
+          <div v-if="imp.kind === 'total'"
+            style="display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: var(--radius-sm); background: color-mix(in oklab, var(--neg) 10%, transparent); color: var(--neg); font-size: 13.5px; font-weight: 540; margin-bottom: 16px">
+            <UiIcon name="bell" :size="18" style="flex-shrink: 0; margin-top: 1px" />
+            <span>{{ $t('admin.importTotalWarn') }}</span>
+          </div>
+          <p v-else style="font-size: 13.5px; color: var(--ink-2); margin-bottom: 16px">{{ $t('admin.importPartialInfo') }}</p>
+
+          <div v-if="imp.counts.length" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px">
+            <div v-for="c in imp.counts" :key="c.label" style="display: flex; justify-content: space-between; font-size: 13.5px; padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2)">
+              <span>{{ c.label }}</span><span class="tnum" style="font-weight: 600">{{ c.n }}</span>
+            </div>
+          </div>
+        </template>
+
+        <div v-if="imp.error" style="color: var(--neg); font-size: 13px; margin-bottom: 12px">{{ imp.error }}</div>
+        <div v-if="imp.result" style="color: var(--pos); font-size: 13.5px; font-weight: 540; margin-bottom: 12px">{{ imp.result }}</div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end">
+          <UiButton variant="ghost" type="button" @click="imp.open = false">{{ imp.result ? $t('common.close') : $t('common.cancel') }}</UiButton>
+          <UiButton v-if="imp.payload" :variant="imp.kind === 'total' ? 'danger' : 'primary'" :disabled="imp.busy"
+            :icon="imp.busy ? undefined : 'check'" @click="confirmImport">
+            {{ imp.busy ? $t('common.processing') : (imp.kind === 'total' ? $t('admin.importReplaceAll') : $t('admin.import')) }}
+          </UiButton>
+        </div>
+      </div>
+    </UiModal>
 
     <!-- Add modal -->
     <UiModal :open="addOpen" :title="$t('admin.addMemberTitle')" :width="460" @close="addOpen = false">

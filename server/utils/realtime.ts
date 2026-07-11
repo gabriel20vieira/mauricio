@@ -26,6 +26,8 @@ export type RealtimeEvent =
   | { type: 'change', resource: 'income', action: 'delete', id: string }
   | { type: 'change', resource: 'member', action: 'upsert', item: Record<string, any> }
   | { type: 'change', resource: 'category', action: 'upsert', item: CategoryDTO }
+  // Bulk data change (e.g. JSON import) — clients should re-fetch everything.
+  | { type: 'change', resource: 'bulk', action: 'refresh' }
 
 // Singleton kept on globalThis so nuxt dev HMR doesn't spin up a second server.
 const g = globalThis as any
@@ -95,3 +97,4 @@ export function broadcastIncomeUpsert(item: Income) { send({ type: 'change', res
 export function broadcastIncomeDelete(id: string) { send({ type: 'change', resource: 'income', action: 'delete', id }) }
 export function broadcastMemberUpsert(item: Record<string, any>) { send({ type: 'change', resource: 'member', action: 'upsert', item }) }
 export function broadcastCategoryUpsert(item: CategoryDTO) { send({ type: 'change', resource: 'category', action: 'upsert', item }) }
+export function broadcastBulkRefresh() { send({ type: 'change', resource: 'bulk', action: 'refresh' }) }
