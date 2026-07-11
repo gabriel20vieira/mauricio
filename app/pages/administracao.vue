@@ -211,7 +211,10 @@ async function confirmImport() {
   try {
     const r = await $fetch<any>('/api/data/import', { method: 'POST', body: imp.payload })
     if (imp.kind === 'total') {
-      await navigateTo('/login') // all sessions were wiped, importer included
+      // All sessions were wiped (importer included). Clear the client-side
+      // session state too, otherwise the login route's guard bounces back to '/'.
+      await useUserSession().clear()
+      await navigateTo('/login')
       return
     }
     imp.result = t('admin.importPartialDone', { e: r.added.expenses, i: r.added.incomes, s: r.skipped })
