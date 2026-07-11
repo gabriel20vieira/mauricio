@@ -88,7 +88,9 @@
     "emptyTitle": "Sin gastos este mes",
     "emptySub": "Añade el primer gasto.",
     "emptyRecentTitle": "Aún sin movimientos",
-    "emptyRecentSub": "Los gastos de este mes aparecen aquí."
+    "emptyRecentSub": "Los gastos de este mes aparecen aquí.",
+    "income": "Ingresos",
+    "balance": "Saldo"
   },
   "expenses": {
     "searchPlaceholder": "Buscar movimientos…",
@@ -111,14 +113,21 @@
     "toBalance": "Para cuadrar las cuentas",
     "suggestion": "Sugerencia para que todos lleguen a la cuota media (transferencias mínimas):",
     "balanced": "Las cuentas ya están equilibradas. 🎉",
-    "note": "Solo una sugerencia — el hogar registra gastos sin división automática."
+    "note": "Solo una sugerencia — el hogar registra gastos sin división automática.",
+    "income": "Ingresos",
+    "monthBalance": "Saldo del mes",
+    "monthIncomes": "Ingresos del mes",
+    "newIncome": "Nuevo ingreso",
+    "noIncomesTitle": "Sin ingresos este mes",
+    "noIncomesSub": "Registra salarios y otras entradas para ver el saldo."
   },
   "reports": {
     "monthlyEvolution": "Evolución mensual",
     "noData": "Sin datos",
     "noDataSub": "Los gastos aparecen aquí en cuanto existan.",
     "byCategory": "Desglose por categoría",
-    "byPerson": "Desglose por persona"
+    "byPerson": "Desglose por persona",
+    "incomeVsExpenses": "Ingresos vs. gastos"
   },
   "people": {
     "addMember": "Añadir miembro",
@@ -271,5 +280,28 @@
     "en-US": "English",
     "pt-PT": "Português",
     "es-ES": "Español"
+  },
+  "income": {
+    "defaultSource": "Ingreso"
+  },
+  "incomeModal": {
+    "newIncome": "Nuevo ingreso",
+    "editIncome": "Editar ingreso",
+    "amount": "Importe",
+    "source": "Fuente",
+    "sourcePlaceholder": "Ej.: Salario",
+    "date": "Fecha",
+    "receivedBy": "Recibido por",
+    "note": "Nota",
+    "notePlaceholder": "Detalle opcional",
+    "delete": "Eliminar",
+    "lockedOther": "Ingreso de otro miembro — solo lectura.",
+    "errAmount": "Indica un importe válido.",
+    "errSave": "No se pudo guardar.",
+    "errDelete": "No se pudo eliminar.",
+    "srcSalary": "Salario",
+    "srcSubsidy": "Subsidio",
+    "srcExtra": "Extra",
+    "srcOther": "Otro"
   }
 }

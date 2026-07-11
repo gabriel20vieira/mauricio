@@ -64,6 +64,18 @@ export const expenses = mysqlTable('expenses', {
   createdAt: bigint('created_at', { mode: 'number' }).notNull(),
 })
 
+// Household income (salaries, subsidies, other inflows). Mirrors expenses but is a
+// separate table so existing expense queries/aggregations stay untouched.
+export const incomes = mysqlTable('incomes', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  date: varchar('date', { length: 10 }).notNull(), // ISO yyyy-mm-dd
+  amountCents: int('amount_cents').notNull(),
+  source: varchar('source', { length: 120 }).notNull().default(''), // e.g. Salário
+  note: varchar('note', { length: 500 }).notNull().default(''),
+  userId: varchar('user_id', { length: 36 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: bigint('created_at', { mode: 'number' }).notNull(),
+})
+
 export const chatConversations = mysqlTable('chat_conversations', {
   id: varchar('id', { length: 36 }).primaryKey(),
   userId: varchar('user_id', { length: 36 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -97,6 +109,7 @@ export const sessions = mysqlTable('sessions', {
 
 export type User = typeof users.$inferSelect
 export type Expense = typeof expenses.$inferSelect
+export type Income = typeof incomes.$inferSelect
 export type Session = typeof sessions.$inferSelect
 export type ChatConversation = typeof chatConversations.$inferSelect
 export type ChatMessage = typeof chatMessages.$inferSelect

@@ -29,23 +29,44 @@ export interface ExpenseInput {
   who?: string
 }
 
+export interface Income {
+  id: string
+  date: string
+  amountCents: number
+  source: string
+  note: string
+  userId: string
+  createdAt: number
+}
+
+export interface IncomeInput {
+  date: string
+  amount: number
+  source: string
+  note: string
+  who?: string
+}
+
 export interface CatNames { en: string; pt: string; es: string }
 export interface SubcategoryT { id: string; sort: number; active: boolean; names: CatNames; description: string }
 export interface CategoryT { id: string; hue: number; sort: number; active: boolean; names: CatNames; subs: SubcategoryT[]; description: string }
 
 export function useStore() {
   const expenses = useState<Expense[]>('expenses', () => [])
+  const incomes = useState<Income[]>('incomes', () => [])
   const members = useState<Member[]>('members', () => [])
   const categories = useState<CategoryT[]>('categories', () => [])
   const loaded = useState<boolean>('store-loaded', () => false)
 
   async function refresh() {
-    const [ex, me, cats] = await Promise.all([
+    const [ex, inc, me, cats] = await Promise.all([
       $fetch<Expense[]>('/api/expenses'),
+      $fetch<Income[]>('/api/incomes'),
       $fetch<Member[]>('/api/users'),
       $fetch<CategoryT[]>('/api/categories'),
     ])
     expenses.value = ex
+    incomes.value = inc
     members.value = me
     categories.value = cats
     loaded.value = true
@@ -74,6 +95,19 @@ export function useStore() {
   }
   async function deleteExpense(id: string) {
     await $fetch(`/api/expenses/${id}`, { method: 'DELETE' })
+    await refresh()
+  }
+
+  async function addIncome(input: IncomeInput) {
+    await $fetch('/api/incomes', { method: 'POST', body: input })
+    await refresh()
+  }
+  async function updateIncome(id: string, input: Partial<IncomeInput>) {
+    await $fetch(`/api/incomes/${id}`, { method: 'PATCH', body: input })
+    await refresh()
+  }
+  async function deleteIncome(id: string) {
+    await $fetch(`/api/incomes/${id}`, { method: 'DELETE' })
     await refresh()
   }
 
@@ -122,6 +156,13 @@ export function useStore() {
   function applyExpenseRemove(id: string) {
     expenses.value = expenses.value.filter(x => x.id !== id)
   }
+  function applyIncome(i: Income) {
+    const has = incomes.value.some(x => x.id === i.id)
+    incomes.value = has ? incomes.value.map(x => x.id === i.id ? i : x) : [i, ...incomes.value]
+  }
+  function applyIncomeRemove(id: string) {
+    incomes.value = incomes.value.filter(x => x.id !== id)
+  }
   function applyMember(u: Member) {
     const has = members.value.some(m => m.id === u.id)
     members.value = has ? members.value.map(m => m.id === u.id ? u : m) : [...members.value, u]
@@ -140,14 +181,15 @@ export function useStore() {
   }
 
   return {
-    expenses, members, categories, loaded, memberById, activeMembers,
+    expenses, incomes, members, categories, loaded, memberById, activeMembers,
     refresh, refreshCategories, ensure,
     addExpense, updateExpense, deleteExpense,
+    addIncome, updateIncome, deleteIncome,
     addMember, updateMember, deleteMember, setMemberActive,
     addCategory, updateCategory, hideCategory,
     addSubcategory, updateSubcategory, hideSubcategory,
     fetchSessions, revokeSession,
-    applyExpense, applyExpenseRemove, applyMember, applyCategory,
+    applyExpense, applyExpenseRemove, applyIncome, applyIncomeRemove, applyMember, applyCategory,
   }
 }
 

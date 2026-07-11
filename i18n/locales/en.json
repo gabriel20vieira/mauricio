@@ -88,7 +88,9 @@
     "emptyTitle": "No expenses this month",
     "emptySub": "Add the first expense.",
     "emptyRecentTitle": "No movements yet",
-    "emptyRecentSub": "This month's expenses show up here."
+    "emptyRecentSub": "This month's expenses show up here.",
+    "income": "Income",
+    "balance": "Balance"
   },
   "expenses": {
     "searchPlaceholder": "Search movements…",
@@ -111,14 +113,21 @@
     "toBalance": "To settle up",
     "suggestion": "Suggestion so everyone reaches the average share (minimal transfers):",
     "balanced": "The accounts are already balanced. 🎉",
-    "note": "Only a suggestion — the household records expenses without automatic splitting."
+    "note": "Only a suggestion — the household records expenses without automatic splitting.",
+    "income": "Income",
+    "monthBalance": "Month balance",
+    "monthIncomes": "This month's income",
+    "newIncome": "New income",
+    "noIncomesTitle": "No income this month",
+    "noIncomesSub": "Record salaries and other inflows to see the balance."
   },
   "reports": {
     "monthlyEvolution": "Monthly trend",
     "noData": "No data",
     "noDataSub": "Expenses show up here as soon as they exist.",
     "byCategory": "Breakdown by category",
-    "byPerson": "Breakdown by person"
+    "byPerson": "Breakdown by person",
+    "incomeVsExpenses": "Income vs. spending"
   },
   "people": {
     "addMember": "Add member",
@@ -271,5 +280,28 @@
     "en-US": "English",
     "pt-PT": "Português",
     "es-ES": "Español"
+  },
+  "income": {
+    "defaultSource": "Income"
+  },
+  "incomeModal": {
+    "newIncome": "New income",
+    "editIncome": "Edit income",
+    "amount": "Amount",
+    "source": "Source",
+    "sourcePlaceholder": "E.g. Salary",
+    "date": "Date",
+    "receivedBy": "Received by",
+    "note": "Note",
+    "notePlaceholder": "Optional detail",
+    "delete": "Delete",
+    "lockedOther": "Another member's income — read only.",
+    "errAmount": "Enter a valid amount.",
+    "errSave": "Could not save.",
+    "errDelete": "Could not delete.",
+    "srcSalary": "Salary",
+    "srcSubsidy": "Subsidy",
+    "srcExtra": "Extra",
+    "srcOther": "Other"
   }
 }

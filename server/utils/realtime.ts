@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { WebSocketServer, WebSocket } from 'ws'
-import type { Expense } from '../db/schema'
+import type { Expense, Income } from '../db/schema'
 import type { CategoryDTO } from './categories'
 
 // Real-time layer: a dedicated WebSocket server (port 5003) that pushes fine-grained
@@ -22,6 +22,8 @@ export type RealtimeEvent =
   | { type: 'ready' }
   | { type: 'change', resource: 'expense', action: 'upsert', item: Expense }
   | { type: 'change', resource: 'expense', action: 'delete', id: string }
+  | { type: 'change', resource: 'income', action: 'upsert', item: Income }
+  | { type: 'change', resource: 'income', action: 'delete', id: string }
   | { type: 'change', resource: 'member', action: 'upsert', item: Record<string, any> }
   | { type: 'change', resource: 'category', action: 'upsert', item: CategoryDTO }
 
@@ -89,5 +91,7 @@ function send(event: RealtimeEvent) {
 
 export function broadcastExpenseUpsert(item: Expense) { send({ type: 'change', resource: 'expense', action: 'upsert', item }) }
 export function broadcastExpenseDelete(id: string) { send({ type: 'change', resource: 'expense', action: 'delete', id }) }
+export function broadcastIncomeUpsert(item: Income) { send({ type: 'change', resource: 'income', action: 'upsert', item }) }
+export function broadcastIncomeDelete(id: string) { send({ type: 'change', resource: 'income', action: 'delete', id }) }
 export function broadcastMemberUpsert(item: Record<string, any>) { send({ type: 'change', resource: 'member', action: 'upsert', item }) }
 export function broadcastCategoryUpsert(item: CategoryDTO) { send({ type: 'change', resource: 'category', action: 'upsert', item }) }

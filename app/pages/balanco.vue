@@ -6,12 +6,16 @@ const store = useStore()
 const selected = useMonth()
 const { isDark } = useTweaks()
 const { d } = useI18n()
+const { openNewIncome } = useAppUi()
 
 onMounted(async () => { await store.ensure(); syncMonth(selected, store.expenses.value) })
 watch(() => store.expenses.value, (ex) => syncMonth(selected, ex))
 
 const monthExpenses = computed(() => store.expenses.value.filter(e => monthKey(e.date) === selected.value))
+const monthIncomes = computed(() => store.incomes.value.filter(i => monthKey(i.date) === selected.value))
 const totalCents = computed(() => monthExpenses.value.reduce((a, e) => a + e.amountCents, 0))
+const incomeCents = computed(() => monthIncomes.value.reduce((a, i) => a + i.amountCents, 0))
+const saldoCents = computed(() => incomeCents.value - totalCents.value)
 const members = computed(() => store.members.value)
 const quotaCents = computed(() => members.value.length ? totalCents.value / members.value.length : 0)
 
@@ -55,14 +59,37 @@ const transfers = computed(() => {
     <UiCard :pad="24">
       <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px">
         <div>
-          <div style="font-size: 13px; color: var(--muted)">{{ $t('balance.totalHouse') }} · {{ monthLabel }}</div>
-          <div class="tnum" style="font-size: 36px; font-weight: 700; letter-spacing: -0.02em">{{ $n(totalCents / 100, 'currency') }}</div>
+          <div style="font-size: 13px; color: var(--muted)">{{ $t('balance.income') }} · {{ monthLabel }}</div>
+          <div class="tnum" style="font-size: 32px; font-weight: 700; letter-spacing: -0.02em; color: var(--pos)">{{ $n(incomeCents / 100, 'currency') }}</div>
+        </div>
+        <div>
+          <div style="font-size: 13px; color: var(--muted)">{{ $t('balance.totalHouse') }}</div>
+          <div class="tnum" style="font-size: 32px; font-weight: 700; letter-spacing: -0.02em">{{ $n(totalCents / 100, 'currency') }}</div>
+        </div>
+        <div>
+          <div style="font-size: 13px; color: var(--muted)">{{ $t('balance.monthBalance') }}</div>
+          <div class="tnum" style="font-size: 32px; font-weight: 700; letter-spacing: -0.02em" :style="{ color: saldoCents >= 0 ? 'var(--pos)' : 'var(--neg)' }">
+            {{ saldoCents >= 0 ? '+' : '' }}{{ $n(saldoCents / 100, 'currency') }}
+          </div>
         </div>
         <div style="text-align: right">
           <div style="font-size: 13px; color: var(--muted)">{{ $t('balance.avgQuota') }}</div>
-          <div class="tnum" style="font-size: 36px; font-weight: 700; letter-spacing: -0.02em; color: var(--accent)">{{ $n(quotaCents / 100, 'currency') }}</div>
+          <div class="tnum" style="font-size: 32px; font-weight: 700; letter-spacing: -0.02em; color: var(--accent)">{{ $n(quotaCents / 100, 'currency') }}</div>
         </div>
       </div>
+    </UiCard>
+
+    <UiCard :pad="22">
+      <UiSectionTitle>
+        {{ $t('balance.monthIncomes') }}
+        <template #action>
+          <UiButton variant="ghost" icon="plus" @click="openNewIncome">{{ $t('balance.newIncome') }}</UiButton>
+        </template>
+      </UiSectionTitle>
+      <div v-if="monthIncomes.length">
+        <AppIncomeRow v-for="i in monthIncomes" :key="i.id" :income="i" />
+      </div>
+      <UiEmptyState v-else icon="trend" :title="$t('balance.noIncomesTitle')" :sub="$t('balance.noIncomesSub')" />
     </UiCard>
 
     <UiCard :pad="22">

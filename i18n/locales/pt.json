@@ -88,7 +88,9 @@
     "emptyTitle": "Sem gastos neste mês",
     "emptySub": "Adicione o primeiro gasto.",
     "emptyRecentTitle": "Ainda sem movimentos",
-    "emptyRecentSub": "Os gastos deste mês aparecem aqui."
+    "emptyRecentSub": "Os gastos deste mês aparecem aqui.",
+    "income": "Rendimentos",
+    "balance": "Saldo"
   },
   "expenses": {
     "searchPlaceholder": "Pesquisar movimentos…",
@@ -111,14 +113,21 @@
     "toBalance": "Para equilibrar as contas",
     "suggestion": "Sugestão para que todos fiquem na quota média (transferências mínimas):",
     "balanced": "As contas já estão equilibradas. 🎉",
-    "note": "Apenas uma sugestão — a casa regista gastos sem divisão automática."
+    "note": "Apenas uma sugestão — a casa regista gastos sem divisão automática.",
+    "income": "Rendimentos",
+    "monthBalance": "Saldo do mês",
+    "monthIncomes": "Rendimentos do mês",
+    "newIncome": "Novo rendimento",
+    "noIncomesTitle": "Sem rendimentos neste mês",
+    "noIncomesSub": "Registe salários e outras entradas para ver o saldo."
   },
   "reports": {
     "monthlyEvolution": "Evolução mensal",
     "noData": "Sem dados",
     "noDataSub": "Os gastos aparecem aqui assim que existirem.",
     "byCategory": "Repartição por categoria",
-    "byPerson": "Repartição por pessoa"
+    "byPerson": "Repartição por pessoa",
+    "incomeVsExpenses": "Rendimentos vs. gastos"
   },
   "people": {
     "addMember": "Adicionar membro",
@@ -271,5 +280,28 @@
     "en-US": "English",
     "pt-PT": "Português",
     "es-ES": "Español"
+  },
+  "income": {
+    "defaultSource": "Rendimento"
+  },
+  "incomeModal": {
+    "newIncome": "Novo rendimento",
+    "editIncome": "Editar rendimento",
+    "amount": "Valor",
+    "source": "Fonte",
+    "sourcePlaceholder": "Ex.: Salário",
+    "date": "Data",
+    "receivedBy": "Recebido por",
+    "note": "Nota",
+    "notePlaceholder": "Detalhe opcional",
+    "delete": "Apagar",
+    "lockedOther": "Rendimento de outro membro — apenas leitura.",
+    "errAmount": "Indique um valor válido.",
+    "errSave": "Não foi possível guardar.",
+    "errDelete": "Não foi possível apagar.",
+    "srcSalary": "Salário",
+    "srcSubsidy": "Subsídio",
+    "srcExtra": "Extra",
+    "srcOther": "Outro"
   }
 }

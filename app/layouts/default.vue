@@ -127,5 +127,6 @@ function navLinkStyle(active: boolean) {
     </div>
 
     <AppExpenseModal />
+    <AppIncomeModal />
   </div>
 </template>

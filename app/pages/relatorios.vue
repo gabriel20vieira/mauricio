@@ -19,6 +19,27 @@ const monthly = computed(() => {
   })
 })
 
+// Income vs expenses, last 6 months (union of months with any movement).
+const incomeVsExpense = computed(() => {
+  const exp: Record<string, number> = {}
+  const inc: Record<string, number> = {}
+  for (const e of store.expenses.value) exp[monthKey(e.date)] = (exp[monthKey(e.date)] || 0) + e.amountCents
+  for (const i of store.incomes.value) inc[monthKey(i.date)] = (inc[monthKey(i.date)] || 0) + i.amountCents
+  const keys = [...new Set([...Object.keys(exp), ...Object.keys(inc)])].sort().slice(-6)
+  return keys.map((k) => {
+    const [y, m] = k.split('-').map(Number)
+    return {
+      key: k,
+      label: `${new Intl.DateTimeFormat(locale.value, { month: 'short' }).format(new Date(2000, m - 1, 1))} ${y}`,
+      income: inc[k] || 0,
+      expense: exp[k] || 0,
+      saldo: (inc[k] || 0) - (exp[k] || 0),
+    }
+  })
+})
+const maxFlow = computed(() => Math.max(...incomeVsExpense.value.flatMap(r => [r.income, r.expense]), 1))
+const hasIncome = computed(() => store.incomes.value.length > 0)
+
 // All-time by category
 const totalCents = computed(() => store.expenses.value.reduce((a, e) => a + e.amountCents, 0))
 const byCat = computed(() => {
@@ -42,6 +63,26 @@ const maxPerson = computed(() => Math.max(...byPerson.value.map(p => p.cents), 1
       <UiSectionTitle>{{ $t('reports.monthlyEvolution') }}</UiSectionTitle>
       <UiBarChart v-if="monthly.length" :data="monthly" :height="200" />
       <UiEmptyState v-else icon="chart" :title="$t('reports.noData')" :sub="$t('reports.noDataSub')" />
+    </UiCard>
+
+    <UiCard v-if="hasIncome" :pad="22">
+      <UiSectionTitle>{{ $t('reports.incomeVsExpenses') }}</UiSectionTitle>
+      <div style="display: flex; flex-direction: column; gap: 16px">
+        <div v-for="r in incomeVsExpense" :key="r.key">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 7px; font-size: 13.5px">
+            <span style="flex: 1; font-weight: 540; text-transform: capitalize">{{ r.label }}</span>
+            <span class="tnum" style="color: var(--pos)">+{{ $n(r.income / 100, 'currency0') }}</span>
+            <span class="tnum" style="color: var(--muted)">−{{ $n(r.expense / 100, 'currency0') }}</span>
+            <span class="tnum" style="font-weight: 700; min-width: 84px; text-align: right" :style="{ color: r.saldo >= 0 ? 'var(--pos)' : 'var(--neg)' }">
+              {{ r.saldo >= 0 ? '+' : '' }}{{ $n(r.saldo / 100, 'currency0') }}
+            </span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <UiMiniBar :value="r.income" :max="maxFlow" color="var(--pos)" />
+            <UiMiniBar :value="r.expense" :max="maxFlow" color="var(--accent)" />
+          </div>
+        </div>
+      </div>
     </UiCard>
 
     <div class="dash-cols" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">

@@ -69,6 +69,16 @@ const DDL = [
     created_at BIGINT NOT NULL,
     CONSTRAINT fk_exp_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+  `CREATE TABLE IF NOT EXISTS incomes (
+    id VARCHAR(36) PRIMARY KEY,
+    date VARCHAR(10) NOT NULL,
+    amount_cents INT NOT NULL,
+    source VARCHAR(120) NOT NULL DEFAULT '',
+    note VARCHAR(500) NOT NULL DEFAULT '',
+    user_id VARCHAR(36) NOT NULL,
+    created_at BIGINT NOT NULL,
+    CONSTRAINT fk_inc_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
   `CREATE TABLE IF NOT EXISTS sessions (
     id VARCHAR(36) PRIMARY KEY,
     user_id VARCHAR(36) NOT NULL,

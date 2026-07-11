@@ -18,6 +18,8 @@ const monthExpenses = computed(() => store.expenses.value.filter(e => monthKey(e
 const total = computed(() => monthExpenses.value.reduce((a, e) => a + e.amountCents, 0) / 100)
 const count = computed(() => monthExpenses.value.length)
 const avg = computed(() => count.value ? total.value / count.value : 0)
+const monthIncome = computed(() => store.incomes.value.filter(i => monthKey(i.date) === selected.value).reduce((a, i) => a + i.amountCents, 0) / 100)
+const saldo = computed(() => monthIncome.value - total.value)
 
 const prevKey = computed(() => {
   const [y, m] = selected.value.split('-').map(Number)
@@ -70,7 +72,9 @@ const recent = computed(() => monthExpenses.value.slice(0, 6))
           </UiTag>
         </div>
         <div class="tnum" style="font-size: 42px; font-weight: 700; letter-spacing: -0.02em; margin: 8px 0 16px">{{ $n(total, 'currency') }}</div>
-        <div style="display: flex; gap: 28px">
+        <div style="display: flex; gap: 28px; flex-wrap: wrap">
+          <div><div class="tnum" style="font-weight: 600; color: var(--pos)">{{ $n(monthIncome, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.income') }}</div></div>
+          <div><div class="tnum" style="font-weight: 600" :style="{ color: saldo >= 0 ? 'var(--pos)' : 'var(--neg)' }">{{ saldo >= 0 ? '+' : '' }}{{ $n(saldo, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.balance') }}</div></div>
           <div><div class="tnum" style="font-weight: 600">{{ count }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.movements') }}</div></div>
           <div><div class="tnum" style="font-weight: 600">{{ $n(avg, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.avgPerExpense') }}</div></div>
           <div><div class="tnum" style="font-weight: 600">{{ $n(prevTotal, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.prevMonth') }}</div></div>

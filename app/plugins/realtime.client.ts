@@ -37,6 +37,8 @@ export default defineNuxtPlugin(() => {
         if (m.type !== 'change') return
         if (m.resource === 'expense') {
           m.action === 'delete' ? store.applyExpenseRemove(m.id) : store.applyExpense(m.item)
+        } else if (m.resource === 'income') {
+          m.action === 'delete' ? store.applyIncomeRemove(m.id) : store.applyIncome(m.item)
         } else if (m.resource === 'member') {
           store.applyMember(m.item)
         } else if (m.resource === 'category') {
