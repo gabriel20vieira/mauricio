@@ -3,12 +3,25 @@
 
 import { desc } from 'drizzle-orm'
 import { db, schema } from './db'
-import type { Expense, User } from '../db/schema'
+import type { User } from '../db/schema'
 import { monthKey, parseDate, MONTHS_PT } from '../../shared/config'
 import { catNameMap, subNameMap } from './categories'
 
-export type Dimension = 'pessoa' | 'categoria' | 'subcategoria' | 'dia' | 'mes' | 'ano' | 'metodo'
+export type Dimension = 'pessoa' | 'categoria' | 'subcategoria' | 'dia' | 'mes' | 'ano' | 'metodo' | 'fonte'
 export type Measure = 'soma' | 'contagem' | 'media'
+export type Dataset = 'gastos' | 'rendimentos'
+
+// Generic movement row: expenses carry cat/sub/method (source empty); incomes
+// carry source (cat/sub/method empty). Lets both datasets share the engine.
+interface Row {
+  date: string
+  amountCents: number
+  userId: string
+  cat: string
+  sub: string
+  method: string
+  source: string
+}
 
 export interface AggFilters {
   dateFrom?: string // yyyy-mm-dd
@@ -20,9 +33,11 @@ export interface AggFilters {
   sub?: string
   who?: string // name or id
   method?: string
+  fonte?: string // income source (rendimentos only)
 }
 
 export interface AggQuery {
+  dataset?: Dataset // gastos (default) | rendimentos
   groupBy: Dimension
   series?: Dimension // optional 2nd dimension → multi-series
   measure?: Measure
@@ -42,8 +57,13 @@ export interface AggResult {
 const TEMPORAL: Dimension[] = ['dia', 'mes', 'ano']
 
 function members(): Promise<User[]> { return db.select().from(schema.users) }
-function expenses(): Promise<Expense[]> {
-  return db.select().from(schema.expenses).orderBy(desc(schema.expenses.date))
+async function loadRows(dataset: Dataset): Promise<Row[]> {
+  if (dataset === 'rendimentos') {
+    const rows = await db.select().from(schema.incomes).orderBy(desc(schema.incomes.date))
+    return rows.map(i => ({ ...i, cat: '', sub: '', method: '' }))
+  }
+  const rows = await db.select().from(schema.expenses).orderBy(desc(schema.expenses.date))
+  return rows.map(e => ({ ...e, source: '' }))
 }
 
 function resolveWho(ms: User[], who?: string): User | undefined {
@@ -55,7 +75,7 @@ function resolveWho(ms: User[], who?: string): User | undefined {
     || ms.find(m => m.name.toLowerCase().includes(w))
 }
 
-function applyFilters(rows: Expense[], f: AggFilters | undefined, ms: User[]): Expense[] {
+function applyFilters(rows: Row[], f: AggFilters | undefined, ms: User[]): Row[] {
   if (!f) return rows
   const who = resolveWho(ms, f.who)
   return rows.filter((e) => {
@@ -68,12 +88,13 @@ function applyFilters(rows: Expense[], f: AggFilters | undefined, ms: User[]): E
     if (f.sub && e.sub.toLowerCase() !== f.sub.toLowerCase()) return false
     if (who && e.userId !== who.id) return false
     if (f.method && e.method.toLowerCase() !== f.method.toLowerCase()) return false
+    if (f.fonte && !e.source.toLowerCase().includes(f.fonte.toLowerCase())) return false
     return true
   })
 }
 
 // Returns { key, label, sort } for a row on a given dimension.
-function dimOf(dim: Dimension, e: Expense, ms: User[], catMap: Record<string, string>, subMap: Record<string, string>): { key: string, label: string, sort: string } {
+function dimOf(dim: Dimension, e: Row, ms: User[], catMap: Record<string, string>, subMap: Record<string, string>): { key: string, label: string, sort: string } {
   switch (dim) {
     case 'pessoa': {
       const m = ms.find(x => x.id === e.userId)
@@ -101,15 +122,17 @@ function dimOf(dim: Dimension, e: Expense, ms: User[], catMap: Record<string, st
     }
     case 'metodo':
       return { key: e.method || '', label: e.method || '(sem método)', sort: e.method || '~' }
+    case 'fonte':
+      return { key: e.source.toLowerCase() || '', label: e.source || '(sem fonte)', sort: e.source.toLowerCase() || '~' }
   }
 }
 
 export async function aggregate(q: AggQuery, locale?: string): Promise<AggResult> {
-  const [ms, allExpenses, catMap, subMap] = await Promise.all([
-    members(), expenses(), catNameMap(locale), subNameMap(locale),
+  const [ms, allRows, catMap, subMap] = await Promise.all([
+    members(), loadRows(q.dataset === 'rendimentos' ? 'rendimentos' : 'gastos'), catNameMap(locale), subNameMap(locale),
   ])
   const measure: Measure = q.measure || 'soma'
-  const rows = applyFilters(allExpenses, q.filters, ms)
+  const rows = applyFilters(allRows, q.filters, ms)
 
   // Collect cells keyed by primary + series.
   const primaries = new Map<string, { label: string, sort: string }>()
