@@ -4,41 +4,44 @@ import { catColor, monthKey, firstName } from '~~/shared/config'
 definePageMeta({ titleKey: 'nav.reports', subtitleKey: 'pageSub.reports' })
 const store = useStore()
 const cats = useCategories()
+const selected = useMonth()
 const { isDark } = useTweaks()
 const { locale } = useI18n()
-onMounted(() => store.ensure())
 
-// Last 6 months evolution
-const monthly = computed(() => {
-  const map: Record<string, number> = {}
-  for (const e of store.expenses.value) map[monthKey(e.date)] = (map[monthKey(e.date)] || 0) + e.amountCents
-  const keys = Object.keys(map).sort().slice(-6)
-  return keys.map(k => {
-    const [, m] = k.split('-').map(Number)
-    return { label: new Intl.DateTimeFormat(locale.value, { month: 'short' }).format(new Date(2000, m - 1, 1)), value: map[k] / 100, color: 'var(--accent)' }
-  })
+onMounted(async () => { await store.ensure(); syncMonth(selected, store.expenses.value) })
+watch(() => store.expenses.value, (ex) => syncMonth(selected, ex))
+
+// ---- annual evolution (12 months of a selected year) ----
+const years = computed(() => {
+  const set = new Set<string>()
+  for (const e of store.expenses.value) set.add(e.date.slice(0, 4))
+  for (const i of store.incomes.value) set.add(i.date.slice(0, 4))
+  set.add(String(new Date().getFullYear()))
+  return [...set].sort().reverse()
 })
+const year = ref('')
+watch(years, (ys) => { if (!year.value || !ys.includes(year.value)) year.value = ys[0] }, { immediate: true })
 
-// Income vs expenses, last 6 months (union of months with any movement).
-const incomeVsExpense = computed(() => {
+const annual = computed(() => {
   const exp: Record<string, number> = {}
   const inc: Record<string, number> = {}
-  for (const e of store.expenses.value) exp[monthKey(e.date)] = (exp[monthKey(e.date)] || 0) + e.amountCents
-  for (const i of store.incomes.value) inc[monthKey(i.date)] = (inc[monthKey(i.date)] || 0) + i.amountCents
-  const keys = [...new Set([...Object.keys(exp), ...Object.keys(inc)])].sort().slice(-6)
-  return keys.map((k) => {
-    const [y, m] = k.split('-').map(Number)
+  for (const e of store.expenses.value) if (e.date.slice(0, 4) === year.value) exp[monthKey(e.date)] = (exp[monthKey(e.date)] || 0) + e.amountCents
+  for (const i of store.incomes.value) if (i.date.slice(0, 4) === year.value) inc[monthKey(i.date)] = (inc[monthKey(i.date)] || 0) + i.amountCents
+  return Array.from({ length: 12 }, (_, m) => {
+    const mk = `${year.value}-${String(m + 1).padStart(2, '0')}`
+    const expense = exp[mk] || 0
+    const income = inc[mk] || 0
     return {
-      key: k,
-      label: `${new Intl.DateTimeFormat(locale.value, { month: 'short' }).format(new Date(2000, m - 1, 1))} ${y}`,
-      income: inc[k] || 0,
-      expense: exp[k] || 0,
-      saldo: (inc[k] || 0) - (exp[k] || 0),
+      mk,
+      label: new Intl.DateTimeFormat(locale.value, { month: 'short' }).format(new Date(2000, m, 1)),
+      expense,
+      income,
+      saldo: income - expense,
     }
   })
 })
-const maxFlow = computed(() => Math.max(...incomeVsExpense.value.flatMap(r => [r.income, r.expense]), 1))
-const hasIncome = computed(() => store.incomes.value.length > 0)
+const maxExpense = computed(() => Math.max(...annual.value.map(a => a.expense), 1))
+const hasAnnual = computed(() => annual.value.some(a => a.expense || a.income))
 
 // All-time by category
 const totalCents = computed(() => store.expenses.value.reduce((a, e) => a + e.amountCents, 0))
@@ -55,34 +58,45 @@ const byPerson = computed(() => {
   return store.members.value.map(m => ({ member: m, cents: map[m.id] || 0 })).sort((a, b) => b.cents - a.cents)
 })
 const maxPerson = computed(() => Math.max(...byPerson.value.map(p => p.cents), 1))
+
+function printReport() {
+  if (!selected.value) return
+  window.open(`/relatorios-imprimir?mes=${selected.value}`, '_blank')
+}
 </script>
 
 <template>
   <div style="max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px">
-    <UiCard :pad="22">
-      <UiSectionTitle>{{ $t('reports.monthlyEvolution') }}</UiSectionTitle>
-      <UiBarChart v-if="monthly.length" :data="monthly" :height="200" />
-      <UiEmptyState v-else icon="chart" :title="$t('reports.noData')" :sub="$t('reports.noDataSub')" />
-    </UiCard>
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end">
+      <AppMonthPicker />
+      <UiButton variant="outline" icon="receipt" @click="printReport">{{ $t('reports.print') }}</UiButton>
+    </div>
 
-    <UiCard v-if="hasIncome" :pad="22">
-      <UiSectionTitle>{{ $t('reports.incomeVsExpenses') }}</UiSectionTitle>
-      <div style="display: flex; flex-direction: column; gap: 16px">
-        <div v-for="r in incomeVsExpense" :key="r.key">
-          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 7px; font-size: 13.5px">
-            <span style="flex: 1; font-weight: 540; text-transform: capitalize">{{ r.label }}</span>
-            <span class="tnum" style="color: var(--pos)">+{{ $n(r.income / 100, 'currency0') }}</span>
-            <span class="tnum" style="color: var(--muted)">−{{ $n(r.expense / 100, 'currency0') }}</span>
-            <span class="tnum" style="font-weight: 700; min-width: 84px; text-align: right" :style="{ color: r.saldo >= 0 ? 'var(--pos)' : 'var(--neg)' }">
-              {{ r.saldo >= 0 ? '+' : '' }}{{ $n(r.saldo / 100, 'currency0') }}
-            </span>
+    <UiCard :pad="22">
+      <UiSectionTitle>
+        {{ $t('reports.annualEvolution') }}
+        <template #action>
+          <div style="width: 110px">
+            <UiSelect :model-value="year" @update:model-value="year = $event">
+              <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
+            </UiSelect>
           </div>
-          <div style="display: flex; flex-direction: column; gap: 4px">
-            <UiMiniBar :value="r.income" :max="maxFlow" color="var(--pos)" />
-            <UiMiniBar :value="r.expense" :max="maxFlow" color="var(--accent)" />
+        </template>
+      </UiSectionTitle>
+      <div v-if="hasAnnual" style="display: flex; align-items: flex-end; gap: 6px; height: 210px; padding-top: 18px">
+        <div v-for="a in annual" :key="a.mk"
+          style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; min-width: 0">
+          <div class="tnum" style="font-size: 10.5px; font-weight: 600; color: var(--ink-2); white-space: nowrap">{{ a.expense ? $n(a.expense / 100, 'currency0') : '' }}</div>
+          <div :title="$n(a.expense / 100, 'currency')"
+            :style="{ width: '100%', maxWidth: '40px', height: `${(a.expense / maxExpense) * 100}%`, minHeight: a.expense ? '4px' : '0', background: 'var(--accent)', borderRadius: '6px 6px 3px 3px' }" />
+          <div style="font-size: 11px; color: var(--muted); font-weight: 500; text-transform: capitalize">{{ a.label }}</div>
+          <div class="tnum" style="font-size: 10.5px; font-weight: 600; white-space: nowrap"
+            :style="{ color: a.saldo > 0 ? 'var(--pos)' : a.saldo < 0 ? 'var(--neg)' : 'var(--faint)' }">
+            {{ (a.income || a.expense) ? `${a.saldo >= 0 ? '+' : ''}${$n(a.saldo / 100, 'currency0')}` : '—' }}
           </div>
         </div>
       </div>
+      <UiEmptyState v-else icon="chart" :title="$t('reports.noData')" :sub="$t('reports.noDataSub')" />
     </UiCard>
 
     <div class="dash-cols" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">

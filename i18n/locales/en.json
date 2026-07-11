@@ -127,7 +127,20 @@
     "noDataSub": "Expenses show up here as soon as they exist.",
     "byCategory": "Breakdown by category",
     "byPerson": "Breakdown by person",
-    "incomeVsExpenses": "Income vs. spending"
+    "incomeVsExpenses": "Income vs. spending",
+    "print": "Print / PDF",
+    "printNow": "Print",
+    "back": "Back",
+    "annualEvolution": "Annual trend",
+    "reportTitle": "{month} report",
+    "generatedAt": "Generated on {date}",
+    "colDate": "Date",
+    "colCategory": "Category",
+    "colSub": "Subcategory",
+    "colMethod": "Method",
+    "colWho": "Who",
+    "colAmount": "Amount",
+    "noRecords": "No movements this month."
   },
   "people": {
     "addMember": "Add member",

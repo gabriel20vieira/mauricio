@@ -127,7 +127,20 @@
     "noDataSub": "Os gastos aparecem aqui assim que existirem.",
     "byCategory": "Repartição por categoria",
     "byPerson": "Repartição por pessoa",
-    "incomeVsExpenses": "Rendimentos vs. gastos"
+    "incomeVsExpenses": "Rendimentos vs. gastos",
+    "print": "Imprimir / PDF",
+    "printNow": "Imprimir",
+    "back": "Voltar",
+    "annualEvolution": "Evolução anual",
+    "reportTitle": "Relatório de {month}",
+    "generatedAt": "Gerado a {date}",
+    "colDate": "Data",
+    "colCategory": "Categoria",
+    "colSub": "Subcategoria",
+    "colMethod": "Método",
+    "colWho": "Quem",
+    "colAmount": "Valor",
+    "noRecords": "Sem movimentos neste mês."
   },
   "people": {
     "addMember": "Adicionar membro",
