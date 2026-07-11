@@ -1,6 +1,6 @@
 export interface ConfirmCard {
   kind: 'confirm'
-  action: 'add' | 'update' | 'delete'
+  action: 'add' | 'update' | 'delete' | 'add_income'
   payload: Record<string, any>
   summary: string
 }

@@ -283,7 +283,8 @@
     "ctaUpdate": "Save change",
     "ctaDelete": "Delete",
     "done": "Done",
-    "confirmed": "Confirmed"
+    "confirmed": "Confirmed",
+    "addIncome": "Add income"
   },
   "cat": {
     "alimentacao": "Food",

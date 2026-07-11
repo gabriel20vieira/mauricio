@@ -13,6 +13,7 @@ const { t } = useI18n()
 const meta = computed(() => {
   switch (props.card.action) {
     case 'add': return { icon: 'plusCircle', label: t('confirmCard.addExpense'), cta: t('confirmCard.ctaAdd'), danger: false }
+    case 'add_income': return { icon: 'trend', label: t('confirmCard.addIncome'), cta: t('confirmCard.ctaAdd'), danger: false }
     case 'update': return { icon: 'pencil', label: t('confirmCard.editExpense'), cta: t('confirmCard.ctaUpdate'), danger: false }
     case 'delete': return { icon: 'trash', label: t('confirmCard.deleteExpense'), cta: t('confirmCard.ctaDelete'), danger: true }
   }
