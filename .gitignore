@@ -30,3 +30,6 @@ server/db/*.sqlite
 
 # Design handoff bundle (reference only)
 .design-ref
+
+# Playwright MCP session snapshots (test artifacts)
+.playwright-mcp/
