@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const { user, clear } = useUserSession()
-const { navOpen, openNewExpense } = useAppUi()
+const { navOpen, openNewExpense, openNewIncome } = useAppUi()
 const { toggleTheme, isDark } = useTweaks()
 
 async function logout() {
@@ -64,6 +64,7 @@ function navLinkStyle(active: boolean) {
         </div>
 
         <UiButton icon="plus" full @click="openNewExpense">{{ $t('layout.newExpense') }}</UiButton>
+        <UiButton variant="outline" icon="trend" full @click="openNewIncome">{{ $t('layout.newIncome') }}</UiButton>
 
         <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: var(--faint); padding: 16px 8px 6px">{{ $t('layout.navigation') }}</div>
         <NuxtLink v-for="n in navMain" :key="n.to" :to="n.to" :style="navLinkStyle(route.path === n.to)">
@@ -106,7 +107,10 @@ function navLinkStyle(active: boolean) {
           <div class="topbar-sub" style="font-size: 13px; color: var(--muted)">{{ header.sub }}</div>
         </div>
         <UiIconButton :name="isDark ? 'sun' : 'moon'" :label="$t('layout.toggleTheme')" @click="toggleTheme" />
-        <div class="add-btn-top"><UiButton icon="plus" @click="openNewExpense">{{ $t('layout.newExpense') }}</UiButton></div>
+        <div class="add-btn-top" style="display: flex; gap: 8px">
+          <UiButton variant="outline" icon="trend" @click="openNewIncome">{{ $t('layout.newIncome') }}</UiButton>
+          <UiButton icon="plus" @click="openNewExpense">{{ $t('layout.newExpense') }}</UiButton>
+        </div>
       </header>
 
       <main class="main-scroll" style="flex: 1; overflow-y: auto; padding: 26px 26px 40px">

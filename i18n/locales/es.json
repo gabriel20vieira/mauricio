@@ -40,7 +40,8 @@
     "administrator": "Administrador",
     "member": "Miembro",
     "toggleTheme": "Cambiar tema",
-    "endSession": "Cerrar sesión"
+    "endSession": "Cerrar sesión",
+    "newIncome": "Nuevo ingreso"
   },
   "auth": {
     "heroTitle": "Las cuentas del hogar,{br}todas en un solo lugar.",

@@ -40,7 +40,8 @@
     "administrator": "Administrator",
     "member": "Member",
     "toggleTheme": "Toggle theme",
-    "endSession": "Sign out"
+    "endSession": "Sign out",
+    "newIncome": "New income"
   },
   "auth": {
     "heroTitle": "Your household accounts,{br}all in one place.",

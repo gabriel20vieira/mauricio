@@ -40,7 +40,8 @@
     "administrator": "Administrador",
     "member": "Membro",
     "toggleTheme": "Alternar tema",
-    "endSession": "Terminar sessão"
+    "endSession": "Terminar sessão",
+    "newIncome": "Novo rendimento"
   },
   "auth": {
     "heroTitle": "As contas da casa,{br}todas no mesmo sítio.",
