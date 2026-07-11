@@ -1,0 +1,122 @@
+- generic [ref=e3]:
+  - status [ref=e4]: Entrar · Maurício
+  - generic [ref=e48]:
+    - complementary [ref=e50]:
+      - generic [ref=e51]: Maurício
+      - button "Novo gasto" [ref=e57] [cursor=pointer]
+      - generic [ref=e60]: NAVEGAÇÃO
+      - link "Resumo" [ref=e61] [cursor=pointer]:
+        - /url: /
+      - link "Gastos" [ref=e64] [cursor=pointer]:
+        - /url: /gastos
+      - link "Relatórios" [ref=e68] [cursor=pointer]:
+        - /url: /relatorios
+      - link "Balanço" [ref=e72] [cursor=pointer]:
+        - /url: /balanco
+      - link "Assistente" [ref=e75] [cursor=pointer]:
+        - /url: /assistente
+      - link "Pessoas" [ref=e79] [cursor=pointer]:
+        - /url: /pessoas
+      - generic [ref=e83]: GESTÃO
+      - link "Administração" [ref=e84] [cursor=pointer]:
+        - /url: /administracao
+      - generic [ref=e89]:
+        - button "CT Claude Teste Administrador" [ref=e90] [cursor=pointer]:
+          - generic [ref=e91]: CT
+          - generic [ref=e92]:
+            - generic [ref=e93]: Claude Teste
+            - generic [ref=e94]: Administrador
+        - button "Terminar sessão" [ref=e95] [cursor=pointer]
+    - generic [ref=e99]:
+      - banner [ref=e100]:
+        - generic [ref=e101]:
+          - heading "Resumo" [level=1] [ref=e102]
+          - generic [ref=e103]: Visão geral das contas da casa
+        - button "Alternar tema" [ref=e104] [cursor=pointer]
+        - button "Novo gasto" [ref=e108] [cursor=pointer]
+      - main [ref=e111]:
+        - generic [ref=e112]:
+          - combobox [ref=e116] [cursor=pointer]:
+            - option "julho de 2026" [selected]
+          - generic [ref=e117]:
+            - generic [ref=e118]:
+              - generic [ref=e119]: Total gasto · julho de 2026
+              - generic [ref=e121]: 270,00 €
+              - generic [ref=e122]:
+                - generic [ref=e123]:
+                  - generic [ref=e124]: 0 €
+                  - generic [ref=e125]: Rendimentos
+                - generic [ref=e126]:
+                  - generic [ref=e127]: "-270 €"
+                  - generic [ref=e128]: Saldo
+                - generic [ref=e129]:
+                  - generic [ref=e130]: "3"
+                  - generic [ref=e131]: Movimentos
+                - generic [ref=e132]:
+                  - generic [ref=e133]: 90 €
+                  - generic [ref=e134]: Média / gasto
+                - generic [ref=e135]:
+                  - generic [ref=e136]: 0 €
+                  - generic [ref=e137]: Mês anterior
+            - generic [ref=e138]:
+              - generic [ref=e143]: Alimentação
+              - generic [ref=e144]: 270 €
+          - generic [ref=e145]:
+            - generic [ref=e146]:
+              - generic [ref=e147]:
+                - heading "Gastos por categoria" [level=2] [ref=e148]
+                - link "Ver relatórios ›" [ref=e149] [cursor=pointer]:
+                  - /url: /relatorios
+              - generic [ref=e150]:
+                - img [ref=e151]:
+                  - generic [ref=e156]:
+                    - generic [ref=e157]: Total
+                    - generic [ref=e158]: 270 €
+                - generic [ref=e160]:
+                  - generic [ref=e162]: Alimentação
+                  - generic [ref=e163]: 270 €
+                  - generic [ref=e164]: 100%
+            - generic [ref=e165]:
+              - generic [ref=e166]:
+                - heading "Contribuição por pessoa" [level=2] [ref=e167]
+                - link "Balanço ›" [ref=e168] [cursor=pointer]:
+                  - /url: /balanco
+              - generic [ref=e169]:
+                - generic [ref=e171]:
+                  - generic [ref=e172]: GV
+                  - generic [ref=e173]: Gabriel
+                  - generic [ref=e174]: 270,00 €
+                - generic [ref=e178]:
+                  - generic [ref=e179]: CT
+                  - generic [ref=e180]: Claude
+                  - generic [ref=e181]: 0,00 €
+          - generic [ref=e183]:
+            - generic [ref=e184]:
+              - heading "Movimentos recentes" [level=2] [ref=e185]
+              - link "Ver todos ›" [ref=e186] [cursor=pointer]:
+                - /url: /gastos
+            - generic [ref=e187]:
+              - generic [ref=e188] [cursor=pointer]:
+                - generic [ref=e193]:
+                  - generic [ref=e194]: Alimentação
+                  - generic [ref=e195]: Alimentação · 07/07
+                - generic [ref=e197]:
+                  - generic [ref=e198]: GV
+                  - generic [ref=e199]: Gabriel
+                - generic [ref=e200]: 20,00 €
+              - generic [ref=e204] [cursor=pointer]:
+                - generic [ref=e209]:
+                  - generic [ref=e210]: tem aqui um bug
+                  - generic [ref=e211]: Alimentação · Fora · 07/07
+                - generic [ref=e213]:
+                  - generic [ref=e214]: GV
+                  - generic [ref=e215]: Gabriel
+                - generic [ref=e216]: 50,00 €
+              - generic [ref=e220] [cursor=pointer]:
+                - generic [ref=e225]:
+                  - generic [ref=e226]: Alimentação
+                  - generic [ref=e227]: Alimentação · Fora · 07/07
+                - generic [ref=e229]:
+                  - generic [ref=e230]: GV
+                  - generic [ref=e231]: Gabriel
+                - generic [ref=e232]: 200,00 €

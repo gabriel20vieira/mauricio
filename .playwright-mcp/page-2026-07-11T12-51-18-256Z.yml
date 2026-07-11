@@ -1,0 +1,99 @@
+- generic [ref=f4e3]:
+  - status [ref=f4e4]: Maurício — contas de casa
+  - generic [ref=f4e5]:
+    - complementary [ref=f4e7]:
+      - generic [ref=f4e8]: Maurício
+      - button "Novo gasto" [ref=f4e14] [cursor=pointer]
+      - generic [ref=f4e17]: NAVEGAÇÃO
+      - link "Resumo" [ref=f4e18] [cursor=pointer]:
+        - /url: /
+      - link "Gastos" [ref=f4e21] [cursor=pointer]:
+        - /url: /gastos
+      - link "Relatórios" [ref=f4e25] [cursor=pointer]:
+        - /url: /relatorios
+      - link "Balanço" [ref=f4e29] [cursor=pointer]:
+        - /url: /balanco
+      - link "Assistente" [ref=f4e32] [cursor=pointer]:
+        - /url: /assistente
+      - link "Pessoas" [ref=f4e36] [cursor=pointer]:
+        - /url: /pessoas
+      - generic [ref=f4e40]: GESTÃO
+      - link "Administração" [ref=f4e41] [cursor=pointer]:
+        - /url: /administracao
+      - generic [ref=f4e46]:
+        - button "CT Claude Teste Administrador" [ref=f4e47] [cursor=pointer]:
+          - generic [ref=f4e48]: CT
+          - generic [ref=f4e49]:
+            - generic [ref=f4e50]: Claude Teste
+            - generic [ref=f4e51]: Administrador
+        - button "Terminar sessão" [ref=f4e52] [cursor=pointer]
+    - generic [ref=f4e56]:
+      - banner [ref=f4e57]:
+        - generic [ref=f4e58]:
+          - heading "Balanço" [level=1] [ref=f4e59]
+          - generic [ref=f4e60]: Quem pagou quanto este mês
+        - button "Alternar tema" [ref=f4e61] [cursor=pointer]
+        - button "Novo gasto" [ref=f4e65] [cursor=pointer]
+      - main [ref=f4e68]:
+        - generic [ref=f4e69]:
+          - combobox [ref=f4e73] [cursor=pointer]:
+            - option "julho de 2026" [selected]
+          - generic [ref=f4e75]:
+            - generic [ref=f4e76]:
+              - generic [ref=f4e77]: Rendimentos · julho de 2026
+              - generic [ref=f4e78]: 1350,49 €
+            - generic [ref=f4e79]:
+              - generic [ref=f4e80]: Total da casa
+              - generic [ref=f4e81]: 270,00 €
+            - generic [ref=f4e82]:
+              - generic [ref=f4e83]: Saldo do mês
+              - generic [ref=f4e84]: +1080,49 €
+            - generic [ref=f4e85]:
+              - generic [ref=f4e86]: Quota média por pessoa
+              - generic [ref=f4e87]: 135,00 €
+          - generic [ref=f4e88]:
+            - generic [ref=f4e89]:
+              - heading "Rendimentos do mês" [level=2] [ref=f4e90]
+              - button "Novo rendimento" [ref=f4e91] [cursor=pointer]
+            - generic [ref=f4e110]:
+              - generic [ref=f4e111] [cursor=pointer]:
+                - generic [ref=f4e116]:
+                  - generic [ref=f4e117]: Extra
+                  - generic [ref=f4e118]: realtime probe · 10/07
+                - generic [ref=f4e119]:
+                  - generic [ref=f4e120]: CT
+                  - generic [ref=f4e121]: Claude
+                - generic [ref=f4e122]: +99,99 €
+              - generic [ref=f4e126] [cursor=pointer]:
+                - generic [ref=f4e131]:
+                  - generic [ref=f4e132]: Salário
+                  - generic [ref=f4e133]: Teste e2e · 11/07
+                - generic [ref=f4e134]:
+                  - generic [ref=f4e135]: GV
+                  - generic [ref=f4e136]: Gabriel
+                - generic [ref=f4e137]: +1250,50 €
+          - generic [ref=f4e101]:
+            - heading "Contribuição vs. média" [level=2] [ref=f4e103]
+            - generic [ref=f4e141]:
+              - generic [ref=f4e142]:
+                - generic [ref=f4e143]: GV
+                - generic [ref=f4e144]: Gabriel Vieira
+                - generic [ref=f4e148]:
+                  - generic [ref=f4e149]: 270,00 €
+                  - generic [ref=f4e150]: +135,00 € · acima da média
+              - generic [ref=f4e151]:
+                - generic [ref=f4e152]: CT
+                - generic [ref=f4e153]: Claude Teste
+                - generic [ref=f4e156]:
+                  - generic [ref=f4e157]: 0,00 €
+                  - generic [ref=f4e158]: "-135,00 € · abaixo da média"
+          - generic [ref=f4e104]:
+            - heading "Para equilibrar as contas" [level=2] [ref=f4e106]
+            - paragraph [ref=f4e107]: "Sugestão para que todos fiquem na quota média (transferências mínimas):"
+            - generic [ref=f4e160]:
+              - generic [ref=f4e161]: CT
+              - generic [ref=f4e162]: Claude
+              - generic [ref=f4e166]: Gabriel
+              - generic [ref=f4e167]: GV
+              - generic [ref=f4e168]: 135,00 €
+            - paragraph [ref=f4e109]: Apenas uma sugestão — a casa regista gastos sem divisão automática.

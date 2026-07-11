@@ -1,0 +1,78 @@
+- generic [ref=f2e4]:
+  - complementary [ref=f2e6]:
+    - generic [ref=f2e7]: Maurício
+    - button "Novo gasto" [ref=f2e13] [cursor=pointer]
+    - generic [ref=f2e16]: NAVEGAÇÃO
+    - link "Resumo" [ref=f2e17] [cursor=pointer]:
+      - /url: /
+    - link "Gastos" [ref=f2e20] [cursor=pointer]:
+      - /url: /gastos
+    - link "Relatórios" [ref=f2e24] [cursor=pointer]:
+      - /url: /relatorios
+    - link "Balanço" [ref=f2e28] [cursor=pointer]:
+      - /url: /balanco
+    - link "Assistente" [ref=f2e31] [cursor=pointer]:
+      - /url: /assistente
+    - link "Pessoas" [ref=f2e35] [cursor=pointer]:
+      - /url: /pessoas
+    - generic [ref=f2e39]: GESTÃO
+    - link "Administração" [ref=f2e40] [cursor=pointer]:
+      - /url: /administracao
+    - generic [ref=f2e45]:
+      - button "CT Claude Teste Administrador" [ref=f2e46] [cursor=pointer]:
+        - generic [ref=f2e47]: CT
+        - generic [ref=f2e48]:
+          - generic [ref=f2e49]: Claude Teste
+          - generic [ref=f2e50]: Administrador
+      - button "Terminar sessão" [ref=f2e51] [cursor=pointer]
+  - generic [ref=f2e55]:
+    - banner [ref=f2e56]:
+      - generic [ref=f2e57]:
+        - heading "Resumo" [level=1] [ref=f2e58]
+        - generic [ref=f2e59]: Visão geral das contas da casa
+      - button "Alternar tema" [ref=f2e60] [cursor=pointer]
+      - button "Novo gasto" [ref=f2e64] [cursor=pointer]
+    - main [ref=f2e67]:
+      - generic [ref=f2e68]:
+        - combobox [ref=f2e72] [cursor=pointer]:
+          - option "julho de 2026" [selected]
+        - generic [ref=f2e74]:
+          - generic [ref=f2e75]: Total gasto · julho de 2026
+          - generic [ref=f2e77]: 0,00 €
+          - generic [ref=f2e78]:
+            - generic [ref=f2e79]:
+              - generic [ref=f2e80]: 0 €
+              - generic [ref=f2e81]: Rendimentos
+            - generic [ref=f2e82]:
+              - generic [ref=f2e83]: +0 €
+              - generic [ref=f2e84]: Saldo
+            - generic [ref=f2e85]:
+              - generic [ref=f2e86]: "0"
+              - generic [ref=f2e87]: Movimentos
+            - generic [ref=f2e88]:
+              - generic [ref=f2e89]: 0 €
+              - generic [ref=f2e90]: Média / gasto
+            - generic [ref=f2e91]:
+              - generic [ref=f2e92]: 0 €
+              - generic [ref=f2e93]: Mês anterior
+        - generic [ref=f2e94]:
+          - generic [ref=f2e95]:
+            - generic [ref=f2e96]:
+              - heading "Gastos por categoria" [level=2] [ref=f2e97]
+              - link "Ver relatórios ›" [ref=f2e98] [cursor=pointer]:
+                - /url: /relatorios
+            - generic [ref=f2e99]:
+              - generic [ref=f2e104]: Sem gastos neste mês
+              - generic [ref=f2e105]: Adicione o primeiro gasto.
+          - generic [ref=f2e107]:
+            - heading "Contribuição por pessoa" [level=2] [ref=f2e108]
+            - link "Balanço ›" [ref=f2e109] [cursor=pointer]:
+              - /url: /balanco
+        - generic [ref=f2e110]:
+          - generic [ref=f2e111]:
+            - heading "Movimentos recentes" [level=2] [ref=f2e112]
+            - link "Ver todos ›" [ref=f2e113] [cursor=pointer]:
+              - /url: /gastos
+          - generic [ref=f2e114]:
+            - generic [ref=f2e119]: Ainda sem movimentos
+            - generic [ref=f2e120]: Os gastos deste mês aparecem aqui.

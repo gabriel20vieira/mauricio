@@ -1,0 +1,54 @@
+- generic [ref=f8e4]:
+  - complementary [ref=f8e6]:
+    - generic [ref=f8e7]: Maurício
+    - button "Novo gasto" [ref=f8e13] [cursor=pointer]
+    - generic [ref=f8e16]: NAVEGAÇÃO
+    - link "Resumo" [ref=f8e17] [cursor=pointer]:
+      - /url: /
+    - link "Gastos" [ref=f8e20] [cursor=pointer]:
+      - /url: /gastos
+    - link "Relatórios" [ref=f8e24] [cursor=pointer]:
+      - /url: /relatorios
+    - link "Balanço" [ref=f8e28] [cursor=pointer]:
+      - /url: /balanco
+    - link "Assistente" [ref=f8e31] [cursor=pointer]:
+      - /url: /assistente
+    - link "Pessoas" [ref=f8e35] [cursor=pointer]:
+      - /url: /pessoas
+    - generic [ref=f8e39]: GESTÃO
+    - link "Administração" [ref=f8e40] [cursor=pointer]:
+      - /url: /administracao
+    - generic [ref=f8e45]:
+      - button "CT Claude Teste Administrador" [ref=f8e46] [cursor=pointer]:
+        - generic [ref=f8e47]: CT
+        - generic [ref=f8e48]:
+          - generic [ref=f8e49]: Claude Teste
+          - generic [ref=f8e50]: Administrador
+      - button "Terminar sessão" [ref=f8e51] [cursor=pointer]
+  - generic [ref=f8e55]:
+    - banner [ref=f8e56]:
+      - generic [ref=f8e57]:
+        - heading "Assistente" [level=1] [ref=f8e58]
+        - generic [ref=f8e59]: Pergunta sobre as contas da casa
+      - button "Alternar tema" [ref=f8e60] [cursor=pointer]
+      - button "Novo gasto" [ref=f8e64] [cursor=pointer]
+    - main [ref=f8e67]:
+      - generic [ref=f8e68]:
+        - complementary [ref=f8e69]:
+          - button "Nova conversa" [ref=f8e70] [cursor=pointer]
+        - generic [ref=f8e74]:
+          - generic [ref=f8e75]:
+            - button "Conversas" [ref=f8e76] [cursor=pointer]
+            - button "Nova conversa" [ref=f8e79] [cursor=pointer]
+          - generic [ref=f8e83]:
+            - generic [ref=f8e88]:
+              - generic [ref=f8e89]: Assistente do Maurício
+              - generic [ref=f8e90]: Pergunta sobre gastos, pede gráficos ou diz para adicionar um gasto — eu mostro uma confirmação antes de gravar.
+            - generic [ref=f8e91]:
+              - button "Quanto gastámos este mês?" [ref=f8e92] [cursor=pointer]
+              - button "Mostra um gráfico dos gastos por categoria" [ref=f8e93] [cursor=pointer]
+              - button "Quem contribuiu mais este mês?" [ref=f8e94] [cursor=pointer]
+              - button "Adiciona um gasto de 25€ em alimentação fora, jantar" [ref=f8e95] [cursor=pointer]
+          - generic [ref=f8e96]:
+            - textbox "Escreve uma mensagem…" [ref=f8e97]
+            - button "Enviar" [disabled] [ref=f8e98] [cursor=pointer]

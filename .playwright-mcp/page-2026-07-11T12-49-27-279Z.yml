@@ -1,0 +1,122 @@
+- generic [ref=f1e1]:
+  - generic [ref=f1e139]:
+    - generic [ref=f1e140]:
+      - heading "Novo rendimento" [level=3] [ref=f1e141]
+      - button "Fechar" [ref=f1e142] [cursor=pointer]
+    - generic [ref=f1e145]:
+      - generic [ref=f1e146]:
+        - generic [ref=f1e147]: Valor
+        - generic [ref=f1e148]:
+          - textbox "0,00" [ref=f1e149]: 1250,50
+          - generic [ref=f1e150]: €
+      - generic [ref=f1e151]:
+        - generic [ref=f1e152]: Fonte
+        - textbox "Fonte Salário Subsídio Extra Outro" [ref=f1e153]:
+          - /placeholder: "Ex.: Salário"
+          - text: Salário
+        - generic [ref=f1e154]:
+          - button "Salário" [active] [ref=f1e155] [cursor=pointer]
+          - button "Subsídio" [ref=f1e156] [cursor=pointer]
+          - button "Extra" [ref=f1e157] [cursor=pointer]
+          - button "Outro" [ref=f1e158] [cursor=pointer]
+      - generic [ref=f1e159]:
+        - generic [ref=f1e160]:
+          - generic [ref=f1e161]: Data
+          - textbox "Data" [ref=f1e162]: 2026-07-11
+        - generic [ref=f1e163]:
+          - generic [ref=f1e164]: Recebido por
+          - combobox "Recebido por" [ref=f1e166] [cursor=pointer]:
+            - option "Claude Teste" [selected]
+            - option "Gabriel Vieira"
+      - generic [ref=f1e167]:
+        - generic [ref=f1e168]: Nota
+        - textbox "Nota" [ref=f1e169]:
+          - /placeholder: Detalhe opcional
+      - generic [ref=f1e170]:
+        - button "Cancelar" [ref=f1e171] [cursor=pointer]
+        - button "Guardar" [ref=f1e172] [cursor=pointer]
+  - generic [ref=f1e3]:
+    - status [ref=f1e109]: Maurício — contas de casa
+    - generic [ref=f1e4]:
+      - complementary [ref=f1e6]:
+        - generic [ref=f1e7]: Maurício
+        - button "Novo gasto" [ref=f1e13] [cursor=pointer]
+        - generic [ref=f1e16]: NAVEGAÇÃO
+        - link "Resumo" [ref=f1e17] [cursor=pointer]:
+          - /url: /
+        - link "Gastos" [ref=f1e20] [cursor=pointer]:
+          - /url: /gastos
+        - link "Relatórios" [ref=f1e24] [cursor=pointer]:
+          - /url: /relatorios
+        - link "Balanço" [ref=f1e28] [cursor=pointer]:
+          - /url: /balanco
+        - link "Assistente" [ref=f1e31] [cursor=pointer]:
+          - /url: /assistente
+        - link "Pessoas" [ref=f1e35] [cursor=pointer]:
+          - /url: /pessoas
+        - generic [ref=f1e39]: GESTÃO
+        - link "Administração" [ref=f1e40] [cursor=pointer]:
+          - /url: /administracao
+        - generic [ref=f1e45]:
+          - button "CT Claude Teste Administrador" [ref=f1e46] [cursor=pointer]:
+            - generic [ref=f1e47]: CT
+            - generic [ref=f1e48]:
+              - generic [ref=f1e49]: Claude Teste
+              - generic [ref=f1e50]: Administrador
+          - button "Terminar sessão" [ref=f1e51] [cursor=pointer]
+      - generic [ref=f1e55]:
+        - banner [ref=f1e56]:
+          - generic [ref=f1e57]:
+            - heading "Balanço" [level=1] [ref=f1e58]
+            - generic [ref=f1e59]: Quem pagou quanto este mês
+          - button "Alternar tema" [ref=f1e60] [cursor=pointer]
+          - button "Novo gasto" [ref=f1e64] [cursor=pointer]
+        - main [ref=f1e67]:
+          - generic [ref=f1e68]:
+            - combobox [ref=f1e72] [cursor=pointer]:
+              - option "julho de 2026" [selected]
+            - generic [ref=f1e74]:
+              - generic [ref=f1e75]:
+                - generic [ref=f1e76]: Rendimentos · julho de 2026
+                - generic [ref=f1e77]: 0,00 €
+              - generic [ref=f1e78]:
+                - generic [ref=f1e79]: Total da casa
+                - generic [ref=f1e80]: 270,00 €
+              - generic [ref=f1e81]:
+                - generic [ref=f1e82]: Saldo do mês
+                - generic [ref=f1e83]: "-270,00 €"
+              - generic [ref=f1e84]:
+                - generic [ref=f1e85]: Quota média por pessoa
+                - generic [ref=f1e86]: 135,00 €
+            - generic [ref=f1e87]:
+              - generic [ref=f1e88]:
+                - heading "Rendimentos do mês" [level=2] [ref=f1e89]
+                - button "Novo rendimento" [ref=f1e90] [cursor=pointer]
+              - generic [ref=f1e93]:
+                - generic [ref=f1e98]: Sem rendimentos neste mês
+                - generic [ref=f1e99]: Registe salários e outras entradas para ver o saldo.
+            - generic [ref=f1e100]:
+              - heading "Contribuição vs. média" [level=2] [ref=f1e102]
+              - generic [ref=f1e110]:
+                - generic [ref=f1e111]:
+                  - generic [ref=f1e112]: GV
+                  - generic [ref=f1e113]: Gabriel Vieira
+                  - generic [ref=f1e117]:
+                    - generic [ref=f1e118]: 270,00 €
+                    - generic [ref=f1e119]: +135,00 € · acima da média
+                - generic [ref=f1e120]:
+                  - generic [ref=f1e121]: CT
+                  - generic [ref=f1e122]: Claude Teste
+                  - generic [ref=f1e125]:
+                    - generic [ref=f1e126]: 0,00 €
+                    - generic [ref=f1e127]: "-135,00 € · abaixo da média"
+            - generic [ref=f1e103]:
+              - heading "Para equilibrar as contas" [level=2] [ref=f1e105]
+              - paragraph [ref=f1e106]: "Sugestão para que todos fiquem na quota média (transferências mínimas):"
+              - generic [ref=f1e129]:
+                - generic [ref=f1e130]: CT
+                - generic [ref=f1e131]: Claude
+                - generic [ref=f1e135]: Gabriel
+                - generic [ref=f1e136]: GV
+                - generic [ref=f1e137]: 135,00 €
+              - paragraph [ref=f1e108]: Apenas uma sugestão — a casa regista gastos sem divisão automática.

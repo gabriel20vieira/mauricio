@@ -1,0 +1,95 @@
+- generic [ref=f5e4]:
+  - complementary [ref=f5e6]:
+    - generic [ref=f5e7]: Maurício
+    - button "Novo gasto" [ref=f5e13] [cursor=pointer]
+    - generic [ref=f5e16]: NAVEGAÇÃO
+    - link "Resumo" [ref=f5e17] [cursor=pointer]:
+      - /url: /
+    - link "Gastos" [ref=f5e20] [cursor=pointer]:
+      - /url: /gastos
+    - link "Relatórios" [ref=f5e24] [cursor=pointer]:
+      - /url: /relatorios
+    - link "Balanço" [ref=f5e28] [cursor=pointer]:
+      - /url: /balanco
+    - link "Assistente" [ref=f5e31] [cursor=pointer]:
+      - /url: /assistente
+    - link "Pessoas" [ref=f5e35] [cursor=pointer]:
+      - /url: /pessoas
+    - generic [ref=f5e39]: GESTÃO
+    - link "Administração" [ref=f5e40] [cursor=pointer]:
+      - /url: /administracao
+    - generic [ref=f5e45]:
+      - button "CT Claude Teste Administrador" [ref=f5e46] [cursor=pointer]:
+        - generic [ref=f5e47]: CT
+        - generic [ref=f5e48]:
+          - generic [ref=f5e49]: Claude Teste
+          - generic [ref=f5e50]: Administrador
+      - button "Terminar sessão" [ref=f5e51] [cursor=pointer]
+  - generic [ref=f5e55]:
+    - banner [ref=f5e56]:
+      - generic [ref=f5e57]:
+        - heading "Administração" [level=1] [ref=f5e58]
+        - generic [ref=f5e59]: Gestão de membros e categorias
+      - button "Alternar tema" [ref=f5e60] [cursor=pointer]
+      - button "Novo gasto" [ref=f5e64] [cursor=pointer]
+    - main [ref=f5e67]:
+      - generic [ref=f5e68]:
+        - generic [ref=f5e70]:
+          - heading "Membros da casa" [level=2] [ref=f5e71]
+          - button "Adicionar" [ref=f5e72] [cursor=pointer]
+        - generic [ref=f5e75]:
+          - heading "Sessões ativas" [level=2] [ref=f5e77]
+          - paragraph [ref=f5e78]: Todos os dispositivos com sessão aberta. Pode terminar qualquer um.
+          - generic [ref=f5e79]: Sem sessões ativas.
+        - generic [ref=f5e81]:
+          - generic [ref=f5e82]:
+            - heading "Categorias" [level=2] [ref=f5e83]
+            - button "Adicionar categoria" [ref=f5e84] [cursor=pointer]
+          - paragraph [ref=f5e87]: Criar, editar e ocultar categorias e subcategorias.
+        - generic [ref=f5e88]:
+          - heading "Assistente" [level=2] [ref=f5e90]
+          - paragraph [ref=f5e91]: Ativar o assistente e definir o servidor Ollama.
+          - generic [ref=f5e92]:
+            - generic [ref=f5e93]: Ativado
+            - button [ref=f5e94] [cursor=pointer]
+          - generic [ref=f5e96]:
+            - generic [ref=f5e97]: Usar servidor cloud
+            - button [ref=f5e98] [cursor=pointer]
+          - generic [ref=f5e100]:
+            - generic [ref=f5e101]: Servidor
+            - textbox "Servidor" [ref=f5e102]:
+              - /placeholder: http://192.168.1.203:11434
+          - generic [ref=f5e103]:
+            - generic [ref=f5e104]: Modelo
+            - textbox "Modelo" [ref=f5e105]:
+              - /placeholder: minimax-m3:cloud
+          - button "Guardar" [ref=f5e106] [cursor=pointer]
+        - generic [ref=f5e109]:
+          - heading "Conversas do assistente" [level=2] [ref=f5e111]
+          - paragraph [ref=f5e112]: Ver e gerir as conversas dos membros da casa.
+          - generic [ref=f5e113]: Sem conversas.
+        - generic [ref=f5e115]:
+          - heading "Língua forçada" [level=2] [ref=f5e117]
+          - paragraph [ref=f5e118]: Sobrepõe a língua para todos. 'Automático' deixa cada pessoa usar a sua.
+          - combobox [ref=f5e121] [cursor=pointer]:
+            - option "Automático" [selected]
+            - option "English"
+            - option "Português"
+            - option "Español"
+        - generic [ref=f5e122]:
+          - heading "Dados (backup)" [level=2] [ref=f5e124]
+          - paragraph [ref=f5e125]: Exporte e importe os dados da aplicação em JSON.
+          - generic [ref=f5e126]:
+            - generic [ref=f5e127]:
+              - generic [ref=f5e128]:
+                - generic [ref=f5e129]: Tudo
+                - generic [ref=f5e130]: Membros, categorias, gastos, rendimentos, definições e conversas. Importar substitui TODOS os dados.
+              - button "Exportar" [ref=f5e131] [cursor=pointer]
+              - button "Importar" [ref=f5e135] [cursor=pointer]
+            - generic [ref=f5e138]:
+              - generic [ref=f5e139]:
+                - generic [ref=f5e140]: Movimentos
+                - generic [ref=f5e141]: Só gastos e rendimentos. Importar adiciona os novos; os existentes não são alterados.
+              - button "Exportar" [ref=f5e142] [cursor=pointer]
+              - button "Importar" [ref=f5e146] [cursor=pointer]
+          - paragraph [ref=f5e149]: O export total contém as palavras-passe encriptadas dos membros — guarde o ficheiro em local seguro.

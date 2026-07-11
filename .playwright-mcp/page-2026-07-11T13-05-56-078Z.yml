@@ -1,0 +1,470 @@
+- generic [ref=f10e1]:
+  - generic [ref=f10e151]:
+    - generic [ref=f10e152]:
+      - heading "Importar tudo" [level=3] [ref=f10e153]
+      - button "Fechar" [ref=f10e154] [cursor=pointer]
+    - generic [ref=f10e157]:
+      - generic [ref=f10e158]: Isto substitui TODOS os dados da aplicação pelos do ficheiro. A ação não pode ser desfeita e todos os membros (incluindo você) serão desligados.
+      - generic [ref=f10e162]:
+        - generic [ref=f10e163]:
+          - generic [ref=f10e164]: Membros da casa
+          - generic [ref=f10e165]: "3"
+        - generic [ref=f10e166]:
+          - generic [ref=f10e167]: Categorias
+          - generic [ref=f10e168]: "16"
+        - generic [ref=f10e169]:
+          - generic [ref=f10e170]: Gastos
+          - generic [ref=f10e171]: "3"
+        - generic [ref=f10e172]:
+          - generic [ref=f10e173]: Rendimentos
+          - generic [ref=f10e174]: "3"
+        - generic [ref=f10e175]:
+          - generic [ref=f10e176]: Conversas do assistente
+          - generic [ref=f10e177]: "1"
+      - generic [ref=f10e178]:
+        - button "Cancelar" [ref=f10e179] [cursor=pointer]
+        - button "Substituir tudo" [ref=f10e180] [cursor=pointer]
+  - generic [ref=f10e3]:
+    - status [ref=f10e183]: Maurício — contas de casa
+    - generic [ref=f10e4]:
+      - complementary [ref=f10e6]:
+        - generic [ref=f10e7]: Maurício
+        - button "Novo gasto" [ref=f10e13] [cursor=pointer]
+        - generic [ref=f10e16]: NAVEGAÇÃO
+        - link "Resumo" [ref=f10e17] [cursor=pointer]:
+          - /url: /
+        - link "Gastos" [ref=f10e20] [cursor=pointer]:
+          - /url: /gastos
+        - link "Relatórios" [ref=f10e24] [cursor=pointer]:
+          - /url: /relatorios
+        - link "Balanço" [ref=f10e28] [cursor=pointer]:
+          - /url: /balanco
+        - link "Assistente" [ref=f10e31] [cursor=pointer]:
+          - /url: /assistente
+        - link "Pessoas" [ref=f10e35] [cursor=pointer]:
+          - /url: /pessoas
+        - generic [ref=f10e39]: GESTÃO
+        - link "Administração" [ref=f10e40] [cursor=pointer]:
+          - /url: /administracao
+        - generic [ref=f10e45]:
+          - button "CT Claude Teste Administrador" [ref=f10e46] [cursor=pointer]:
+            - generic [ref=f10e47]: CT
+            - generic [ref=f10e48]:
+              - generic [ref=f10e49]: Claude Teste
+              - generic [ref=f10e50]: Administrador
+          - button "Terminar sessão" [ref=f10e51] [cursor=pointer]
+      - generic [ref=f10e55]:
+        - banner [ref=f10e56]:
+          - generic [ref=f10e57]:
+            - heading "Administração" [level=1] [ref=f10e58]
+            - generic [ref=f10e59]: Gestão de membros e categorias
+          - button "Alternar tema" [ref=f10e60] [cursor=pointer]
+          - button "Novo gasto" [ref=f10e64] [cursor=pointer]
+        - main [ref=f10e67]:
+          - generic [ref=f10e68]:
+            - generic [ref=f10e69]:
+              - generic [ref=f10e70]:
+                - heading "Membros da casa" [level=2] [ref=f10e71]
+                - button "Adicionar" [ref=f10e72] [cursor=pointer]
+              - generic [ref=f10e184]:
+                - generic [ref=f10e185]:
+                  - generic [ref=f10e186]: UN
+                  - generic [ref=f10e187]:
+                    - generic [ref=f10e188]:
+                      - generic [ref=f10e189]: User Normal
+                      - generic [ref=f10e190]: Membro
+                    - generic [ref=f10e191]: normal@teste.local
+                  - generic [ref=f10e192]:
+                    - button "Editar" [ref=f10e193] [cursor=pointer]
+                    - button "Bloquear" [ref=f10e196] [cursor=pointer]
+                - generic [ref=f10e200]:
+                  - generic [ref=f10e201]: CT
+                  - generic [ref=f10e202]:
+                    - generic [ref=f10e203]:
+                      - generic [ref=f10e204]: Claude Teste
+                      - generic [ref=f10e205]: Administrador
+                      - generic [ref=f10e206]: Você
+                    - generic [ref=f10e207]: claude@teste.local
+                  - button "Editar" [ref=f10e209] [cursor=pointer]
+                - generic [ref=f10e212]:
+                  - generic [ref=f10e213]: GV
+                  - generic [ref=f10e214]:
+                    - generic [ref=f10e215]:
+                      - generic [ref=f10e216]: Gabriel Vieira
+                      - generic [ref=f10e217]: Administrador
+                    - generic [ref=f10e218]: gv1999mpc@hotmail.com
+                  - generic [ref=f10e219]:
+                    - button "Editar" [ref=f10e220] [cursor=pointer]
+                    - button "Bloquear" [ref=f10e223] [cursor=pointer]
+            - generic [ref=f10e75]:
+              - heading "Sessões ativas" [level=2] [ref=f10e77]
+              - paragraph [ref=f10e78]: Todos os dispositivos com sessão aberta. Pode terminar qualquer um.
+              - generic [ref=f10e79]:
+                - generic [ref=f10e227]:
+                  - generic [ref=f10e232]:
+                    - generic [ref=f10e233]: Claude Teste
+                    - generic [ref=f10e235]: Navegador · — · há 17 segundos · ::ffff:192.168.96.1
+                  - button "Terminar" [ref=f10e236] [cursor=pointer]
+                - generic [ref=f10e240]:
+                  - generic [ref=f10e245]:
+                    - generic [ref=f10e246]:
+                      - generic [ref=f10e247]: Claude Teste
+                      - generic [ref=f10e248]: Este dispositivo
+                    - generic [ref=f10e249]: Chrome · Windows · há 32 segundos · ::ffff:192.168.96.1
+                  - button "Terminar" [ref=f10e250] [cursor=pointer]
+                - generic [ref=f10e254]:
+                  - generic [ref=f10e259]:
+                    - generic [ref=f10e260]: Claude Teste
+                    - generic [ref=f10e262]: Navegador · — · há 4 minutos · ::ffff:192.168.96.1
+                  - button "Terminar" [ref=f10e263] [cursor=pointer]
+            - generic [ref=f10e81]:
+              - generic [ref=f10e82]:
+                - heading "Categorias" [level=2] [ref=f10e83]
+                - button "Adicionar categoria" [ref=f10e84] [cursor=pointer]
+              - paragraph [ref=f10e87]: Criar, editar e ocultar categorias e subcategorias.
+              - generic [ref=f10e267]:
+                - generic [ref=f10e268]:
+                  - generic [ref=f10e269]:
+                    - generic [ref=f10e271]: Alimentação
+                    - button "Adicionar subcategoria" [ref=f10e272] [cursor=pointer]
+                    - button "Editar" [ref=f10e273] [cursor=pointer]
+                    - button "Ocultar" [ref=f10e274] [cursor=pointer]
+                  - generic [ref=f10e275]:
+                    - generic [ref=f10e276]:
+                      - text: Casa
+                      - button "Editar" [ref=f10e277] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e278] [cursor=pointer]
+                    - generic [ref=f10e279]:
+                      - text: Fora
+                      - button "Editar" [ref=f10e280] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e281] [cursor=pointer]
+                - generic [ref=f10e282]:
+                  - generic [ref=f10e283]:
+                    - generic [ref=f10e285]: Transportes
+                    - button "Adicionar subcategoria" [ref=f10e286] [cursor=pointer]
+                    - button "Editar" [ref=f10e287] [cursor=pointer]
+                    - button "Ocultar" [ref=f10e288] [cursor=pointer]
+                  - generic [ref=f10e289]:
+                    - generic [ref=f10e290]:
+                      - text: Carro
+                      - button "Editar" [ref=f10e291] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e292] [cursor=pointer]
+                    - generic [ref=f10e293]:
+                      - text: Públicos
+                      - button "Editar" [ref=f10e294] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e295] [cursor=pointer]
+                    - generic [ref=f10e296]:
+                      - text: Reparações
+                      - button "Editar" [ref=f10e297] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e298] [cursor=pointer]
+                - generic [ref=f10e299]:
+                  - generic [ref=f10e300]:
+                    - generic [ref=f10e302]: Casa
+                    - button "Adicionar subcategoria" [ref=f10e303] [cursor=pointer]
+                    - button "Editar" [ref=f10e304] [cursor=pointer]
+                    - button "Ocultar" [ref=f10e305] [cursor=pointer]
+                  - generic [ref=f10e306]:
+                    - generic [ref=f10e307]:
+                      - text: Renda
+                      - button "Editar" [ref=f10e308] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e309] [cursor=pointer]
+                    - generic [ref=f10e310]:
+                      - text: Manutenção
+                      - button "Editar" [ref=f10e311] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e312] [cursor=pointer]
+                - generic [ref=f10e313]:
+                  - generic [ref=f10e314]:
+                    - generic [ref=f10e316]: Água/Luz/Gás
+                    - button "Adicionar subcategoria" [ref=f10e317] [cursor=pointer]
+                    - button "Editar" [ref=f10e318] [cursor=pointer]
+                    - button "Ocultar" [ref=f10e319] [cursor=pointer]
+                  - generic [ref=f10e320]:
+                    - generic [ref=f10e321]:
+                      - text: Água
+                      - button "Editar" [ref=f10e322] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e323] [cursor=pointer]
+                    - generic [ref=f10e324]:
+                      - text: Luz
+                      - button "Editar" [ref=f10e325] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e326] [cursor=pointer]
+                    - generic [ref=f10e327]:
+                      - text: Gás
+                      - button "Editar" [ref=f10e328] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e329] [cursor=pointer]
+                - generic [ref=f10e330]:
+                  - generic [ref=f10e331]:
+                    - generic [ref=f10e333]: Lazer
+                    - button "Adicionar subcategoria" [ref=f10e334] [cursor=pointer]
+                    - button "Editar" [ref=f10e335] [cursor=pointer]
+                    - button "Ocultar" [ref=f10e336] [cursor=pointer]
+                  - generic [ref=f10e337]:
+                    - generic [ref=f10e338]:
+                      - text: Desporto
+                      - button "Editar" [ref=f10e339] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e340] [cursor=pointer]
+                    - generic [ref=f10e341]:
+                      - text: Ginásio
+                      - button "Editar" [ref=f10e342] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e343] [cursor=pointer]
+                - generic [ref=f10e344]:
+                  - generic [ref=f10e345]:
+                    - generic [ref=f10e347]: Equipamentos
+                    - button "Adicionar subcategoria" [ref=f10e348] [cursor=pointer]
+                    - button "Editar" [ref=f10e349] [cursor=pointer]
+                    - button "Ocultar" [ref=f10e350] [cursor=pointer]
+                  - generic [ref=f10e351]:
+                    - generic [ref=f10e352]:
+                      - text: Eletrónicos
+                      - button "Editar" [ref=f10e353] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e354] [cursor=pointer]
+                    - generic [ref=f10e355]:
+                      - text: Mecânicos
+                      - button "Editar" [ref=f10e356] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e357] [cursor=pointer]
+                    - generic [ref=f10e358]:
+                      - text: Cozinha
+                      - button "Editar" [ref=f10e359] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e360] [cursor=pointer]
+                - generic [ref=f10e361]:
+                  - generic [ref=f10e362]:
+                    - generic [ref=f10e364]: Saúde
+                    - button "Adicionar subcategoria" [ref=f10e365] [cursor=pointer]
+                    - button "Editar" [ref=f10e366] [cursor=pointer]
+                    - button "Ocultar" [ref=f10e367] [cursor=pointer]
+                  - generic [ref=f10e368]:
+                    - generic [ref=f10e369]:
+                      - text: Dentista
+                      - button "Editar" [ref=f10e370] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e371] [cursor=pointer]
+                    - generic [ref=f10e372]:
+                      - text: Hospital
+                      - button "Editar" [ref=f10e373] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e374] [cursor=pointer]
+                    - generic [ref=f10e375]:
+                      - text: Médico
+                      - button "Editar" [ref=f10e376] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e377] [cursor=pointer]
+                    - generic [ref=f10e378]:
+                      - text: Higiene
+                      - button "Editar" [ref=f10e379] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e380] [cursor=pointer]
+                - generic [ref=f10e381]:
+                  - generic [ref=f10e382]:
+                    - generic [ref=f10e384]: Educação
+                    - button "Adicionar subcategoria" [ref=f10e385] [cursor=pointer]
+                    - button "Editar" [ref=f10e386] [cursor=pointer]
+                    - button "Ocultar" [ref=f10e387] [cursor=pointer]
+                  - generic [ref=f10e388]:
+                    - generic [ref=f10e389]:
+                      - text: Escola
+                      - button "Editar" [ref=f10e390] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e391] [cursor=pointer]
+                    - generic [ref=f10e392]:
+                      - text: Livros
+                      - button "Editar" [ref=f10e393] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e394] [cursor=pointer]
+                    - generic [ref=f10e395]:
+                      - text: Cursos
+                      - button "Editar" [ref=f10e396] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e397] [cursor=pointer]
+                - generic [ref=f10e398]:
+                  - generic [ref=f10e399]:
+                    - generic [ref=f10e401]: Vestuário
+                    - button "Adicionar subcategoria" [ref=f10e402] [cursor=pointer]
+                    - button "Editar" [ref=f10e403] [cursor=pointer]
+                    - button "Ocultar" [ref=f10e404] [cursor=pointer]
+                  - generic [ref=f10e405]:
+                    - generic [ref=f10e406]:
+                      - text: Roupa
+                      - button "Editar" [ref=f10e407] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e408] [cursor=pointer]
+                    - generic [ref=f10e409]:
+                      - text: Calçado
+                      - button "Editar" [ref=f10e410] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e411] [cursor=pointer]
+                    - generic [ref=f10e412]:
+                      - text: Acessórios
+                      - button "Editar" [ref=f10e413] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e414] [cursor=pointer]
+                - generic [ref=f10e415]:
+                  - generic [ref=f10e416]:
+                    - generic [ref=f10e418]: Animais
+                    - button "Adicionar subcategoria" [ref=f10e419] [cursor=pointer]
+                    - button "Editar" [ref=f10e420] [cursor=pointer]
+                    - button "Ocultar" [ref=f10e421] [cursor=pointer]
+                  - generic [ref=f10e422]:
+                    - generic [ref=f10e423]:
+                      - text: Veterinário
+                      - button "Editar" [ref=f10e424] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e425] [cursor=pointer]
+                    - generic [ref=f10e426]:
+                      - text: Comida
+                      - button "Editar" [ref=f10e427] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e428] [cursor=pointer]
+                    - generic [ref=f10e429]:
+                      - text: Acessórios
+                      - button "Editar" [ref=f10e430] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e431] [cursor=pointer]
+                - generic [ref=f10e432]:
+                  - generic [ref=f10e433]:
+                    - generic [ref=f10e435]: Subscrições
+                    - button "Adicionar subcategoria" [ref=f10e436] [cursor=pointer]
+                    - button "Editar" [ref=f10e437] [cursor=pointer]
+                    - button "Ocultar" [ref=f10e438] [cursor=pointer]
+                  - generic [ref=f10e439]:
+                    - generic [ref=f10e440]:
+                      - text: Streaming
+                      - button "Editar" [ref=f10e441] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e442] [cursor=pointer]
+                    - generic [ref=f10e443]:
+                      - text: Software
+                      - button "Editar" [ref=f10e444] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e445] [cursor=pointer]
+                - generic [ref=f10e446]:
+                  - generic [ref=f10e447]:
+                    - generic [ref=f10e449]: Seguros
+                    - button "Adicionar subcategoria" [ref=f10e450] [cursor=pointer]
+                    - button "Editar" [ref=f10e451] [cursor=pointer]
+                    - button "Ocultar" [ref=f10e452] [cursor=pointer]
+                  - generic [ref=f10e453]:
+                    - generic [ref=f10e454]:
+                      - text: Casa
+                      - button "Editar" [ref=f10e455] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e456] [cursor=pointer]
+                    - generic [ref=f10e457]:
+                      - text: Carro
+                      - button "Editar" [ref=f10e458] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e459] [cursor=pointer]
+                    - generic [ref=f10e460]:
+                      - text: Saúde
+                      - button "Editar" [ref=f10e461] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e462] [cursor=pointer]
+                    - generic [ref=f10e463]:
+                      - text: Vida
+                      - button "Editar" [ref=f10e464] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e465] [cursor=pointer]
+                - generic [ref=f10e466]:
+                  - generic [ref=f10e467]:
+                    - generic [ref=f10e469]: Impostos
+                    - button "Adicionar subcategoria" [ref=f10e470] [cursor=pointer]
+                    - button "Editar" [ref=f10e471] [cursor=pointer]
+                    - button "Ocultar" [ref=f10e472] [cursor=pointer]
+                  - generic [ref=f10e473]:
+                    - generic [ref=f10e474]:
+                      - text: IMI
+                      - button "Editar" [ref=f10e475] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e476] [cursor=pointer]
+                    - generic [ref=f10e477]:
+                      - text: IUC
+                      - button "Editar" [ref=f10e478] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e479] [cursor=pointer]
+                    - generic [ref=f10e480]:
+                      - text: IRS
+                      - button "Editar" [ref=f10e481] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e482] [cursor=pointer]
+                - generic [ref=f10e484]:
+                  - generic [ref=f10e486]: Presentes
+                  - button "Adicionar subcategoria" [ref=f10e487] [cursor=pointer]
+                  - button "Editar" [ref=f10e488] [cursor=pointer]
+                  - button "Ocultar" [ref=f10e489] [cursor=pointer]
+                - generic [ref=f10e490]:
+                  - generic [ref=f10e491]:
+                    - generic [ref=f10e493]: Poupança
+                    - button "Adicionar subcategoria" [ref=f10e494] [cursor=pointer]
+                    - button "Editar" [ref=f10e495] [cursor=pointer]
+                    - button "Ocultar" [ref=f10e496] [cursor=pointer]
+                  - generic [ref=f10e497]:
+                    - generic [ref=f10e498]:
+                      - text: Investimento
+                      - button "Editar" [ref=f10e499] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e500] [cursor=pointer]
+                    - generic [ref=f10e501]:
+                      - text: Emergência
+                      - button "Editar" [ref=f10e502] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e503] [cursor=pointer]
+                - generic [ref=f10e504]:
+                  - generic [ref=f10e505]:
+                    - generic [ref=f10e507]: Viagens
+                    - button "Adicionar subcategoria" [ref=f10e508] [cursor=pointer]
+                    - button "Editar" [ref=f10e509] [cursor=pointer]
+                    - button "Ocultar" [ref=f10e510] [cursor=pointer]
+                  - generic [ref=f10e511]:
+                    - generic [ref=f10e512]:
+                      - text: Voos
+                      - button "Editar" [ref=f10e513] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e514] [cursor=pointer]
+                    - generic [ref=f10e515]:
+                      - text: Alojamento
+                      - button "Editar" [ref=f10e516] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e517] [cursor=pointer]
+                    - generic [ref=f10e518]:
+                      - text: Férias
+                      - button "Editar" [ref=f10e519] [cursor=pointer]
+                      - button "Ocultar" [ref=f10e520] [cursor=pointer]
+            - generic [ref=f10e88]:
+              - heading "Assistente" [level=2] [ref=f10e90]
+              - paragraph [ref=f10e91]: Ativar o assistente e definir o servidor Ollama.
+              - generic [ref=f10e92]:
+                - generic [ref=f10e93]: Ativado
+                - button [ref=f10e94] [cursor=pointer]
+              - generic [ref=f10e96]:
+                - generic [ref=f10e97]: Usar servidor cloud
+                - button [ref=f10e98] [cursor=pointer]
+              - generic [ref=f10e100]:
+                - generic [ref=f10e101]: Servidor
+                - textbox "Servidor" [ref=f10e102]:
+                  - /placeholder: http://192.168.1.203:11434
+                  - text: http://host.docker.internal:11435
+              - generic [ref=f10e103]:
+                - generic [ref=f10e104]: Modelo
+                - textbox "Modelo" [ref=f10e105]:
+                  - /placeholder: minimax-m3:cloud
+                  - text: stub
+              - button "Guardar" [ref=f10e106] [cursor=pointer]
+            - generic [ref=f10e109]:
+              - heading "Conversas do assistente" [level=2] [ref=f10e111]
+              - paragraph [ref=f10e112]: Ver e gerir as conversas dos membros da casa.
+              - generic [ref=f10e113]:
+                - generic [ref=f10e521]:
+                  - generic [ref=f10e524]:
+                    - generic [ref=f10e525]: Conversa de teste
+                    - generic [ref=f10e526]: Claude Teste · 11/07/2026
+                  - button "Editar" [ref=f10e527] [cursor=pointer]
+                  - button "Apagar" [ref=f10e530] [cursor=pointer]
+                - generic [ref=f10e533]:
+                  - generic [ref=f10e536]:
+                    - generic [ref=f10e537]: Qual é o saldo deste mês? Quanto entrou e quanto saiu?
+                    - generic [ref=f10e538]: Claude Teste · 11/07/2026
+                  - button "Editar" [ref=f10e539] [cursor=pointer]
+                  - button "Apagar" [ref=f10e542] [cursor=pointer]
+                - generic [ref=f10e545]:
+                  - generic [ref=f10e548]:
+                    - generic [ref=f10e549]: qual o gasto mais baixo até agr?
+                    - generic [ref=f10e550]: Gabriel Vieira · 07/07/2026
+                  - button "Editar" [ref=f10e551] [cursor=pointer]
+                  - button "Apagar" [ref=f10e554] [cursor=pointer]
+            - generic [ref=f10e115]:
+              - heading "Língua forçada" [level=2] [ref=f10e117]
+              - paragraph [ref=f10e118]: Sobrepõe a língua para todos. 'Automático' deixa cada pessoa usar a sua.
+              - combobox [ref=f10e121] [cursor=pointer]:
+                - option "Automático" [selected]
+                - option "English"
+                - option "Português"
+                - option "Español"
+            - generic [ref=f10e122]:
+              - heading "Dados (backup)" [level=2] [ref=f10e124]
+              - paragraph [ref=f10e125]: Exporte e importe os dados da aplicação em JSON.
+              - generic [ref=f10e126]:
+                - generic [ref=f10e127]:
+                  - generic [ref=f10e128]:
+                    - generic [ref=f10e129]: Tudo
+                    - generic [ref=f10e130]: Membros, categorias, gastos, rendimentos, definições e conversas. Importar substitui TODOS os dados.
+                  - button "Exportar" [ref=f10e131] [cursor=pointer]
+                  - button "Importar" [active] [ref=f10e135] [cursor=pointer]
+                - generic [ref=f10e138]:
+                  - generic [ref=f10e139]:
+                    - generic [ref=f10e140]: Movimentos
+                    - generic [ref=f10e141]: Só gastos e rendimentos. Importar adiciona os novos; os existentes não são alterados.
+                  - button "Exportar" [ref=f10e142] [cursor=pointer]
+                  - button "Importar" [ref=f10e146] [cursor=pointer]
+              - paragraph [ref=f10e149]: O export total contém as palavras-passe encriptadas dos membros — guarde o ficheiro em local seguro.

@@ -1,0 +1,67 @@
+- generic [ref=f8e3]:
+  - status [ref=f8e109]: Maurício — contas de casa
+  - generic [ref=f8e4]:
+    - complementary [ref=f8e6]:
+      - generic [ref=f8e7]: Maurício
+      - button "Novo gasto" [ref=f8e13] [cursor=pointer]
+      - generic [ref=f8e16]: NAVEGAÇÃO
+      - link "Resumo" [ref=f8e17] [cursor=pointer]:
+        - /url: /
+      - link "Gastos" [ref=f8e20] [cursor=pointer]:
+        - /url: /gastos
+      - link "Relatórios" [ref=f8e24] [cursor=pointer]:
+        - /url: /relatorios
+      - link "Balanço" [ref=f8e28] [cursor=pointer]:
+        - /url: /balanco
+      - link "Assistente" [ref=f8e31] [cursor=pointer]:
+        - /url: /assistente
+      - link "Pessoas" [ref=f8e35] [cursor=pointer]:
+        - /url: /pessoas
+      - generic [ref=f8e39]: GESTÃO
+      - link "Administração" [ref=f8e40] [cursor=pointer]:
+        - /url: /administracao
+      - generic [ref=f8e45]:
+        - button "CT Claude Teste Administrador" [ref=f8e46] [cursor=pointer]:
+          - generic [ref=f8e47]: CT
+          - generic [ref=f8e48]:
+            - generic [ref=f8e49]: Claude Teste
+            - generic [ref=f8e50]: Administrador
+        - button "Terminar sessão" [ref=f8e51] [cursor=pointer]
+    - generic [ref=f8e55]:
+      - banner [ref=f8e56]:
+        - generic [ref=f8e57]:
+          - heading "Assistente" [level=1] [ref=f8e58]
+          - generic [ref=f8e59]: Pergunta sobre as contas da casa
+        - button "Alternar tema" [ref=f8e60] [cursor=pointer]
+        - button "Novo gasto" [ref=f8e64] [cursor=pointer]
+      - main [ref=f8e67]:
+        - generic [ref=f8e68]:
+          - complementary [ref=f8e69]:
+            - button "Nova conversa" [ref=f8e70] [cursor=pointer]
+            - generic [ref=f8e73]:
+              - generic [ref=f8e110] [cursor=pointer]:
+                - generic [ref=f8e113]: Conversa de teste
+                - button "Apagar" [ref=f8e114]
+              - generic [ref=f8e102] [cursor=pointer]:
+                - generic [ref=f8e105]: Qual é o saldo deste mês? Quanto entrou e quanto saiu?
+                - button "Apagar" [ref=f8e106]
+          - generic [ref=f8e74]:
+            - generic [ref=f8e75]:
+              - button "Conversas" [ref=f8e76] [cursor=pointer]
+              - button "Nova conversa" [ref=f8e79] [cursor=pointer]
+            - generic [ref=f8e82]:
+              - generic [ref=f8e117]: Qual é o saldo deste mês?
+              - generic [ref=f8e126]:
+                - generic [ref=f8e127]: Resumo de Julho 2026
+                - paragraph [ref=f8e132]: "RESULTADO_TOOL: {\"mes\":\"Julho 2026\",\"month\":\"2026-07\",\"total\":\"270,00 €\",\"totalAmount\":270,\"movimentos\":3,\"rendimentos\":\"1360,49 €\",\"rendimentosAmount\":1360.49,\"saldo\":\"1090,49 €\",\"saldoAmount\":1090.49,\"mesAnterior\":\"0,00 €\",\"variacaoPct\":null,\"porCategoria\":[{\"categoria\":\"Alimentação\",\"cat\":\"alimentacao\",\"total\":\"270,00 €\",\"amount\":270}],\"porPessoa\":[{\"pessoa\":\"Gabriel Vieira\",\"total\":\"270,00 €\",\"amount\":270}]}"
+              - generic [ref=f8e133]: Recebi o salário
+              - generic [ref=f8e142]:
+                - generic [ref=f8e143]: Propôs adicionar rendimento
+                - generic [ref=f8e147]:
+                  - generic [ref=f8e148]: Adicionar rendimento
+                  - generic [ref=f8e153]: Adicionar rendimento de 1500,00 € — Salário (2026-07-11) · Claude Teste
+                  - button "Adicionar" [ref=f8e155] [cursor=pointer]
+                - paragraph [ref=f8e157]: "RESULTADO_TOOL: {\"proposto\":true,\"aguardaConfirmacao\":true,\"resumo\":\"Adicionar rendimento de 1500,00 € — Salário (2026-07-11) · Claude Teste\"}"
+            - generic [ref=f8e96]:
+              - textbox "Escreve uma mensagem…" [active] [ref=f8e97]
+              - button "Enviar" [disabled] [ref=f8e98] [cursor=pointer]
