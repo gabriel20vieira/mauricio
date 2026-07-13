@@ -143,7 +143,9 @@
     "colMethod": "Método",
     "colWho": "Quién",
     "colAmount": "Importe",
-    "noRecords": "Sin movimientos este mes."
+    "noRecords": "Sin movimientos este mes.",
+    "annual": "Anual",
+    "monthly": "Mensual"
   },
   "people": {
     "addMember": "Añadir miembro",

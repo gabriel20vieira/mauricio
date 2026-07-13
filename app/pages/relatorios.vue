@@ -6,12 +6,14 @@ const store = useStore()
 const cats = useCategories()
 const selected = useMonth()
 const { isDark } = useTweaks()
-const { locale } = useI18n()
+const { locale, d } = useI18n()
+
+const mode = ref<'anual' | 'mensal'>('anual')
 
 onMounted(async () => { await store.ensure(); syncMonth(selected, store.expenses.value) })
 watch(() => store.expenses.value, (ex) => syncMonth(selected, ex))
 
-// ---- annual evolution (12 months of a selected year) ----
+// ---- year selection (annual mode) ----
 const years = computed(() => {
   const set = new Set<string>()
   for (const e of store.expenses.value) set.add(e.date.slice(0, 4))
@@ -22,6 +24,23 @@ const years = computed(() => {
 const year = ref('')
 watch(years, (ys) => { if (!year.value || !ys.includes(year.value)) year.value = ys[0] }, { immediate: true })
 
+// ---- period scope: filter movements by the active mode (year vs month) ----
+function inScope(date: string) {
+  return mode.value === 'anual' ? date.slice(0, 4) === year.value : monthKey(date) === selected.value
+}
+const scopeExpenses = computed(() => store.expenses.value.filter(e => inScope(e.date)))
+const scopeIncomes = computed(() => store.incomes.value.filter(i => inScope(i.date)))
+const periodLabel = computed(() => {
+  if (mode.value === 'anual') return year.value
+  const [y, m] = (selected.value || '').split('-').map(Number)
+  return m ? d(new Date(y, m - 1, 1), 'monthYear') : ''
+})
+
+const expenseCents = computed(() => scopeExpenses.value.reduce((a, e) => a + e.amountCents, 0))
+const incomeCents = computed(() => scopeIncomes.value.reduce((a, i) => a + i.amountCents, 0))
+const saldoCents = computed(() => incomeCents.value - expenseCents.value)
+
+// ---- annual evolution (12 months of the selected year) ----
 const annual = computed(() => {
   const exp: Record<string, number> = {}
   const inc: Record<string, number> = {}
@@ -43,12 +62,10 @@ const annual = computed(() => {
 const maxExpense = computed(() => Math.max(...annual.value.map(a => a.expense), 1))
 const hasAnnual = computed(() => annual.value.some(a => a.expense || a.income))
 
-// All-time by category, with per-subcategory breakdown (derived from real data:
-// includes hidden cats/subs and a '(—)' bucket for expenses with no subcategory).
-const totalCents = computed(() => store.expenses.value.reduce((a, e) => a + e.amountCents, 0))
+// ---- by category (scoped), with per-subcategory breakdown ----
 const byCat = computed(() => {
   const acc: Record<string, { total: number, subs: Record<string, number> }> = {}
-  for (const e of store.expenses.value) {
+  for (const e of scopeExpenses.value) {
     const a = acc[e.cat] || (acc[e.cat] = { total: 0, subs: {} })
     a.total += e.amountCents
     const sk = e.sub || ''
@@ -56,7 +73,6 @@ const byCat = computed(() => {
   }
   return Object.entries(acc).map(([catId, v]) => ({
     catId,
-    cat: cats.byId.value[catId],
     hue: cats.hue(catId),
     label: cats.catLabel(catId),
     cents: v.total,
@@ -77,35 +93,45 @@ function toggleCat(catId: string) {
 
 const byPerson = computed(() => {
   const map: Record<string, number> = {}
-  for (const e of store.expenses.value) map[e.userId] = (map[e.userId] || 0) + e.amountCents
+  for (const e of scopeExpenses.value) map[e.userId] = (map[e.userId] || 0) + e.amountCents
   return store.members.value.map(m => ({ member: m, cents: map[m.id] || 0 })).sort((a, b) => b.cents - a.cents)
 })
 const maxPerson = computed(() => Math.max(...byPerson.value.map(p => p.cents), 1))
 
 function printReport() {
-  if (!selected.value) return
-  window.open(`/relatorios-imprimir?mes=${selected.value}`, '_blank')
+  const q = mode.value === 'anual' ? `ano=${year.value}` : `mes=${selected.value}`
+  if (!q.split('=')[1]) return
+  window.open(`/relatorios-imprimir?${q}`, '_blank')
 }
 </script>
 
 <template>
   <div style="max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px">
-    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end">
-      <AppMonthPicker />
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+      <UiSegmented v-model="mode" :options="[{ value: 'anual', label: $t('reports.annual') }, { value: 'mensal', label: $t('reports.monthly') }]" />
+      <div style="flex: 1" />
+      <AppMonthPicker v-if="mode === 'mensal'" />
+      <div v-else style="width: 120px">
+        <UiSelect :model-value="year" @update:model-value="year = $event">
+          <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
+        </UiSelect>
+      </div>
       <UiButton variant="outline" icon="receipt" @click="printReport">{{ $t('reports.print') }}</UiButton>
     </div>
 
-    <UiCard :pad="22">
-      <UiSectionTitle>
-        {{ $t('reports.annualEvolution') }}
-        <template #action>
-          <div style="width: 110px">
-            <UiSelect :model-value="year" @update:model-value="year = $event">
-              <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
-            </UiSelect>
-          </div>
-        </template>
-      </UiSectionTitle>
+    <!-- Period totals -->
+    <UiCard :pad="20">
+      <div style="display: flex; gap: 28px; flex-wrap: wrap; align-items: center">
+        <div style="font-size: 13px; color: var(--muted); text-transform: capitalize; min-width: 120px">{{ periodLabel }}</div>
+        <div><div class="tnum" style="font-weight: 700; font-size: 18px; color: var(--pos)">{{ $n(incomeCents / 100, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.income') }}</div></div>
+        <div><div class="tnum" style="font-weight: 700; font-size: 18px">{{ $n(expenseCents / 100, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.totalSpent') }}</div></div>
+        <div><div class="tnum" style="font-weight: 700; font-size: 18px" :style="{ color: saldoCents >= 0 ? 'var(--pos)' : 'var(--neg)' }">{{ saldoCents >= 0 ? '+' : '' }}{{ $n(saldoCents / 100, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.balance') }}</div></div>
+      </div>
+    </UiCard>
+
+    <!-- Annual evolution (annual mode only) -->
+    <UiCard v-if="mode === 'anual'" :pad="22">
+      <UiSectionTitle>{{ $t('reports.annualEvolution') }}</UiSectionTitle>
       <div v-if="hasAnnual" style="display: flex; align-items: flex-end; gap: 6px; height: 210px; padding-top: 18px">
         <div v-for="a in annual" :key="a.mk"
           style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; min-width: 0">
@@ -125,7 +151,7 @@ function printReport() {
     <div class="dash-cols" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
       <UiCard :pad="22">
         <UiSectionTitle>{{ $t('reports.byCategory') }}</UiSectionTitle>
-        <div style="display: flex; flex-direction: column; gap: 14px">
+        <div v-if="byCat.length" style="display: flex; flex-direction: column; gap: 14px">
           <div v-for="x in byCat" :key="x.catId">
             <div style="display: flex; align-items: center; gap: 9px; margin-bottom: 6px; font-size: 13.5px; cursor: pointer" role="button"
               :aria-expanded="expanded.has(x.catId)" @click="toggleCat(x.catId)">
@@ -133,7 +159,7 @@ function printReport() {
               <span :style="{ width: '9px', height: '9px', borderRadius: '50%', background: catColor(x.hue, isDark), flexShrink: 0 }" />
               <span style="flex: 1">{{ x.label }}</span>
               <span class="tnum" style="font-weight: 600">{{ $n(x.cents / 100, 'currency0') }}</span>
-              <span class="tnum" style="color: var(--muted); width: 38px; text-align: right">{{ Math.round((x.cents / (totalCents || 1)) * 100) }}%</span>
+              <span class="tnum" style="color: var(--muted); width: 38px; text-align: right">{{ Math.round((x.cents / (expenseCents || 1)) * 100) }}%</span>
             </div>
             <UiMiniBar :value="x.cents" :max="maxCat" :color="catColor(x.hue, isDark)" />
             <!-- Subcategory breakdown -->
@@ -149,6 +175,7 @@ function printReport() {
             </div>
           </div>
         </div>
+        <UiEmptyState v-else icon="chart" :title="$t('reports.noData')" :sub="$t('reports.noDataSub')" />
       </UiCard>
 
       <UiCard :pad="22">

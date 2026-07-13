@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { monthKey, firstName } from '~~/shared/config'
 
-// Print-only report view: opened in a new tab as /relatorios/imprimir?mes=YYYY-MM.
+// Print-only report view: opened in a new tab as
+//   /relatorios-imprimir?mes=YYYY-MM  → monthly report (with transaction records)
+//   /relatorios-imprimir?ano=YYYY     → annual report (summary + evolution, no records)
 // No app chrome (layout: false); auto-triggers the browser print dialog once data
 // is loaded so the user can "Save as PDF".
 definePageMeta({ layout: false })
@@ -13,26 +15,37 @@ const incomeCats = useIncomeCategories()
 const { d, n, t, locale } = useI18n()
 const appName = useRuntimeConfig().public.appName
 
+// Mode from the query: annual when ?ano=YYYY, else monthly (?mes=YYYY-MM).
+const anoQ = computed(() => String(route.query.ano || ''))
+const isAnnual = computed(() => /^\d{4}$/.test(anoQ.value))
 const mes = computed(() => {
   const q = String(route.query.mes || '')
   return /^\d{4}-\d{2}$/.test(q) ? q : monthKey(new Date().toISOString().slice(0, 10))
 })
-const [yy, mm] = mes.value.split('-').map(Number)
-const monthTitle = computed(() => d(new Date(yy, mm - 1, 1), 'monthYear'))
+const year = computed(() => isAnnual.value ? anoQ.value : mes.value.slice(0, 4))
+const periodTitle = computed(() => {
+  if (isAnnual.value) return year.value
+  const [y, m] = mes.value.split('-').map(Number)
+  return d(new Date(y, m - 1, 1), 'monthYear')
+})
 
-const monthExpenses = computed(() =>
-  store.expenses.value.filter(e => monthKey(e.date) === mes.value).sort((a, b) => (a.date < b.date ? -1 : 1)))
-const monthIncomes = computed(() =>
-  store.incomes.value.filter(i => monthKey(i.date) === mes.value).sort((a, b) => (a.date < b.date ? -1 : 1)))
+// Scope filter: whole year (annual) vs a single month.
+function inScope(date: string) {
+  return isAnnual.value ? date.slice(0, 4) === year.value : monthKey(date) === mes.value
+}
+const scopeExpenses = computed(() =>
+  store.expenses.value.filter(e => inScope(e.date)).sort((a, b) => (a.date < b.date ? -1 : 1)))
+const scopeIncomes = computed(() =>
+  store.incomes.value.filter(i => inScope(i.date)).sort((a, b) => (a.date < b.date ? -1 : 1)))
 
-const expenseCents = computed(() => monthExpenses.value.reduce((a, e) => a + e.amountCents, 0))
-const incomeCents = computed(() => monthIncomes.value.reduce((a, i) => a + i.amountCents, 0))
+const expenseCents = computed(() => scopeExpenses.value.reduce((a, e) => a + e.amountCents, 0))
+const incomeCents = computed(() => scopeIncomes.value.reduce((a, i) => a + i.amountCents, 0))
 const saldoCents = computed(() => incomeCents.value - expenseCents.value)
-const avgCents = computed(() => monthExpenses.value.length ? expenseCents.value / monthExpenses.value.length : 0)
+const avgCents = computed(() => scopeExpenses.value.length ? expenseCents.value / scopeExpenses.value.length : 0)
 
 const byCat = computed(() => {
   const acc: Record<string, { total: number, subs: Record<string, number> }> = {}
-  for (const e of monthExpenses.value) {
+  for (const e of scopeExpenses.value) {
     const a = acc[e.cat] || (acc[e.cat] = { total: 0, subs: {} })
     a.total += e.amountCents
     const sk = e.sub || ''
@@ -52,16 +65,17 @@ const members = computed(() => store.members.value)
 const quotaCents = computed(() => members.value.length ? expenseCents.value / members.value.length : 0)
 const byPerson = computed(() => {
   const map: Record<string, number> = {}
-  for (const e of monthExpenses.value) map[e.userId] = (map[e.userId] || 0) + e.amountCents
+  for (const e of scopeExpenses.value) map[e.userId] = (map[e.userId] || 0) + e.amountCents
   return members.value.map(m => ({ member: m, paid: map[m.id] || 0, diff: (map[m.id] || 0) - quotaCents.value }))
     .sort((a, b) => b.paid - a.paid)
 })
 
-// Annual mini (12 months of the report's year).
+// Annual mini (12 months of the report's year). In monthly mode it highlights the
+// month being reported; in annual mode there is no single "current" month.
 const annual = computed(() => {
   const exp: Record<string, number> = {}
   const inc: Record<string, number> = {}
-  const y = String(yy)
+  const y = year.value
   for (const e of store.expenses.value) if (e.date.slice(0, 4) === y) exp[monthKey(e.date)] = (exp[monthKey(e.date)] || 0) + e.amountCents
   for (const i of store.incomes.value) if (i.date.slice(0, 4) === y) inc[monthKey(i.date)] = (inc[monthKey(i.date)] || 0) + i.amountCents
   return Array.from({ length: 12 }, (_, m) => {
@@ -71,7 +85,7 @@ const annual = computed(() => {
       label: new Intl.DateTimeFormat(locale.value, { month: 'short' }).format(new Date(2000, m, 1)),
       expense: exp[mk] || 0,
       saldo: (inc[mk] || 0) - (exp[mk] || 0),
-      current: mk === mes.value,
+      current: !isAnnual.value && mk === mes.value,
     }
   })
 })
@@ -105,7 +119,7 @@ onMounted(async () => {
       <header class="head">
         <div>
           <div class="brand">{{ appName }}</div>
-          <h1>{{ t('reports.reportTitle', { month: monthTitle }) }}</h1>
+          <h1>{{ t('reports.reportTitle', { month: periodTitle }) }}</h1>
         </div>
         <div class="gen">{{ t('reports.generatedAt', { date: d(new Date(), 'long') }) }}</div>
       </header>
@@ -113,8 +127,8 @@ onMounted(async () => {
       <div class="stats">
         <div class="stat"><span>{{ t('summary.income') }}</span><b class="pos">{{ euro(incomeCents) }}</b></div>
         <div class="stat"><span>{{ t('summary.totalSpent') }}</span><b>{{ euro(expenseCents) }}</b></div>
-        <div class="stat"><span>{{ t('balance.monthBalance') }}</span><b :class="saldoCents >= 0 ? 'pos' : 'neg'">{{ saldoCents >= 0 ? '+' : '' }}{{ euro(saldoCents) }}</b></div>
-        <div class="stat"><span>{{ t('summary.movements') }}</span><b>{{ monthExpenses.length }}</b></div>
+        <div class="stat"><span>{{ t('summary.balance') }}</span><b :class="saldoCents >= 0 ? 'pos' : 'neg'">{{ saldoCents >= 0 ? '+' : '' }}{{ euro(saldoCents) }}</b></div>
+        <div class="stat"><span>{{ t('summary.movements') }}</span><b>{{ scopeExpenses.length }}</b></div>
         <div class="stat"><span>{{ t('summary.avgPerExpense') }}</span><b>{{ euro(avgCents) }}</b></div>
       </div>
 
@@ -154,7 +168,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <h2>{{ t('reports.annualEvolution') }} · {{ yy }}</h2>
+      <h2>{{ t('reports.annualEvolution') }} · {{ year }}</h2>
       <div class="annual">
         <div v-for="a in annual" :key="a.mk" class="acol">
           <div class="aval">{{ a.expense ? n(a.expense / 100, 'currency0') : '' }}</div>
@@ -169,62 +183,64 @@ onMounted(async () => {
       </div>
     </section>
 
-    <!-- Page 2+: expense records -->
-    <section class="sheet records">
-      <h2>{{ t('nav.expenses') }} · {{ monthTitle }}</h2>
-      <table class="records-table">
-        <thead>
-          <tr>
-            <th>{{ t('reports.colDate') }}</th>
-            <th>{{ t('reports.colCategory') }}</th>
-            <th>{{ t('reports.colSub') }}</th>
-            <th>{{ t('reports.colMethod') }}</th>
-            <th>{{ t('reports.colWho') }}</th>
-            <th class="num">{{ t('reports.colAmount') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="e in monthExpenses" :key="e.id">
-            <td>{{ day(e.date) }}</td>
-            <td>{{ cats.catLabel(e.cat) }}</td>
-            <td>{{ e.sub ? cats.subLabel(e.cat, e.sub) : '—' }}</td>
-            <td>{{ e.method || '—' }}</td>
-            <td>{{ firstName(memberName(e.userId)) }}</td>
-            <td class="num">{{ euro(e.amountCents) }}</td>
-          </tr>
-          <tr v-if="!monthExpenses.length"><td class="muted" colspan="6">{{ t('reports.noRecords') }}</td></tr>
-        </tbody>
-        <tfoot v-if="monthExpenses.length">
-          <tr><td colspan="5">{{ t('summary.total') }}</td><td class="num">{{ euro(expenseCents) }}</td></tr>
-        </tfoot>
-      </table>
-    </section>
+    <!-- Page 2+: transaction records (monthly report only — a full year would be
+         too many pages; the annual report is a summary) -->
+    <template v-if="!isAnnual">
+      <section class="sheet records">
+        <h2>{{ t('nav.expenses') }} · {{ periodTitle }}</h2>
+        <table class="records-table">
+          <thead>
+            <tr>
+              <th>{{ t('reports.colDate') }}</th>
+              <th>{{ t('reports.colCategory') }}</th>
+              <th>{{ t('reports.colSub') }}</th>
+              <th>{{ t('reports.colMethod') }}</th>
+              <th>{{ t('reports.colWho') }}</th>
+              <th class="num">{{ t('reports.colAmount') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="e in scopeExpenses" :key="e.id">
+              <td>{{ day(e.date) }}</td>
+              <td>{{ cats.catLabel(e.cat) }}</td>
+              <td>{{ e.sub ? cats.subLabel(e.cat, e.sub) : '—' }}</td>
+              <td>{{ e.method || '—' }}</td>
+              <td>{{ firstName(memberName(e.userId)) }}</td>
+              <td class="num">{{ euro(e.amountCents) }}</td>
+            </tr>
+            <tr v-if="!scopeExpenses.length"><td class="muted" colspan="6">{{ t('reports.noRecords') }}</td></tr>
+          </tbody>
+          <tfoot v-if="scopeExpenses.length">
+            <tr><td colspan="5">{{ t('summary.total') }}</td><td class="num">{{ euro(expenseCents) }}</td></tr>
+          </tfoot>
+        </table>
+      </section>
 
-    <!-- Income records -->
-    <section v-if="monthIncomes.length" class="sheet records">
-      <h2>{{ t('balance.income') }} · {{ monthTitle }}</h2>
-      <table class="records-table">
-        <thead>
-          <tr>
-            <th>{{ t('reports.colDate') }}</th>
-            <th>{{ t('incomeModal.category') }}</th>
-            <th>{{ t('reports.colWho') }}</th>
-            <th class="num">{{ t('reports.colAmount') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="i in monthIncomes" :key="i.id">
-            <td>{{ day(i.date) }}</td>
-            <td>{{ i.incomeCat ? incomeCats.catLabel(i.incomeCat) : (i.source || '—') }}</td>
-            <td>{{ firstName(memberName(i.userId)) }}</td>
-            <td class="num">{{ euro(i.amountCents) }}</td>
-          </tr>
-        </tbody>
-        <tfoot>
-          <tr><td colspan="3">{{ t('summary.total') }}</td><td class="num">{{ euro(incomeCents) }}</td></tr>
-        </tfoot>
-      </table>
-    </section>
+      <section v-if="scopeIncomes.length" class="sheet records">
+        <h2>{{ t('balance.income') }} · {{ periodTitle }}</h2>
+        <table class="records-table">
+          <thead>
+            <tr>
+              <th>{{ t('reports.colDate') }}</th>
+              <th>{{ t('incomeModal.category') }}</th>
+              <th>{{ t('reports.colWho') }}</th>
+              <th class="num">{{ t('reports.colAmount') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="i in scopeIncomes" :key="i.id">
+              <td>{{ day(i.date) }}</td>
+              <td>{{ i.incomeCat ? incomeCats.catLabel(i.incomeCat) : (i.source || '—') }}</td>
+              <td>{{ firstName(memberName(i.userId)) }}</td>
+              <td class="num">{{ euro(i.amountCents) }}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr><td colspan="3">{{ t('summary.total') }}</td><td class="num">{{ euro(incomeCents) }}</td></tr>
+          </tfoot>
+        </table>
+      </section>
+    </template>
   </div>
 </template>
 

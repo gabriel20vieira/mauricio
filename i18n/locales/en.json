@@ -143,7 +143,9 @@
     "colMethod": "Method",
     "colWho": "Who",
     "colAmount": "Amount",
-    "noRecords": "No movements this month."
+    "noRecords": "No movements this month.",
+    "annual": "Annual",
+    "monthly": "Monthly"
   },
   "people": {
     "addMember": "Add member",
