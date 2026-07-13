@@ -35,7 +35,8 @@ const visibleNav = computed(() => nav.filter(n =>
 const navMain = computed(() => visibleNav.value.filter(n => n.group === 'nav'))
 const navMgmt = computed(() => visibleNav.value.filter(n => n.group === 'mgmt'))
 
-const bottomNav = computed(() => visibleNav.value.slice(0, 5))
+// Four nav links + two quick-add buttons (expense/income) fit the mobile bar.
+const bottomNav = computed(() => visibleNav.value.slice(0, 4))
 
 watch(() => route.path, () => { navOpen.value = false })
 
@@ -126,6 +127,10 @@ function navLinkStyle(active: boolean) {
         <button style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px; font-size: 10.5px; font-weight: 600; color: var(--accent); background: none; border: none"
           @click="openNewExpense">
           <UiIcon name="plus" :size="20" />{{ $t('nav.expenses') }}
+        </button>
+        <button style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px; font-size: 10.5px; font-weight: 600; color: var(--pos); background: none; border: none"
+          @click="openNewIncome">
+          <UiIcon name="trend" :size="20" />{{ $t('balance.income') }}
         </button>
       </nav>
     </div>
