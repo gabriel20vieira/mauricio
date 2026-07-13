@@ -30,9 +30,21 @@ const saldoCents = computed(() => incomeCents.value - expenseCents.value)
 const avgCents = computed(() => monthExpenses.value.length ? expenseCents.value / monthExpenses.value.length : 0)
 
 const byCat = computed(() => {
-  const map: Record<string, number> = {}
-  for (const e of monthExpenses.value) map[e.cat] = (map[e.cat] || 0) + e.amountCents
-  return Object.entries(map).map(([cat, cents]) => ({ cat, cents })).sort((a, b) => b.cents - a.cents)
+  const acc: Record<string, { total: number, subs: Record<string, number> }> = {}
+  for (const e of monthExpenses.value) {
+    const a = acc[e.cat] || (acc[e.cat] = { total: 0, subs: {} })
+    a.total += e.amountCents
+    const sk = e.sub || ''
+    a.subs[sk] = (a.subs[sk] || 0) + e.amountCents
+  }
+  return Object.entries(acc).map(([cat, v]) => ({
+    cat,
+    label: cats.catLabel(cat),
+    cents: v.total,
+    subs: Object.entries(v.subs)
+      .map(([subId, cents]) => ({ subId, label: subId ? cats.subLabel(cat, subId) : '(—)', cents }))
+      .sort((a, b) => b.cents - a.cents),
+  })).sort((a, b) => b.cents - a.cents)
 })
 
 const members = computed(() => store.members.value)
@@ -110,11 +122,18 @@ onMounted(async () => {
           <h2>{{ t('summary.byCategory') }}</h2>
           <table class="mini">
             <tbody>
-              <tr v-for="x in byCat" :key="x.cat">
-                <td>{{ cats.catLabel(x.cat) }}</td>
-                <td class="num">{{ euro(x.cents) }}</td>
-                <td class="num muted">{{ Math.round((x.cents / (expenseCents || 1)) * 100) }}%</td>
-              </tr>
+              <template v-for="x in byCat" :key="x.cat">
+                <tr class="cat-row">
+                  <td>{{ x.label }}</td>
+                  <td class="num">{{ euro(x.cents) }}</td>
+                  <td class="num muted">{{ Math.round((x.cents / (expenseCents || 1)) * 100) }}%</td>
+                </tr>
+                <tr v-for="s in x.subs" :key="x.cat + s.subId" class="sub-row">
+                  <td class="sub">{{ s.label }}</td>
+                  <td class="num muted">{{ euro(s.cents) }}</td>
+                  <td class="num muted">{{ Math.round((s.cents / (x.cents || 1)) * 100) }}%</td>
+                </tr>
+              </template>
               <tr v-if="!byCat.length"><td class="muted" colspan="3">—</td></tr>
             </tbody>
           </table>
@@ -240,6 +259,10 @@ onMounted(async () => {
 h2 { font-size: 14px; font-weight: 700; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid #ddd; }
 .mini { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .mini td { padding: 4px 2px; border-bottom: 1px solid #f0f0f0; }
+.mini .cat-row td { font-weight: 600; border-bottom: none; padding-top: 6px; }
+.mini .sub-row td { font-size: 11px; color: #666; padding: 2px 2px; border-bottom: none; }
+.mini .sub-row td.sub { padding-left: 14px; }
+.mini .cat-row { break-inside: avoid; }
 .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .quota { font-size: 12px; color: #555; margin-top: 8px; }
 

@@ -43,14 +43,37 @@ const annual = computed(() => {
 const maxExpense = computed(() => Math.max(...annual.value.map(a => a.expense), 1))
 const hasAnnual = computed(() => annual.value.some(a => a.expense || a.income))
 
-// All-time by category
+// All-time by category, with per-subcategory breakdown (derived from real data:
+// includes hidden cats/subs and a '(—)' bucket for expenses with no subcategory).
 const totalCents = computed(() => store.expenses.value.reduce((a, e) => a + e.amountCents, 0))
 const byCat = computed(() => {
-  const map: Record<string, number> = {}
-  for (const e of store.expenses.value) map[e.cat] = (map[e.cat] || 0) + e.amountCents
-  return cats.active.value.map(c => ({ cat: c, cents: map[c.id] || 0 })).filter(x => x.cents > 0).sort((a, b) => b.cents - a.cents)
+  const acc: Record<string, { total: number, subs: Record<string, number> }> = {}
+  for (const e of store.expenses.value) {
+    const a = acc[e.cat] || (acc[e.cat] = { total: 0, subs: {} })
+    a.total += e.amountCents
+    const sk = e.sub || ''
+    a.subs[sk] = (a.subs[sk] || 0) + e.amountCents
+  }
+  return Object.entries(acc).map(([catId, v]) => ({
+    catId,
+    cat: cats.byId.value[catId],
+    hue: cats.hue(catId),
+    label: cats.catLabel(catId),
+    cents: v.total,
+    subs: Object.entries(v.subs)
+      .map(([subId, cents]) => ({ subId, label: subId ? cats.subLabel(catId, subId) : '(—)', cents }))
+      .sort((a, b) => b.cents - a.cents),
+  })).filter(x => x.cents > 0).sort((a, b) => b.cents - a.cents)
 })
 const maxCat = computed(() => Math.max(...byCat.value.map(x => x.cents), 1))
+
+// Expand/collapse state for per-category subcategory detail.
+const expanded = ref<Set<string>>(new Set())
+function toggleCat(catId: string) {
+  const s = new Set(expanded.value)
+  s.has(catId) ? s.delete(catId) : s.add(catId)
+  expanded.value = s
+}
 
 const byPerson = computed(() => {
   const map: Record<string, number> = {}
@@ -103,13 +126,27 @@ function printReport() {
       <UiCard :pad="22">
         <UiSectionTitle>{{ $t('reports.byCategory') }}</UiSectionTitle>
         <div style="display: flex; flex-direction: column; gap: 14px">
-          <div v-for="x in byCat" :key="x.cat.id">
-            <div style="display: flex; align-items: center; gap: 9px; margin-bottom: 6px; font-size: 13.5px">
-              <UiCatDot :cat="x.cat" :size="9" /><span style="flex: 1">{{ cats.catLabel(x.cat.id) }}</span>
+          <div v-for="x in byCat" :key="x.catId">
+            <div style="display: flex; align-items: center; gap: 9px; margin-bottom: 6px; font-size: 13.5px; cursor: pointer" role="button"
+              :aria-expanded="expanded.has(x.catId)" @click="toggleCat(x.catId)">
+              <UiIcon :name="expanded.has(x.catId) ? 'chevDown' : 'chevRight'" :size="14" style="color: var(--muted); flex-shrink: 0" />
+              <span :style="{ width: '9px', height: '9px', borderRadius: '50%', background: catColor(x.hue, isDark), flexShrink: 0 }" />
+              <span style="flex: 1">{{ x.label }}</span>
               <span class="tnum" style="font-weight: 600">{{ $n(x.cents / 100, 'currency0') }}</span>
               <span class="tnum" style="color: var(--muted); width: 38px; text-align: right">{{ Math.round((x.cents / (totalCents || 1)) * 100) }}%</span>
             </div>
-            <UiMiniBar :value="x.cents" :max="maxCat" :color="catColor(x.cat.hue, isDark)" />
+            <UiMiniBar :value="x.cents" :max="maxCat" :color="catColor(x.hue, isDark)" />
+            <!-- Subcategory breakdown -->
+            <div v-if="expanded.has(x.catId) && x.subs.length" style="display: flex; flex-direction: column; gap: 8px; margin: 10px 0 2px 23px">
+              <div v-for="s in x.subs" :key="s.subId">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 12.5px; color: var(--ink-2)">
+                  <span style="flex: 1">{{ s.label }}</span>
+                  <span class="tnum">{{ $n(s.cents / 100, 'currency0') }}</span>
+                  <span class="tnum" style="color: var(--muted); width: 34px; text-align: right">{{ Math.round((s.cents / (x.cents || 1)) * 100) }}%</span>
+                </div>
+                <UiMiniBar :value="s.cents" :max="x.cents" :color="catColor(x.hue, isDark)" />
+              </div>
+            </div>
           </div>
         </div>
       </UiCard>
