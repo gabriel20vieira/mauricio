@@ -2,6 +2,7 @@
 // READ tools query the DB. PROPOSE / CHART tools never mutate — they return a
 // descriptor card the client renders (with a confirm button for writes).
 
+import { randomUUID } from 'node:crypto'
 import { desc } from 'drizzle-orm'
 import type { H3Event } from 'h3'
 import { db, schema } from './db'
@@ -15,6 +16,7 @@ import { loadIncomeCategories, incomeCatName, incomeCatNameMap } from './incomeC
 // ---- card descriptors sent to the client ----
 export interface ConfirmCard {
   kind: 'confirm'
+  id: string // stable id so the client can persist a per-card "confirmed" state
   action: 'add' | 'update' | 'delete' | 'add_income'
   payload: Record<string, any>
   summary: string
@@ -354,7 +356,7 @@ export async function runTool(name: string, args: Record<string, any>, user: Use
       }
       const subTxt = payload.sub ? (subMap[payload.sub] || payload.sub) : ''
       const summary = `Adicionar gasto de ${euro(payload.amount)} em ${catMap[args.cat] || args.cat}${subTxt ? ` · ${subTxt}` : ''} (${args.date})${payload.note ? ` — ${payload.note}` : ''}${m ? ` · ${m.name}` : ''}`
-      return { label: 'Propôs adicionar gasto', result: { proposto: true, aguardaConfirmacao: true, resumo: summary }, card: { kind: 'confirm', action: 'add', payload, summary } }
+      return { label: 'Propôs adicionar gasto', result: { proposto: true, aguardaConfirmacao: true, resumo: summary }, card: { kind: 'confirm', id: randomUUID(), action: 'add', payload, summary } }
     }
 
     case 'propose_add_income': {
@@ -366,7 +368,7 @@ export async function runTool(name: string, args: Record<string, any>, user: Use
       }
       const catTxt = incMap[args.cat] || args.cat
       const summary = `Adicionar rendimento de ${euro(payload.amount)} — ${catTxt} (${args.date})${payload.note ? ` — ${payload.note}` : ''}${m ? ` · ${m.name}` : ''}`
-      return { label: 'Propôs adicionar rendimento', result: { proposto: true, aguardaConfirmacao: true, resumo: summary }, card: { kind: 'confirm', action: 'add_income', payload, summary } }
+      return { label: 'Propôs adicionar rendimento', result: { proposto: true, aguardaConfirmacao: true, resumo: summary }, card: { kind: 'confirm', id: randomUUID(), action: 'add_income', payload, summary } }
     }
 
     case 'propose_update_expense': {
@@ -376,7 +378,7 @@ export async function runTool(name: string, args: Record<string, any>, user: Use
       for (const k of ['date', 'cat', 'sub', 'note', 'method'] as const) if (args[k] != null) payload[k] = args[k]
       if (args.amount != null) payload.amount = Number(args.amount)
       const summary = `Editar gasto ${euro(target.amountCents / 100)} (${target.date}) → ${Object.entries(payload).filter(([k]) => k !== 'id').map(([k, v]) => `${k}: ${v}`).join(', ') || 'sem alterações'}`
-      return { label: 'Propôs editar gasto', result: { proposto: true, aguardaConfirmacao: true, resumo: summary }, card: { kind: 'confirm', action: 'update', payload, summary } }
+      return { label: 'Propôs editar gasto', result: { proposto: true, aguardaConfirmacao: true, resumo: summary }, card: { kind: 'confirm', id: randomUUID(), action: 'update', payload, summary } }
     }
 
     case 'propose_delete_expense': {
@@ -384,7 +386,7 @@ export async function runTool(name: string, args: Record<string, any>, user: Use
       if (!target) return { label: 'Gasto não encontrado', result: { erro: 'Gasto não encontrado com esse ID.' } }
       const v = expenseView(target, members, catMap, subMap)
       const summary = `Eliminar gasto de ${v.valor} em ${v.categoria} (${v.date})${v.nota ? ` — ${v.nota}` : ''} · ${v.quem}`
-      return { label: 'Propôs eliminar gasto', result: { proposto: true, aguardaConfirmacao: true, resumo: summary }, card: { kind: 'confirm', action: 'delete', payload: { id: target.id }, summary } }
+      return { label: 'Propôs eliminar gasto', result: { proposto: true, aguardaConfirmacao: true, resumo: summary }, card: { kind: 'confirm', id: randomUUID(), action: 'delete', payload: { id: target.id }, summary } }
     }
 
     case 'aggregate': {

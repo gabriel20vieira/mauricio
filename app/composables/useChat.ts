@@ -1,5 +1,6 @@
 export interface ConfirmCard {
   kind: 'confirm'
+  id?: string // stable card id (persist a per-card confirmed state)
   action: 'add' | 'update' | 'delete' | 'add_income'
   payload: Record<string, any>
   summary: string

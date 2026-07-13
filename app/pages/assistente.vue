@@ -58,7 +58,9 @@ async function openConversation(id: string) {
   const data = await $fetch<{ messages: any[] }>(`/api/chat/conversations/${id}`)
   messages.value = data.messages.map(m => m.role === 'user'
     ? { id: m.id, role: 'user', content: m.content, segments: [] }
-    : { id: m.id, role: 'assistant', segments: (m.segments || []).map((s: any) => ({ ...s, done: true })) })
+    // A card segment persisted as confirmed rehydrates as status:'done' so the
+    // confirm button is gone and it can't be re-added.
+    : { id: m.id, role: 'assistant', segments: (m.segments || []).map((s: any) => ({ ...s, done: true, status: s.confirmed ? 'done' : s.status })) })
   scrollDown()
 }
 
@@ -134,6 +136,10 @@ async function confirmCard(cs: UiSegment) {
       await store.deleteExpense(p.id)
     }
     cs.status = 'done'
+    // Persist the confirmed state so reopening the conversation keeps it done.
+    if (activeId.value && cs.card.id) {
+      await $fetch('/api/chat/cards/confirm', { method: 'POST', body: { conversationId: activeId.value, cardId: cs.card.id } }).catch(() => {})
+    }
   } catch (e: any) {
     cs.status = 'error'
     cs.error = e?.data?.statusMessage || e?.statusMessage || e?.message || 'Falhou.'
