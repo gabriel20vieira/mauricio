@@ -16,6 +16,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // Authenticated: keep them out of the auth screens.
   if (to.path === '/login' || to.path === '/setup') return navigateTo('/')
 
+  // /balanco was merged into the home dashboard — redirect old links.
+  if (to.path === '/balanco') return navigateTo('/')
+
   // Admin-only area.
   if (to.path.startsWith('/administracao') && user.value?.role !== 'admin') {
     return navigateTo('/')
