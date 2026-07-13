@@ -5,6 +5,7 @@ import { db, schema } from '../../utils/db'
 import { broadcastIncomeUpsert } from '../../utils/realtime'
 
 const Body = z.object({
+  id: z.string().uuid().optional(), // idempotency key (e.g. an assistant card id)
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida'),
   amount: z.number().positive('Valor deve ser positivo'),
   cat: z.string().min(1, 'Categoria obrigatória'), // income category id
@@ -29,8 +30,16 @@ export default defineEventHandler(async (event) => {
   const [cat] = await db.select().from(schema.incomeCategories).where(eq(schema.incomeCategories.id, body.cat)).limit(1)
   if (!cat || !cat.active) throw createError({ statusCode: 400, statusMessage: 'Categoria inválida.' })
 
+  // If a caller-supplied id already exists, this is a duplicate submit (e.g. an
+  // assistant confirm-card re-clicked after a failed state persist) — return the
+  // existing row instead of creating a second one (idempotent).
+  if (body.id) {
+    const [existing] = await db.select().from(schema.incomes).where(eq(schema.incomes.id, body.id)).limit(1)
+    if (existing) return existing
+  }
+
   const row = {
-    id: randomUUID(),
+    id: body.id || randomUUID(),
     date: body.date,
     amountCents: Math.round(body.amount * 100),
     incomeCat: body.cat,

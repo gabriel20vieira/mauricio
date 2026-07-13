@@ -20,6 +20,7 @@ export interface Expense {
 }
 
 export interface ExpenseInput {
+  id?: string // optional idempotency key
   date: string
   amount: number
   cat: string
@@ -41,6 +42,7 @@ export interface Income {
 }
 
 export interface IncomeInput {
+  id?: string // optional idempotency key
   date: string
   amount: number
   cat: string // income category id

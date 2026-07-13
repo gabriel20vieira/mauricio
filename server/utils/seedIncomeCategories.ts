@@ -26,14 +26,15 @@ export async function seedIncomeCategoriesIfEmpty(db: MySql2Database<typeof sche
         nameEn: cat.en, namePt: cat.pt, nameEs: cat.es, description: '',
       })
     }
-    // Backfill legacy incomes (source free-text) → category id. Text match, else 'outro'.
-    // Order matters least-specific last; run specific matches first so 'outro' is the fallback.
-    await tx.update(schema.incomes).set({ incomeCat: 'salario' })
-      .where(and(eq(schema.incomes.incomeCat, ''), like(schema.incomes.source, '%sal%')))
+    // Backfill legacy incomes (source free-text) → category id, best-effort, else
+    // 'outro'. Use specific stems (not a bare '%sal%' that would catch 'sala',
+    // 'salgados', etc.) and run the broadest last so narrower matches win.
     await tx.update(schema.incomes).set({ incomeCat: 'subsidio' })
-      .where(and(eq(schema.incomes.incomeCat, ''), or(like(schema.incomes.source, '%subs%'), like(schema.incomes.source, '%subsíd%'))))
+      .where(and(eq(schema.incomes.incomeCat, ''), or(like(schema.incomes.source, '%subsid%'), like(schema.incomes.source, '%subsíd%'))))
     await tx.update(schema.incomes).set({ incomeCat: 'extra' })
       .where(and(eq(schema.incomes.incomeCat, ''), like(schema.incomes.source, '%extra%')))
+    await tx.update(schema.incomes).set({ incomeCat: 'salario' })
+      .where(and(eq(schema.incomes.incomeCat, ''), or(like(schema.incomes.source, '%salár%'), like(schema.incomes.source, '%salar%'))))
     await tx.update(schema.incomes).set({ incomeCat: 'outro' })
       .where(eq(schema.incomes.incomeCat, ''))
   })

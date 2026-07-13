@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { monthKey, parseDate, stepMonth } from '~~/shared/config'
+import { monthKey, stepMonth } from '~~/shared/config'
 import type { Movement, Expense, Income } from '~/composables/useStore'
 
 definePageMeta({ titleKey: 'nav.movements', subtitleKey: 'pageSub.movements' })
@@ -10,7 +10,10 @@ const activeCats = cats.active
 const activeIncomeCats = incomeCats.active
 const { openNewExpense, openNewIncome } = useAppUi()
 const { d } = useI18n()
-const selected = useMonth() // defaults to the current month; no syncMonth (free navigation)
+// Page-local month state (NOT the shared useMonth): the arrow stepper navigates
+// freely, defaults to the current month, and never coerces or is coerced by the
+// dashboard/reports month picker.
+const selected = ref(monthKey(new Date().toISOString().slice(0, 10)))
 onMounted(() => store.ensure())
 
 const q = ref('')

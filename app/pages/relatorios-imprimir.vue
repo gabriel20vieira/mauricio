@@ -9,6 +9,7 @@ definePageMeta({ layout: false })
 const route = useRoute()
 const store = useStore()
 const cats = useCategories()
+const incomeCats = useIncomeCategories()
 const { d, n, t, locale } = useI18n()
 const appName = useRuntimeConfig().public.appName
 
@@ -206,7 +207,7 @@ onMounted(async () => {
         <thead>
           <tr>
             <th>{{ t('reports.colDate') }}</th>
-            <th>{{ t('incomeModal.source') }}</th>
+            <th>{{ t('incomeModal.category') }}</th>
             <th>{{ t('reports.colWho') }}</th>
             <th class="num">{{ t('reports.colAmount') }}</th>
           </tr>
@@ -214,7 +215,7 @@ onMounted(async () => {
         <tbody>
           <tr v-for="i in monthIncomes" :key="i.id">
             <td>{{ day(i.date) }}</td>
-            <td>{{ i.source || '—' }}</td>
+            <td>{{ i.incomeCat ? incomeCats.catLabel(i.incomeCat) : (i.source || '—') }}</td>
             <td>{{ firstName(memberName(i.userId)) }}</td>
             <td class="num">{{ euro(i.amountCents) }}</td>
           </tr>

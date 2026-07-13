@@ -5,6 +5,7 @@ import { db, schema } from '../../utils/db'
 import { broadcastExpenseUpsert } from '../../utils/realtime'
 
 const Body = z.object({
+  id: z.string().uuid().optional(), // idempotency key (e.g. an assistant card id)
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida'),
   amount: z.number().positive('Valor deve ser positivo'),
   cat: z.string().min(1),
@@ -27,8 +28,14 @@ export default defineEventHandler(async (event) => {
     if (!target || !target.active) throw createError({ statusCode: 400, statusMessage: 'Membro inválido.' })
   }
 
+  // Idempotent on a caller-supplied id (e.g. a re-clicked assistant confirm card).
+  if (body.id) {
+    const [existing] = await db.select().from(schema.expenses).where(eq(schema.expenses.id, body.id)).limit(1)
+    if (existing) return existing
+  }
+
   const row = {
-    id: randomUUID(),
+    id: body.id || randomUUID(),
     date: body.date,
     amountCents: Math.round(body.amount * 100),
     cat: body.cat,
