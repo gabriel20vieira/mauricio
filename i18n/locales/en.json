@@ -6,7 +6,8 @@
     "balance": "Balance",
     "assistant": "Assistant",
     "people": "People",
-    "admin": "Administration"
+    "admin": "Administration",
+    "movements": "Movements"
   },
   "pageSub": {
     "summary": "Overview of the household accounts",
@@ -16,7 +17,8 @@
     "assistant": "Ask about the household accounts",
     "people": "Household members",
     "admin": "Manage members and categories",
-    "profile": "Your account and preferences"
+    "profile": "Your account and preferences",
+    "movements": "Household expenses and income"
   },
   "common": {
     "save": "Save",
@@ -341,5 +343,13 @@
     "category": "Category",
     "errCat": "Pick a category.",
     "noCategory": "No categories."
+  },
+  "movements": {
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "expenses": "Expenses",
+    "incomes": "Income",
+    "emptyTitle": "No movements this month",
+    "emptySub": "Add an expense or income."
   }
 }

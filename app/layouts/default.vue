@@ -21,7 +21,7 @@ const router = useRouter()
 
 const nav = [
   { to: '/', labelKey: 'nav.summary', icon: 'dashboard', group: 'nav' },
-  { to: '/gastos', labelKey: 'nav.expenses', icon: 'receipt', group: 'nav' },
+  { to: '/gastos', labelKey: 'nav.movements', icon: 'receipt', group: 'nav' },
   { to: '/relatorios', labelKey: 'nav.reports', icon: 'chart', group: 'nav' },
   { to: '/balanco', labelKey: 'nav.balance', icon: 'scale', group: 'nav' },
   { to: '/assistente', labelKey: 'nav.assistant', icon: 'sparkles', group: 'nav' },

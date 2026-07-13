@@ -6,7 +6,8 @@
     "balance": "Balance",
     "assistant": "Asistente",
     "people": "Personas",
-    "admin": "Administración"
+    "admin": "Administración",
+    "movements": "Movimientos"
   },
   "pageSub": {
     "summary": "Visión general de las cuentas del hogar",
@@ -16,7 +17,8 @@
     "assistant": "Pregunta sobre las cuentas del hogar",
     "people": "Miembros del hogar",
     "admin": "Gestión de miembros y categorías",
-    "profile": "Tu cuenta y preferencias"
+    "profile": "Tu cuenta y preferencias",
+    "movements": "Gastos e ingresos del hogar"
   },
   "common": {
     "save": "Guardar",
@@ -341,5 +343,13 @@
     "category": "Categoría",
     "errCat": "Elige una categoría.",
     "noCategory": "Sin categorías."
+  },
+  "movements": {
+    "prevMonth": "Mes anterior",
+    "nextMonth": "Mes siguiente",
+    "expenses": "Gastos",
+    "incomes": "Ingresos",
+    "emptyTitle": "Sin movimientos este mes",
+    "emptySub": "Añade un gasto o ingreso."
   }
 }

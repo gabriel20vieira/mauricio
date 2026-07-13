@@ -6,7 +6,8 @@
     "balance": "Balanço",
     "assistant": "Assistente",
     "people": "Pessoas",
-    "admin": "Administração"
+    "admin": "Administração",
+    "movements": "Movimentos"
   },
   "pageSub": {
     "summary": "Visão geral das contas da casa",
@@ -16,7 +17,8 @@
     "assistant": "Pergunta sobre as contas da casa",
     "people": "Membros da casa",
     "admin": "Gestão de membros e categorias",
-    "profile": "A sua conta e preferências"
+    "profile": "A sua conta e preferências",
+    "movements": "Gastos e rendimentos da casa"
   },
   "common": {
     "save": "Guardar",
@@ -341,5 +343,13 @@
     "category": "Categoria",
     "errCat": "Escolha uma categoria.",
     "noCategory": "Sem categorias."
+  },
+  "movements": {
+    "prevMonth": "Mês anterior",
+    "nextMonth": "Mês seguinte",
+    "expenses": "Gastos",
+    "incomes": "Rendimentos",
+    "emptyTitle": "Sem movimentos neste mês",
+    "emptySub": "Adicione um gasto ou rendimento."
   }
 }

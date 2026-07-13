@@ -27,7 +27,7 @@ watch(open, (o) => {
   const e = editing.value
   if (e) {
     form.amount = (e.amountCents / 100).toFixed(2)
-    form.cat = e.cat; form.date = e.date
+    form.cat = e.incomeCat; form.date = e.date
     form.who = e.userId; form.note = e.note
   } else {
     form.amount = ''; form.cat = defaultCat(); form.date = today

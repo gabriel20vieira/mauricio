@@ -10,6 +10,12 @@ export function euro0(n: number) { return fmtEUR0.format(n || 0) }
 
 export function parseDate(s: string) { const [y, m, d] = s.split('-').map(Number); return { y, m: m - 1, d } }
 export function monthKey(s: string) { const p = parseDate(s); return `${p.y}-${String(p.m + 1).padStart(2, '0')}` }
+// Step a 'yyyy-mm' month key by `delta` months, rolling the year over as needed.
+export function stepMonth(mk: string, delta: number): string {
+  const [y, m] = mk.split('-').map(Number)
+  const d = new Date(y, (m - 1) + delta, 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
 export function fmtDate(s: string) { const p = parseDate(s); return `${String(p.d).padStart(2, '0')} ${MONTHS_PT[p.m]} ${p.y}` }
 export function fmtDateShort(s: string) { const p = parseDate(s); return `${String(p.d).padStart(2, '0')} ${MONTHS_PT[p.m]}` }
 

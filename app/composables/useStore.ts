@@ -33,7 +33,7 @@ export interface Income {
   id: string
   date: string
   amountCents: number
-  cat: string // income category id
+  incomeCat: string // income category id (matches the API/DB field name)
   source: string // legacy free-text (historical rows)
   note: string
   userId: string

@@ -11,7 +11,7 @@ const { openEditIncome } = useAppUi()
 const member = computed(() => store.memberById.value[props.income.userId])
 const canEdit = computed(() => user.value?.role === 'admin' || props.income.userId === user.value?.id)
 // Category label (fallback to legacy free-text source, then a default).
-const label = computed(() => props.income.cat ? incomeCats.catLabel(props.income.cat) : (props.income.source || t('income.defaultSource')))
+const label = computed(() => props.income.incomeCat ? incomeCats.catLabel(props.income.incomeCat) : (props.income.source || t('income.defaultSource')))
 const { t } = useI18n()
 </script>
 
