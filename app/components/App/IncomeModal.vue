@@ -1,16 +1,22 @@
 <script setup lang="ts">
+import { catColor, catSoft } from '~~/shared/config'
+
 const { t } = useI18n()
 const { incomeModal, closeIncome } = useAppUi()
 const store = useStore()
+const incomeCats = useIncomeCategories()
+const activeCats = incomeCats.active // top-level binding so the template unwraps the ref
 const { user } = useUserSession()
+const { isDark } = useTweaks()
 
 const editing = computed(() => incomeModal.value.editing)
 const open = computed(() => incomeModal.value.open)
 const isAdmin = computed(() => user.value?.role === 'admin')
 
 const today = new Date().toISOString().slice(0, 10)
+const defaultCat = () => incomeCats.active.value[0]?.id ?? ''
 const form = reactive({
-  amount: '', source: '', date: today, who: user.value?.id ?? '', note: '',
+  amount: '', cat: '', date: today, who: user.value?.id ?? '', note: '',
 })
 const error = ref('')
 const saving = ref(false)
@@ -21,10 +27,10 @@ watch(open, (o) => {
   const e = editing.value
   if (e) {
     form.amount = (e.amountCents / 100).toFixed(2)
-    form.source = e.source; form.date = e.date
+    form.cat = e.cat; form.date = e.date
     form.who = e.userId; form.note = e.note
   } else {
-    form.amount = ''; form.source = ''; form.date = today
+    form.amount = ''; form.cat = defaultCat(); form.date = today
     form.who = user.value?.id ?? ''; form.note = ''
   }
 })
@@ -33,19 +39,25 @@ watch(open, (o) => {
 const canChangeWho = computed(() => isAdmin.value)
 const lockedOther = computed(() => !!editing.value && !isAdmin.value && editing.value.userId !== user.value?.id)
 
-// Quick-pick suggestions for the source field.
-const sourceSuggestions = computed(() => [
-  t('incomeModal.srcSalary'), t('incomeModal.srcSubsidy'), t('incomeModal.srcExtra'), t('incomeModal.srcOther'),
-])
+function chipStyle(active: boolean, hue: number) {
+  return {
+    display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 12px', borderRadius: '99px',
+    fontSize: '13px', fontWeight: 530, cursor: 'pointer', transition: 'all 0.14s',
+    border: '1px solid ' + (active ? 'transparent' : 'var(--border-2)'),
+    background: active ? catSoft(hue, isDark.value) : 'transparent',
+    color: active ? catColor(hue, isDark.value) : 'var(--ink-2)',
+  }
+}
 
 async function submit() {
   error.value = ''
   const amount = parseFloat(form.amount.replace(',', '.'))
   if (!amount || amount <= 0) { error.value = t('incomeModal.errAmount'); return }
+  if (!form.cat) { error.value = t('incomeModal.errCat'); return }
   saving.value = true
   try {
     const body = {
-      date: form.date, amount, source: form.source, note: form.note,
+      date: form.date, amount, cat: form.cat, note: form.note,
       who: canChangeWho.value ? form.who : undefined,
     }
     if (editing.value) await store.updateIncome(editing.value.id, body)
@@ -89,12 +101,13 @@ async function remove() {
         </div>
       </div>
 
-      <UiField :label="$t('incomeModal.source')" style="margin-bottom: 14px">
-        <UiInput v-model="form.source" :placeholder="$t('incomeModal.sourcePlaceholder')" :disabled="lockedOther" />
-        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px">
-          <button v-for="s in sourceSuggestions" :key="s" type="button" :disabled="lockedOther"
-            style="padding: 5px 11px; border-radius: 99px; font-size: 12.5px; font-weight: 530; cursor: pointer; border: 1px solid var(--border-2); background: transparent; color: var(--ink-2)"
-            @click="form.source = s">{{ s }}</button>
+      <UiField :label="$t('incomeModal.category')" style="margin-bottom: 14px">
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
+          <button v-for="c in activeCats" :key="c.id" type="button" :disabled="lockedOther"
+            :style="chipStyle(form.cat === c.id, c.hue)" @click="form.cat = c.id">
+            <span :style="{ width: '8px', height: '8px', borderRadius: '50%', background: catColor(c.hue, isDark) }" />{{ incomeCats.catLabel(c.id) }}
+          </button>
+          <span v-if="!activeCats.length" style="font-size: 13px; color: var(--muted); padding: 6px 2px">{{ $t('incomeModal.noCategory') }}</span>
         </div>
       </UiField>
 

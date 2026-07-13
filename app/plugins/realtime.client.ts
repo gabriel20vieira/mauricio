@@ -43,6 +43,8 @@ export default defineNuxtPlugin(() => {
           store.applyMember(m.item)
         } else if (m.resource === 'category') {
           store.applyCategory(m.item)
+        } else if (m.resource === 'income_category') {
+          store.applyIncomeCategory(m.item)
         } else if (m.resource === 'bulk') {
           store.refresh().catch(() => {}) // bulk import — refetch everything
         }

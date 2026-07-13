@@ -7,7 +7,7 @@ import { broadcastIncomeUpsert } from '../../utils/realtime'
 const Body = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida'),
   amount: z.number().positive('Valor deve ser positivo'),
-  source: z.string().default(''),
+  cat: z.string().min(1, 'Categoria obrigatória'), // income category id
   note: z.string().default(''),
   who: z.string().optional(), // userId — admin may set; others forced to self
 })
@@ -25,11 +25,16 @@ export default defineEventHandler(async (event) => {
     if (!target || !target.active) throw createError({ statusCode: 400, statusMessage: 'Membro inválido.' })
   }
 
+  // Validate the income category exists and is active.
+  const [cat] = await db.select().from(schema.incomeCategories).where(eq(schema.incomeCategories.id, body.cat)).limit(1)
+  if (!cat || !cat.active) throw createError({ statusCode: 400, statusMessage: 'Categoria inválida.' })
+
   const row = {
     id: randomUUID(),
     date: body.date,
     amountCents: Math.round(body.amount * 100),
-    source: body.source,
+    incomeCat: body.cat,
+    source: '',
     note: body.note,
     userId,
     createdAt: Date.now(),

@@ -221,7 +221,9 @@
     "importInvalidFile": "Ficheiro inválido — não é um export desta aplicação.",
     "importKindMismatch": "Tipo errado: o ficheiro não corresponde a este tipo de import (total vs movimentos).",
     "importPartialDone": "Adicionados {e} gastos e {i} rendimentos · {s} ignorados (já existiam).",
-    "importFailed": "Não foi possível importar."
+    "importFailed": "Não foi possível importar.",
+    "incomeCategories": "Categorias de rendimento",
+    "manageIncomeCategoriesSub": "Categorias usadas nos rendimentos (salário, subsídio, extra, outro)."
   },
   "profile": {
     "accountData": "Dados da conta",
@@ -335,6 +337,9 @@
     "srcSalary": "Salário",
     "srcSubsidy": "Subsídio",
     "srcExtra": "Extra",
-    "srcOther": "Outro"
+    "srcOther": "Outro",
+    "category": "Categoria",
+    "errCat": "Escolha uma categoria.",
+    "noCategory": "Sem categorias."
   }
 }

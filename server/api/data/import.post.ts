@@ -27,7 +27,8 @@ const IncomeRow = z.object({
   id: Id,
   date: DateStr,
   amountCents: z.number().int().positive(),
-  source: z.string().max(120).default(''),
+  incomeCat: z.string().max(64).default(''),
+  source: z.string().max(120).default(''), // legacy free-text (older exports)
   note: z.string().max(500).default(''),
   userId: Id,
   createdAt: Millis,
@@ -50,6 +51,7 @@ const CategoryRow = z.object({
   description: z.string().max(255).default(''),
 })
 const SubcategoryRow = CategoryRow.omit({ hue: true }).extend({ categoryId: Id })
+const IncomeCategoryRow = CategoryRow // same flat shape (id, hue, sort, active, names, description)
 const ChatConversationRow = z.object({
   id: Id, userId: Id, title: z.string().max(255).default('Nova conversa'), createdAt: Millis, updatedAt: Millis,
 })
@@ -65,6 +67,7 @@ const TotalData = z.object({
   settings: z.array(SettingRow).default([]),
   categories: z.array(CategoryRow).default([]),
   subcategories: z.array(SubcategoryRow).default([]),
+  incomeCategories: z.array(IncomeCategoryRow).default([]),
   expenses: z.array(ExpenseRow).default([]),
   incomes: z.array(IncomeRow).default([]),
   chatConversations: z.array(ChatConversationRow).default([]),
@@ -126,6 +129,7 @@ export default defineEventHandler(async (event) => {
       await tx.delete(schema.incomes)
       await tx.delete(schema.subcategories)
       await tx.delete(schema.categories)
+      await tx.delete(schema.incomeCategories)
       await tx.delete(schema.users)
       await tx.delete(schema.settings)
       // Insert parents → children, chunked to stay under the MySQL packet limit.
@@ -133,6 +137,7 @@ export default defineEventHandler(async (event) => {
       for (const c of chunks(d.settings)) await tx.insert(schema.settings).values(c)
       for (const c of chunks(d.categories)) await tx.insert(schema.categories).values(c)
       for (const c of chunks(d.subcategories)) await tx.insert(schema.subcategories).values(c)
+      for (const c of chunks(d.incomeCategories)) await tx.insert(schema.incomeCategories).values(c)
       for (const c of chunks(d.expenses)) await tx.insert(schema.expenses).values(c)
       for (const c of chunks(d.incomes)) await tx.insert(schema.incomes).values(c)
       for (const c of chunks(d.chatConversations)) await tx.insert(schema.chatConversations).values(c)
@@ -147,6 +152,7 @@ export default defineEventHandler(async (event) => {
       loggedOut: true,
       counts: {
         users: d.users.length, categories: d.categories.length, subcategories: d.subcategories.length,
+        incomeCategories: d.incomeCategories.length,
         expenses: d.expenses.length, incomes: d.incomes.length,
         chatConversations: d.chatConversations.length, chatMessages: d.chatMessages.length,
       },

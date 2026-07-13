@@ -10,17 +10,18 @@ export default defineEventHandler(async (event) => {
 
   let data: Record<string, unknown>
   if (scope === 'total') {
-    const [users, settings, categories, subcategories, expenses, incomes, chatConversations, chatMessages] = await Promise.all([
+    const [users, settings, categories, subcategories, incomeCategories, expenses, incomes, chatConversations, chatMessages] = await Promise.all([
       db.select().from(schema.users),
       db.select().from(schema.settings),
       db.select().from(schema.categories),
       db.select().from(schema.subcategories),
+      db.select().from(schema.incomeCategories),
       db.select().from(schema.expenses),
       db.select().from(schema.incomes),
       db.select().from(schema.chatConversations),
       db.select().from(schema.chatMessages),
     ])
-    data = { users, settings, categories, subcategories, expenses, incomes, chatConversations, chatMessages }
+    data = { users, settings, categories, subcategories, incomeCategories, expenses, incomes, chatConversations, chatMessages }
   } else {
     const [expenses, incomes] = await Promise.all([
       db.select().from(schema.expenses),

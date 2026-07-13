@@ -63,6 +63,26 @@ async function toggleSub(s: any) {
   else await store.updateSubcategory(s.id, { active: true })
 }
 
+// --- income categories management (flat, no subcategories) ---
+const incomeCats = useIncomeCategories()
+const incCatModal = reactive({ open: false, id: '', hue: 155, names: { en: '', pt: '', es: '' }, description: '', error: '' })
+function openIncCatNew() { Object.assign(incCatModal, { open: true, id: '', hue: 155, names: { en: '', pt: '', es: '' }, description: '', error: '' }) }
+function openIncCatEdit(c: any) { Object.assign(incCatModal, { open: true, id: c.id, hue: c.hue, names: { ...c.names }, description: c.description || '', error: '' }) }
+const incCatNameEmpty = computed(() => !incCatModal.names.en && !incCatModal.names.pt && !incCatModal.names.es)
+async function saveIncCat() {
+  incCatModal.error = ''
+  if (incCatNameEmpty.value) return
+  try {
+    if (incCatModal.id) await store.updateIncomeCategory(incCatModal.id, { names: incCatModal.names, hue: incCatModal.hue, description: incCatModal.description })
+    else await store.addIncomeCategory({ names: incCatModal.names, hue: incCatModal.hue, description: incCatModal.description })
+    incCatModal.open = false
+  } catch (e: any) { incCatModal.error = e?.data?.statusMessage || 'Erro' }
+}
+async function toggleIncCat(c: any) {
+  if (c.active) { if (!confirm(t('admin.hideWarning'))) return; await store.hideIncomeCategory(c.id) }
+  else await store.updateIncomeCategory(c.id, { active: true })
+}
+
 // Auto-translate the filled name into the other languages (needs assistant on).
 const assistantEnabled = useAssistantEnabled()
 const translating = ref(false)
@@ -310,6 +330,29 @@ async function confirmImport() {
       </div>
     </UiCard>
 
+    <!-- Income categories (flat) -->
+    <UiCard :pad="22">
+      <UiSectionTitle>
+        {{ $t('admin.incomeCategories') }}
+        <template #action><UiButton icon="plus" size="sm" @click="openIncCatNew">{{ $t('admin.addCategory') }}</UiButton></template>
+      </UiSectionTitle>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 8px">{{ $t('admin.manageIncomeCategoriesSub') }}</p>
+
+      <div style="display: flex; flex-direction: column">
+        <div v-for="c in store.incomeCategories.value" :key="c.id"
+          :style="{ padding: '12px 2px', borderTop: '1px solid var(--border)', opacity: c.active ? 1 : 0.55 }">
+          <div style="display: flex; align-items: center; gap: 10px">
+            <span :style="{ width: '12px', height: '12px', borderRadius: '50%', background: catColor(c.hue, isDark), flexShrink: 0 }" />
+            <span style="font-weight: 600; font-size: 14px">{{ incomeCats.catLabel(c.id) }}</span>
+            <UiTag v-if="!c.active" tone="muted">{{ $t('admin.hidden') }}</UiTag>
+            <div style="flex: 1" />
+            <button class="lk" @click="openIncCatEdit(c)">{{ $t('common.edit') }}</button>
+            <button class="lk" :style="{ color: c.active ? 'var(--neg)' : 'var(--accent)' }" @click="toggleIncCat(c)">{{ c.active ? $t('admin.hide') : $t('admin.show') }}</button>
+          </div>
+        </div>
+      </div>
+    </UiCard>
+
     <!-- Assistant configuration -->
     <UiCard :pad="22">
       <UiSectionTitle>{{ $t('admin.assistant') }}</UiSectionTitle>
@@ -396,6 +439,31 @@ async function confirmImport() {
         <div style="display: flex; gap: 10px; justify-content: flex-end">
           <UiButton variant="ghost" type="button" @click="catModal.open = false">{{ $t('common.cancel') }}</UiButton>
           <UiButton type="submit" icon="check" :disabled="catNameEmpty">{{ $t('common.save') }}</UiButton>
+        </div>
+      </form>
+    </UiModal>
+
+    <!-- Income category modal (flat) -->
+    <UiModal :open="incCatModal.open" :title="incCatModal.id ? $t('admin.editCategory') : $t('admin.addCategory')" :width="460" @close="incCatModal.open = false">
+      <form style="padding: 22px" @submit.prevent="saveIncCat">
+        <UiField :label="$t('lang.en-US')" style="margin-bottom: 12px"><UiInput v-model="incCatModal.names.en" /></UiField>
+        <UiField :label="$t('lang.pt-PT')" style="margin-bottom: 12px"><UiInput v-model="incCatModal.names.pt" /></UiField>
+        <UiField :label="$t('lang.es-ES')" style="margin-bottom: 10px"><UiInput v-model="incCatModal.names.es" /></UiField>
+        <div v-if="assistantEnabled" style="margin-bottom: 14px">
+          <UiButton variant="subtle" size="sm" icon="sparkles" type="button" :disabled="incCatNameEmpty || translating" @click="translateNames(incCatModal)">{{ translating ? $t('common.processing') : $t('admin.autoTranslate') }}</UiButton>
+        </div>
+        <UiField :label="$t('admin.color')" style="margin-bottom: 18px">
+          <div style="display: flex; flex-direction: column; gap: 7px">
+            <div v-for="(row, ri) in CATEGORY_PALETTE" :key="ri" style="display: flex; gap: 7px">
+              <button v-for="h in row" :key="h" type="button" :title="`${h}°`" @click="incCatModal.hue = h"
+                :style="{ width: '28px', height: '28px', borderRadius: '50%', background: catColor(h, isDark), cursor: 'pointer', flexShrink: 0, border: incCatModal.hue === h ? '2px solid var(--ink)' : '2px solid transparent', boxShadow: incCatModal.hue === h ? '0 0 0 1px var(--border-2)' : 'none' }" />
+            </div>
+          </div>
+        </UiField>
+        <div v-if="incCatModal.error" style="color: var(--neg); font-size: 13px; margin-bottom: 12px">{{ incCatModal.error }}</div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end">
+          <UiButton variant="ghost" type="button" @click="incCatModal.open = false">{{ $t('common.cancel') }}</UiButton>
+          <UiButton type="submit" icon="check" :disabled="incCatNameEmpty">{{ $t('common.save') }}</UiButton>
         </div>
       </form>
     </UiModal>

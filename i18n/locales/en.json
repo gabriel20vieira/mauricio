@@ -221,7 +221,9 @@
     "importInvalidFile": "Invalid file — not an export of this app.",
     "importKindMismatch": "Wrong type: the file does not match this import type (everything vs movements).",
     "importPartialDone": "Added {e} expenses and {i} incomes · {s} skipped (already existed).",
-    "importFailed": "Import failed."
+    "importFailed": "Import failed.",
+    "incomeCategories": "Income categories",
+    "manageIncomeCategoriesSub": "Categories used for income (salary, subsidy, extra, other)."
   },
   "profile": {
     "accountData": "Account details",
@@ -335,6 +337,9 @@
     "srcSalary": "Salary",
     "srcSubsidy": "Subsidy",
     "srcExtra": "Extra",
-    "srcOther": "Other"
+    "srcOther": "Other",
+    "category": "Category",
+    "errCat": "Pick a category.",
+    "noCategory": "No categories."
   }
 }

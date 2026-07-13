@@ -6,7 +6,7 @@ import { broadcastIncomeUpsert } from '../../utils/realtime'
 const Body = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   amount: z.number().positive().optional(),
-  source: z.string().optional(),
+  cat: z.string().min(1).optional(), // income category id
   note: z.string().optional(),
   who: z.string().optional(),
 })
@@ -27,7 +27,11 @@ export default defineEventHandler(async (event) => {
   const patch: Record<string, unknown> = {}
   if (body.date !== undefined) patch.date = body.date
   if (body.amount !== undefined) patch.amountCents = Math.round(body.amount * 100)
-  if (body.source !== undefined) patch.source = body.source
+  if (body.cat !== undefined) {
+    const [cat] = await db.select().from(schema.incomeCategories).where(eq(schema.incomeCategories.id, body.cat)).limit(1)
+    if (!cat || !cat.active) throw createError({ statusCode: 400, statusMessage: 'Categoria inválida.' })
+    patch.incomeCat = body.cat
+  }
   if (body.note !== undefined) patch.note = body.note
   if (user.role === 'admin' && body.who !== undefined) {
     const [target] = await db.select().from(schema.users).where(eq(schema.users.id, body.who)).limit(1)

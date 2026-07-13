@@ -3,6 +3,7 @@ import { drizzle } from 'drizzle-orm/mysql2'
 import { sql } from 'drizzle-orm'
 import * as schema from '../db/schema'
 import { seedCategoriesIfEmpty } from './seedCategories'
+import { seedIncomeCategoriesIfEmpty } from './seedIncomeCategories'
 
 // MySQL connection pool. Configurable via env (set in docker compose / .env).
 const pool = mysql.createPool({
@@ -69,10 +70,21 @@ const DDL = [
     created_at BIGINT NOT NULL,
     CONSTRAINT fk_exp_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+  `CREATE TABLE IF NOT EXISTS income_categories (
+    id VARCHAR(64) PRIMARY KEY,
+    hue INT NOT NULL DEFAULT 155,
+    sort INT NOT NULL DEFAULT 0,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    name_en VARCHAR(255) NOT NULL DEFAULT '',
+    name_pt VARCHAR(255) NOT NULL DEFAULT '',
+    name_es VARCHAR(255) NOT NULL DEFAULT '',
+    description VARCHAR(255) NOT NULL DEFAULT ''
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
   `CREATE TABLE IF NOT EXISTS incomes (
     id VARCHAR(36) PRIMARY KEY,
     date VARCHAR(10) NOT NULL,
     amount_cents INT NOT NULL,
+    income_cat VARCHAR(64) NOT NULL DEFAULT '',
     source VARCHAR(120) NOT NULL DEFAULT '',
     note VARCHAR(500) NOT NULL DEFAULT '',
     user_id VARCHAR(36) NOT NULL,
@@ -145,7 +157,10 @@ async function doInit() {
   await ensureColumn('chat_messages', 'segments', 'segments TEXT NULL')
   await ensureColumn('categories', 'description', "description VARCHAR(255) NOT NULL DEFAULT ''")
   await ensureColumn('subcategories', 'description', "description VARCHAR(255) NOT NULL DEFAULT ''")
+  // Income category link (databases created before income categories existed).
+  await ensureColumn('incomes', 'income_cat', "income_cat VARCHAR(64) NOT NULL DEFAULT ''")
   await seedCategoriesIfEmpty(db)
+  await seedIncomeCategoriesIfEmpty(db)
 }
 
 export async function userCount(): Promise<number> {

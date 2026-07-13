@@ -33,7 +33,8 @@ export interface Income {
   id: string
   date: string
   amountCents: number
-  source: string
+  cat: string // income category id
+  source: string // legacy free-text (historical rows)
   note: string
   userId: string
   createdAt: number
@@ -42,37 +43,59 @@ export interface Income {
 export interface IncomeInput {
   date: string
   amount: number
-  source: string
+  cat: string // income category id
   note: string
   who?: string
+}
+
+// A unified movement: an expense (negative) or an income (positive). `ref` is the
+// original row so callers can open the right edit modal.
+export interface Movement {
+  kind: 'expense' | 'income'
+  id: string
+  date: string
+  amountCents: number // always positive magnitude
+  signedCents: number // negative for expense, positive for income
+  note: string
+  userId: string
+  createdAt: number
+  ref: Expense | Income
 }
 
 export interface CatNames { en: string; pt: string; es: string }
 export interface SubcategoryT { id: string; sort: number; active: boolean; names: CatNames; description: string }
 export interface CategoryT { id: string; hue: number; sort: number; active: boolean; names: CatNames; subs: SubcategoryT[]; description: string }
+// Income categories are flat (no subcategories).
+export interface IncomeCategoryT { id: string; hue: number; sort: number; active: boolean; names: CatNames; description: string }
 
 export function useStore() {
   const expenses = useState<Expense[]>('expenses', () => [])
   const incomes = useState<Income[]>('incomes', () => [])
   const members = useState<Member[]>('members', () => [])
   const categories = useState<CategoryT[]>('categories', () => [])
+  const incomeCategories = useState<IncomeCategoryT[]>('income-categories', () => [])
   const loaded = useState<boolean>('store-loaded', () => false)
 
   async function refresh() {
-    const [ex, inc, me, cats] = await Promise.all([
+    const [ex, inc, me, cats, incCats] = await Promise.all([
       $fetch<Expense[]>('/api/expenses'),
       $fetch<Income[]>('/api/incomes'),
       $fetch<Member[]>('/api/users'),
       $fetch<CategoryT[]>('/api/categories'),
+      $fetch<IncomeCategoryT[]>('/api/income-categories'),
     ])
     expenses.value = ex
     incomes.value = inc
     members.value = me
     categories.value = cats
+    incomeCategories.value = incCats
     loaded.value = true
   }
   async function refreshCategories() {
     categories.value = await $fetch<CategoryT[]>('/api/categories')
+  }
+  async function refreshIncomeCategories() {
+    incomeCategories.value = await $fetch<IncomeCategoryT[]>('/api/income-categories')
   }
 
   async function ensure() {
@@ -148,6 +171,17 @@ export function useStore() {
     await $fetch(`/api/subcategories/${id}`, { method: 'DELETE' }); await refreshCategories()
   }
 
+  // ---- income categories (flat) ----
+  async function addIncomeCategory(body: { names: CatNames; hue: number; description?: string }) {
+    await $fetch('/api/income-categories', { method: 'POST', body }); await refreshIncomeCategories()
+  }
+  async function updateIncomeCategory(id: string, body: { names?: Partial<CatNames>; hue?: number; active?: boolean; description?: string }) {
+    await $fetch(`/api/income-categories/${id}`, { method: 'PATCH', body }); await refreshIncomeCategories()
+  }
+  async function hideIncomeCategory(id: string) {
+    await $fetch(`/api/income-categories/${id}`, { method: 'DELETE' }); await refreshIncomeCategories()
+  }
+
   // ---- realtime apply (from websocket events; no refetch) ----
   function applyExpense(e: Expense) {
     const has = expenses.value.some(x => x.id === e.id)
@@ -171,6 +205,23 @@ export function useStore() {
     const has = categories.value.some(x => x.id === c.id)
     categories.value = has ? categories.value.map(x => x.id === c.id ? c : x) : [...categories.value, c]
   }
+  function applyIncomeCategory(c: IncomeCategoryT) {
+    const has = incomeCategories.value.some(x => x.id === c.id)
+    incomeCategories.value = has ? incomeCategories.value.map(x => x.id === c.id ? c : x) : [...incomeCategories.value, c]
+  }
+
+  // Unified movement list (expenses + incomes), newest first.
+  const movements = computed<Movement[]>(() => {
+    const ex: Movement[] = expenses.value.map(e => ({
+      kind: 'expense', id: e.id, date: e.date, amountCents: e.amountCents, signedCents: -e.amountCents,
+      note: e.note, userId: e.userId, createdAt: e.createdAt, ref: e,
+    }))
+    const inc: Movement[] = incomes.value.map(i => ({
+      kind: 'income', id: i.id, date: i.date, amountCents: i.amountCents, signedCents: i.amountCents,
+      note: i.note, userId: i.userId, createdAt: i.createdAt, ref: i,
+    }))
+    return [...ex, ...inc].sort((a, b) => a.date < b.date ? 1 : a.date > b.date ? -1 : b.createdAt - a.createdAt)
+  })
 
   // ---- sessions ----
   function fetchSessions(all = false) {
@@ -181,15 +232,16 @@ export function useStore() {
   }
 
   return {
-    expenses, incomes, members, categories, loaded, memberById, activeMembers,
-    refresh, refreshCategories, ensure,
+    expenses, incomes, members, categories, incomeCategories, loaded, memberById, activeMembers, movements,
+    refresh, refreshCategories, refreshIncomeCategories, ensure,
     addExpense, updateExpense, deleteExpense,
     addIncome, updateIncome, deleteIncome,
     addMember, updateMember, deleteMember, setMemberActive,
     addCategory, updateCategory, hideCategory,
     addSubcategory, updateSubcategory, hideSubcategory,
+    addIncomeCategory, updateIncomeCategory, hideIncomeCategory,
     fetchSessions, revokeSession,
-    applyExpense, applyExpenseRemove, applyIncome, applyIncomeRemove, applyMember, applyCategory,
+    applyExpense, applyExpenseRemove, applyIncome, applyIncomeRemove, applyMember, applyCategory, applyIncomeCategory,
   }
 }
 
@@ -207,13 +259,14 @@ export interface SessionInfo {
 // ---- analytics helpers (pure) ----
 import { monthKey } from '~~/shared/config'
 
-export function listMonths(expenses: Expense[]): string[] {
-  const set = new Set(expenses.map(e => monthKey(e.date)))
+// Structural {date, amountCents} so these work for expenses, incomes and movements.
+export function listMonths(rows: { date: string }[]): string[] {
+  const set = new Set(rows.map(e => monthKey(e.date)))
   return [...set].sort().reverse()
 }
-export function expensesForMonth(expenses: Expense[], mk: string): Expense[] {
-  return expenses.filter(e => monthKey(e.date) === mk)
+export function expensesForMonth<T extends { date: string }>(rows: T[], mk: string): T[] {
+  return rows.filter(e => monthKey(e.date) === mk)
 }
-export function sumCents(rows: Expense[]): number {
+export function sumCents(rows: { amountCents: number }[]): number {
   return rows.reduce((a, e) => a + e.amountCents, 0)
 }

@@ -126,7 +126,7 @@ async function confirmCard(cs: UiSegment) {
     if (cs.card.action === 'add') {
       await store.addExpense({ date: p.date, amount: p.amount, cat: p.cat, sub: p.sub || '', note: p.note || '', method: p.method || '', who: p.who })
     } else if (cs.card.action === 'add_income') {
-      await store.addIncome({ date: p.date, amount: p.amount, source: p.source || '', note: p.note || '', who: p.who })
+      await store.addIncome({ date: p.date, amount: p.amount, cat: p.cat, note: p.note || '', who: p.who })
     } else if (cs.card.action === 'update') {
       const { id, ...rest } = p
       await store.updateExpense(id, rest)

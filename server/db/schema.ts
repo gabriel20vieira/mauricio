@@ -64,13 +64,28 @@ export const expenses = mysqlTable('expenses', {
   createdAt: bigint('created_at', { mode: 'number' }).notNull(),
 })
 
+// Income categories (salário, subsídio, extra, outro). A SEPARATE, flat table from
+// expense `categories` — income categories never mix with expense ones. No
+// subcategories. `active=false` = hidden (reversible), kept for historical resolve.
+export const incomeCategories = mysqlTable('income_categories', {
+  id: varchar('id', { length: 64 }).primaryKey(),
+  hue: int('hue').notNull().default(155),
+  sort: int('sort').notNull().default(0),
+  active: boolean('active').notNull().default(true),
+  nameEn: varchar('name_en', { length: 255 }).notNull().default(''),
+  namePt: varchar('name_pt', { length: 255 }).notNull().default(''),
+  nameEs: varchar('name_es', { length: 255 }).notNull().default(''),
+  description: varchar('description', { length: 255 }).notNull().default(''),
+})
+
 // Household income (salaries, subsidies, other inflows). Mirrors expenses but is a
 // separate table so existing expense queries/aggregations stay untouched.
 export const incomes = mysqlTable('incomes', {
   id: varchar('id', { length: 36 }).primaryKey(),
   date: varchar('date', { length: 10 }).notNull(), // ISO yyyy-mm-dd
   amountCents: int('amount_cents').notNull(),
-  source: varchar('source', { length: 120 }).notNull().default(''), // e.g. Salário
+  incomeCat: varchar('income_cat', { length: 64 }).notNull().default(''), // income category id
+  source: varchar('source', { length: 120 }).notNull().default(''), // legacy free-text; kept for backfill/history
   note: varchar('note', { length: 500 }).notNull().default(''),
   userId: varchar('user_id', { length: 36 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
   createdAt: bigint('created_at', { mode: 'number' }).notNull(),
@@ -110,6 +125,7 @@ export const sessions = mysqlTable('sessions', {
 export type User = typeof users.$inferSelect
 export type Expense = typeof expenses.$inferSelect
 export type Income = typeof incomes.$inferSelect
+export type IncomeCategory = typeof incomeCategories.$inferSelect
 export type Session = typeof sessions.$inferSelect
 export type ChatConversation = typeof chatConversations.$inferSelect
 export type ChatMessage = typeof chatMessages.$inferSelect

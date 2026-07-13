@@ -4,11 +4,15 @@ import type { Income } from '~/composables/useStore'
 
 const props = defineProps<{ income: Income }>()
 const store = useStore()
+const incomeCats = useIncomeCategories()
 const { user } = useUserSession()
 const { openEditIncome } = useAppUi()
 
 const member = computed(() => store.memberById.value[props.income.userId])
 const canEdit = computed(() => user.value?.role === 'admin' || props.income.userId === user.value?.id)
+// Category label (fallback to legacy free-text source, then a default).
+const label = computed(() => props.income.cat ? incomeCats.catLabel(props.income.cat) : (props.income.source || t('income.defaultSource')))
+const { t } = useI18n()
 </script>
 
 <template>
@@ -19,7 +23,7 @@ const canEdit = computed(() => user.value?.role === 'admin' || props.income.user
     </div>
 
     <div style="min-width: 0">
-      <div style="font-weight: 600; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ income.source || $t('income.defaultSource') }}</div>
+      <div style="font-weight: 600; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ label }}</div>
       <div style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); margin-top: 2px">
         <template v-if="income.note">{{ income.note }} · </template>{{ $d(new Date(income.date + 'T00:00:00'), 'short') }}
       </div>
