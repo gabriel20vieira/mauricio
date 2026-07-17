@@ -47,7 +47,18 @@ export default defineNuxtConfig({
     head: {
       title: `${process.env.NUXT_PUBLIC_APP_NAME || 'Maurício'} — contas de casa`,
       htmlAttrs: { lang: 'pt', 'data-theme': 'light', 'data-density': 'regular' },
+      meta: [
+        { name: 'theme-color', content: '#f6f5f1' },
+        { name: 'mobile-web-app-capable', content: 'yes' },
+        { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
+        { name: 'apple-mobile-web-app-title', content: process.env.NUXT_PUBLIC_APP_NAME || 'Maurício' },
+      ],
       link: [
+        { rel: 'manifest', href: '/manifest.webmanifest' },
+        { rel: 'icon', href: '/favicon.ico', sizes: 'any' },
+        { rel: 'icon', type: 'image/png', href: '/icon-192.png', sizes: '192x192' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png', sizes: '180x180' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         {

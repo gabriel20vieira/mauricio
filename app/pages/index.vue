@@ -122,7 +122,7 @@ const recent = computed(() => monthMovements.value.slice(0, 6))
           {{ $t('summary.byCategory') }}
           <template #action><NuxtLink to="/relatorios" style="font-size: 13px; color: var(--accent); font-weight: 600">{{ $t('summary.viewReports') }}</NuxtLink></template>
         </UiSectionTitle>
-        <div v-if="byCat.length" style="display: flex; align-items: center; gap: 24px">
+        <div v-if="byCat.length" class="donut-row" style="display: flex; align-items: center; gap: 24px">
           <UiDonut :segments="donutSegments" :size="168">
             <template #center>
               <div>
@@ -134,7 +134,7 @@ const recent = computed(() => monthMovements.value.slice(0, 6))
           <div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
             <div v-for="x in byCat.slice(0, 5)" :key="x.cat.id" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px">
               <UiCatDot :cat="x.cat" :size="9" />
-              <span style="flex: 1">{{ cats.catLabel(x.cat.id) }}</span>
+              <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ cats.catLabel(x.cat.id) }}</span>
               <span class="tnum" style="font-weight: 600">{{ $n(x.cents / 100, 'currency0') }}</span>
               <span class="tnum" style="color: var(--muted); width: 38px; text-align: right">{{ Math.round((x.cents / (total * 100 || 1)) * 100) }}%</span>
             </div>
@@ -149,8 +149,8 @@ const recent = computed(() => monthMovements.value.slice(0, 6))
           <div v-for="c in contrib" :key="c.member.id">
             <div style="display: flex; align-items: center; gap: 11px; margin-bottom: 7px">
               <UiAvatar :member="c.member" :size="30" />
-              <span style="flex: 1; font-weight: 540; font-size: 14px">{{ firstName(c.member.name) }}</span>
-              <div style="text-align: right">
+              <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 540; font-size: 14px">{{ firstName(c.member.name) }}</span>
+              <div style="text-align: right; white-space: nowrap">
                 <span class="tnum" style="font-weight: 600">{{ $n(c.paid, 'currency') }}</span>
                 <span class="tnum" style="font-size: 12px; margin-left: 8px" :style="{ color: c.diff >= 0 ? 'var(--pos)' : 'var(--neg)' }">
                   {{ c.diff >= 0 ? '+' : '' }}{{ $n(c.diff, 'currency0') }}
