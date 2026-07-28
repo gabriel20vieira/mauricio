@@ -33,7 +33,9 @@ export default defineNuxtConfig({
     // nuxt-auth-utils session hardening (password comes from NUXT_SESSION_PASSWORD).
     session: {
       name: 'lar-session',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      // Ceiling only — the real lifetime is chosen per login (see
+      // server/utils/session.ts): 30 days with "remember me", 1 day without.
+      maxAge: 60 * 60 * 24 * 30, // 30 days
       cookie: {
         sameSite: 'strict', // CSRF defence for state-changing requests
         httpOnly: true,

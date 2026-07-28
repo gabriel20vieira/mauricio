@@ -11,12 +11,18 @@ const email = ref('')
 const password = ref('')
 const error = ref('')
 const loading = ref(false)
+// Stays on by default — a household device shouldn't ask for the password daily.
+const remember = ref(true)
+
+// Keep the last choice so unticking it isn't undone on the next visit.
+onMounted(() => { remember.value = localStorage.getItem('lar.remember') !== '0' })
 
 async function submit() {
   error.value = ''
   loading.value = true
   try {
-    await $fetch('/api/auth/login', { method: 'POST', body: { email: email.value, password: password.value } })
+    localStorage.setItem('lar.remember', remember.value ? '1' : '0')
+    await $fetch('/api/auth/login', { method: 'POST', body: { email: email.value, password: password.value, remember: remember.value } })
     await refreshSession()
     await navigateTo('/')
   } catch (e: any) {
@@ -77,6 +83,14 @@ async function submit() {
           <UiField :label="$t('auth.password')" style="margin-bottom: 18px">
             <UiInput v-model="password" type="password" placeholder="••••••••" autocomplete="current-password" required />
           </UiField>
+
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px">
+            <UiToggle v-model="remember" />
+            <span style="cursor: pointer" @click="remember = !remember">
+              <span style="display: block; font-size: 14px; font-weight: 500">{{ $t('auth.rememberMe') }}</span>
+              <span style="display: block; font-size: 12.5px; color: var(--muted)">{{ $t('auth.rememberHint') }}</span>
+            </span>
+          </div>
 
           <div v-if="error" style="color: var(--neg); font-size: 13px; margin-bottom: 14px">{{ error }}</div>
 

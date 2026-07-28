@@ -10,6 +10,8 @@ declare module '#auth-utils' {
   interface UserSession {
     // Server-side session row id — used to validate/revoke per device.
     sid?: string
+    // "Remember me" tick at login — decides the cookie lifetime on every re-seal.
+    remember?: boolean
   }
 }
 

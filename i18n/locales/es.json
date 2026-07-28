@@ -58,6 +58,8 @@
     "password": "Contraseña",
     "signIn": "Entrar",
     "signingIn": "Entrando…",
+    "rememberMe": "Mantener la sesión iniciada",
+    "rememberHint": "Durante 1 mes en este dispositivo.",
     "loginFooter": "Las cuentas nuevas las crea un administrador.",
     "errCredentials": "Correo o contraseña incorrectos",
     "setupTitle": "Configuración inicial",

@@ -14,8 +14,9 @@ export default defineEventHandler(async (event) => {
     ? await db.select().from(schema.users).where(eq(schema.users.id, session.user.id)).limit(1)
     : [null]
 
-  // Revoked / unknown session, or deactivated member → drop the session.
-  if (!row || row.revokedAt || !user || !user.active) {
+  // Revoked / expired / unknown session, or deactivated member → drop the session.
+  const expired = !!row?.expiresAt && Date.now() > row.expiresAt
+  if (!row || row.revokedAt || expired || !user || !user.active) {
     await clearUserSession(event)
     return
   }

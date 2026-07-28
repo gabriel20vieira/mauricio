@@ -99,6 +99,7 @@ const DDL = [
     created_at BIGINT NOT NULL,
     last_seen_at BIGINT NOT NULL,
     revoked_at BIGINT NULL,
+    expires_at BIGINT NULL,
     CONSTRAINT fk_sess_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
   `CREATE TABLE IF NOT EXISTS chat_conversations (
@@ -159,6 +160,8 @@ async function doInit() {
   await ensureColumn('subcategories', 'description', "description VARCHAR(255) NOT NULL DEFAULT ''")
   // Income category link (databases created before income categories existed).
   await ensureColumn('incomes', 'income_cat', "income_cat VARCHAR(64) NOT NULL DEFAULT ''")
+  // Per-session expiry (databases created before "remember me" existed).
+  await ensureColumn('sessions', 'expires_at', 'expires_at BIGINT NULL')
   await seedCategoriesIfEmpty(db)
   await seedIncomeCategoriesIfEmpty(db)
 }

@@ -33,6 +33,7 @@ export default defineEventHandler(async (event) => {
   }
   await db.insert(schema.users).values(user)
 
-  await createSession(event, toSessionUser(user as any))
+  // First-run admin stays signed in — no login form was shown to tick.
+  await createSession(event, toSessionUser(user as any), true)
   return { ok: true }
 })

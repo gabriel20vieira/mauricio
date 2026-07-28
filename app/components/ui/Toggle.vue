@@ -12,5 +12,5 @@ const knob = computed(() => ({
 </script>
 
 <template>
-  <button :style="track" @click="emit('update:modelValue', !modelValue)"><span :style="knob" /></button>
+  <button type="button" :style="track" @click="emit('update:modelValue', !modelValue)"><span :style="knob" /></button>
 </template>

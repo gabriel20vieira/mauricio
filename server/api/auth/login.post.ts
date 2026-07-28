@@ -5,6 +5,7 @@ import { db, schema } from '../../utils/db'
 const Body = z.object({
   email: z.string().trim().email('Email inválido'),
   password: z.string().min(1, 'Indique a password'),
+  remember: z.boolean().optional().default(false),
 })
 
 export default defineEventHandler(async (event) => {
@@ -23,6 +24,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Conta desativada. Contacte um administrador.' })
   }
 
-  await createSession(event, toSessionUser(user))
+  await createSession(event, toSessionUser(user), body.remember)
   return { ok: true }
 })

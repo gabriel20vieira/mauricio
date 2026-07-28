@@ -120,6 +120,7 @@ export const sessions = mysqlTable('sessions', {
   createdAt: bigint('created_at', { mode: 'number' }).notNull(),
   lastSeenAt: bigint('last_seen_at', { mode: 'number' }).notNull(),
   revokedAt: bigint('revoked_at', { mode: 'number' }), // null = active
+  expiresAt: bigint('expires_at', { mode: 'number' }), // null = no server-side expiry (legacy rows)
 })
 
 export type User = typeof users.$inferSelect

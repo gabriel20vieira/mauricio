@@ -58,6 +58,8 @@
     "password": "Password",
     "signIn": "Sign in",
     "signingIn": "Signing in…",
+    "rememberMe": "Keep me signed in",
+    "rememberHint": "For 1 month on this device.",
     "loginFooter": "New accounts are created by an administrator.",
     "errCredentials": "Wrong email or password",
     "setupTitle": "Initial setup",
