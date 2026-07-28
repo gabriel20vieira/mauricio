@@ -80,6 +80,8 @@
   "summary": {
     "totalSpent": "Total gastado",
     "vsPrev": "{pct}% vs mes anterior",
+    "vsPrevAmount": "{amt} vs mes anterior",
+    "spent": "Gastos",
     "movements": "Movimientos",
     "avgPerExpense": "Media / gasto",
     "prevMonth": "Mes anterior",

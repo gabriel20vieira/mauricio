@@ -31,7 +31,11 @@ const prevKey = computed(() => {
   return `${d.y}-${String(d.m).padStart(2, '0')}`
 })
 const prevTotal = computed(() => store.expenses.value.filter(e => monthKey(e.date) === prevKey.value).reduce((a, e) => a + e.amountCents, 0) / 100)
-const delta = computed(() => prevTotal.value ? Math.round(((total.value - prevTotal.value) / prevTotal.value) * 100) : 0)
+const prevIncome = computed(() => store.incomes.value.filter(i => monthKey(i.date) === prevKey.value).reduce((a, i) => a + i.amountCents, 0) / 100)
+// Compared in euros, not percent: a percentage against a zero or negative
+// previous balance says nothing useful.
+const saldoDelta = computed(() => saldo.value - (prevIncome.value - prevTotal.value))
+const hasPrev = computed(() => prevTotal.value !== 0 || prevIncome.value !== 0)
 
 const monthLabel = computed(() => {
   const [y, m] = selected.value.split('-').map(Number)
@@ -88,15 +92,19 @@ const transfers = computed(() => {
     <div class="stat-grid" style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px">
       <UiCard class="hero-stat" :pad="24">
         <div style="display: flex; justify-content: space-between; align-items: flex-start">
-          <div style="font-size: 13px; color: var(--muted)">{{ $t('summary.totalSpent') }} · {{ monthLabel }}</div>
-          <UiTag v-if="prevTotal" :tone="delta <= 0 ? 'accent' : 'muted'">
-            {{ delta <= 0 ? '▼' : '▲' }} {{ $t('summary.vsPrev', { pct: Math.abs(delta) }) }}
+          <div style="font-size: 13px; color: var(--muted)">{{ $t('summary.balance') }} · {{ monthLabel }}</div>
+          <UiTag v-if="hasPrev" :tone="saldoDelta >= 0 ? 'accent' : 'muted'">
+            {{ saldoDelta >= 0 ? '▲' : '▼' }} {{ $t('summary.vsPrevAmount', { amt: $n(Math.abs(saldoDelta), 'currency0') }) }}
           </UiTag>
         </div>
-        <div class="tnum" style="font-size: 42px; font-weight: 700; letter-spacing: -0.02em; margin: 8px 0 16px">{{ $n(total, 'currency') }}</div>
+        <div
+          class="tnum"
+          style="font-size: 42px; font-weight: 700; letter-spacing: -0.02em; margin: 8px 0 16px"
+          :style="{ color: saldo >= 0 ? 'var(--pos)' : 'var(--neg)' }"
+        >{{ saldo >= 0 ? '+' : '' }}{{ $n(saldo, 'currency') }}</div>
         <div style="display: flex; gap: 26px; flex-wrap: wrap">
           <div><div class="tnum" style="font-weight: 600; color: var(--pos)">{{ $n(monthIncome, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.income') }}</div></div>
-          <div><div class="tnum" style="font-weight: 600" :style="{ color: saldo >= 0 ? 'var(--pos)' : 'var(--neg)' }">{{ saldo >= 0 ? '+' : '' }}{{ $n(saldo, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.balance') }}</div></div>
+          <div><div class="tnum" style="font-weight: 600">{{ $n(total, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.spent') }}</div></div>
           <div><div class="tnum" style="font-weight: 600; color: var(--accent)">{{ $n(quota, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('balance.avgQuota') }}</div></div>
           <div><div class="tnum" style="font-weight: 600">{{ count }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.movements') }}</div></div>
           <div><div class="tnum" style="font-weight: 600">{{ $n(avg, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.avgPerExpense') }}</div></div>
