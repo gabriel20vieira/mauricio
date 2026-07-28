@@ -7,7 +7,6 @@ const cats = useCategories()
 const selected = useMonth()
 const { isDark } = useTweaks()
 const { d } = useI18n()
-const { openNewIncome } = useAppUi()
 
 onMounted(async () => {
   await store.ensure()
@@ -16,8 +15,8 @@ onMounted(async () => {
 watch(() => store.expenses.value, (ex) => syncMonth(selected, ex))
 
 const monthExpenses = computed(() => store.expenses.value.filter(e => monthKey(e.date) === selected.value))
+// Incomes feed the balance stat only — the listings live on /gastos.
 const monthIncomes = computed(() => store.incomes.value.filter(i => monthKey(i.date) === selected.value))
-const monthMovements = computed(() => store.movements.value.filter(mv => monthKey(mv.date) === selected.value))
 const total = computed(() => monthExpenses.value.reduce((a, e) => a + e.amountCents, 0) / 100)
 const count = computed(() => monthExpenses.value.length)
 const avg = computed(() => count.value ? total.value / count.value : 0)
@@ -77,8 +76,6 @@ const transfers = computed(() => {
   }
   return out
 })
-
-const recent = computed(() => monthMovements.value.slice(0, 6))
 </script>
 
 <template>
@@ -181,28 +178,5 @@ const recent = computed(() => monthMovements.value.slice(0, 6))
       <p style="font-size: 12px; color: var(--faint); margin-top: 16px">{{ $t('balance.note') }}</p>
     </UiCard>
 
-    <!-- This month's income -->
-    <UiCard :pad="22">
-      <UiSectionTitle>
-        {{ $t('balance.monthIncomes') }}
-        <template #action><UiButton variant="ghost" icon="plus" @click="openNewIncome">{{ $t('balance.newIncome') }}</UiButton></template>
-      </UiSectionTitle>
-      <div v-if="monthIncomes.length">
-        <AppIncomeRow v-for="i in monthIncomes" :key="i.id" :income="i" />
-      </div>
-      <UiEmptyState v-else icon="trend" :title="$t('balance.noIncomesTitle')" :sub="$t('balance.noIncomesSub')" />
-    </UiCard>
-
-    <!-- Recent movements (unified) -->
-    <UiCard :pad="22">
-      <UiSectionTitle>
-        {{ $t('summary.recent') }}
-        <template #action><NuxtLink to="/gastos" style="font-size: 13px; color: var(--accent); font-weight: 600">{{ $t('summary.viewAll') }}</NuxtLink></template>
-      </UiSectionTitle>
-      <div v-if="recent.length">
-        <AppMovementRow v-for="mv in recent" :key="mv.kind + mv.id" :movement="mv" />
-      </div>
-      <UiEmptyState v-else :title="$t('summary.emptyRecentTitle')" :sub="$t('summary.emptyRecentSub')" />
-    </UiCard>
   </div>
 </template>
