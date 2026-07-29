@@ -1,9 +1,16 @@
+// One edited field, before and after. `field` is a stable key translated on render.
+export interface FieldChange {
+  field: 'date' | 'amount' | 'cat' | 'sub' | 'note' | 'method' | 'who'
+  from: string
+  to: string
+}
 export interface ConfirmCard {
   kind: 'confirm'
   id?: string // stable card id (persist a per-card confirmed state)
-  action: 'add' | 'update' | 'delete' | 'add_income'
+  action: 'add' | 'update' | 'delete' | 'add_income' | 'update_income' | 'delete_income'
   payload: Record<string, any>
   summary: string
+  changes?: FieldChange[] // update actions only — rendered as a before → after list
 }
 export interface ChartCard {
   kind: 'chart'
@@ -46,7 +53,10 @@ export async function streamChat(
     signal,
   })
   if (!res.ok || !res.body) {
-    handlers.onError?.(`Erro ${res.status} ao contactar o assistente.`)
+    // Surface the server's own reason (h3 puts it in statusMessage/message) —
+    // a bare status code tells the user nothing about what to fix.
+    const reason = await res.json().then((e: any) => e?.statusMessage || e?.message).catch(() => '')
+    handlers.onError?.(reason || `Erro ${res.status} ao contactar o assistente.`)
     return
   }
   const reader = res.body.getReader()

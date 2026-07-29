@@ -208,6 +208,8 @@
     "server": "Servidor",
     "model": "Modelo",
     "token": "Token",
+    "numCtx": "Janela de contexto (num_ctx)",
+    "numCtxHint": "Tokens que o Ollama local guarda em memória por conversa. Menos que isto e as mensagens mais antigas são cortadas em silêncio. Entre {min} e {max}; por omissão {def}.",
     "conversations": "Conversas do assistente",
     "conversationsSub": "Ver e gerir as conversas dos membros da casa.",
     "viewingOther": "Está a ver a conversa de outro membro.",
@@ -308,7 +310,9 @@
     "ctaDelete": "Eliminar",
     "done": "Feito",
     "confirmed": "Confirmado",
-    "addIncome": "Adicionar rendimento"
+    "addIncome": "Adicionar rendimento",
+    "editIncome": "Editar rendimento",
+    "deleteIncome": "Eliminar rendimento"
   },
   "cat": {
     "alimentacao": "Alimentação",

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { streamChat, type Card, type ConversationMeta } from '~/composables/useChat'
+import { CHAT_MAX_CHARS } from '~~/shared/config'
 
 definePageMeta({ titleKey: 'nav.assistant', subtitleKey: 'pageSub.assistant' })
 const appName = useRuntimeConfig().public.appName
@@ -35,6 +36,21 @@ const input = ref('')
 const sending = ref(false)
 const scroller = ref<HTMLElement | null>(null)
 const convDrawer = ref(false) // mobile slide-over for the conversation list
+
+// The composer grows with its content up to COMPOSER_MAX_H, then scrolls — a
+// textarea has no intrinsic auto-height, so it is measured on every change
+// (typing, paste, send-and-clear, Shift+Enter newline).
+const COMPOSER_MAX_H = 200
+const composer = ref<HTMLTextAreaElement | null>(null)
+function autoGrow() {
+  const el = composer.value
+  if (!el) return
+  el.style.height = 'auto' // reset first, else scrollHeight only ever grows
+  el.style.height = `${Math.min(el.scrollHeight, COMPOSER_MAX_H)}px`
+  el.style.overflowY = el.scrollHeight > COMPOSER_MAX_H ? 'auto' : 'hidden'
+}
+watch(input, () => nextTick(autoGrow))
+onMounted(autoGrow)
 
 const suggestions = computed(() => [
   t('assistant.suggestion1'),
@@ -136,6 +152,11 @@ async function confirmCard(cs: UiSegment) {
       await store.updateExpense(id, rest)
     } else if (cs.card.action === 'delete') {
       await store.deleteExpense(p.id)
+    } else if (cs.card.action === 'update_income') {
+      const { id, ...rest } = p
+      await store.updateIncome(id, rest)
+    } else if (cs.card.action === 'delete_income') {
+      await store.deleteIncome(p.id)
     }
     cs.status = 'done'
     // Persist the confirmed state so reopening the conversation keeps it done.
@@ -226,9 +247,16 @@ async function confirmCard(cs: UiSegment) {
 
       <!-- Composer -->
       <div class="asst-composer">
-        <textarea v-model="input" rows="1" :placeholder="$t('assistant.placeholder')"
+        <textarea ref="composer" v-model="input" rows="1" :maxlength="CHAT_MAX_CHARS" :placeholder="$t('assistant.placeholder')"
           @keydown.enter.exact.prevent="send()" />
         <UiButton icon="send" :disabled="sending || !input.trim()" @click="send()">{{ $t('assistant.send') }}</UiButton>
+      </div>
+      <!-- Only shown near the cap, so a long paste being clipped is never a surprise. -->
+      <div v-if="input.length > CHAT_MAX_CHARS * 0.9" class="tnum" :style="{
+        fontSize: '12px', textAlign: 'right', padding: '0 14px 8px',
+        color: input.length >= CHAT_MAX_CHARS ? 'var(--neg)' : 'var(--muted)',
+      }">
+        {{ input.length }} / {{ CHAT_MAX_CHARS }}
       </div>
     </div>
   </div>
@@ -339,15 +367,21 @@ async function confirmCard(cs: UiSegment) {
 .asst-composer textarea {
   flex: 1;
   resize: none;
-  max-height: 120px;
+  /* Height is driven by autoGrow(); max-height mirrors COMPOSER_MAX_H so the
+     stylesheet still caps it if the script hasn't measured yet. */
+  max-height: 200px;
+  overflow-y: hidden;
   padding: 11px 13px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-2);
   background: var(--surface);
   color: var(--ink);
   font-size: 14.5px;
+  line-height: 1.45;
   outline: none;
   font-family: inherit;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 @media (max-width: 760px) {

@@ -208,6 +208,8 @@
     "server": "Server",
     "model": "Model",
     "token": "Token",
+    "numCtx": "Context window (num_ctx)",
+    "numCtxHint": "Tokens your self-hosted Ollama keeps in memory per conversation. Below this, the oldest messages are dropped silently. Between {min} and {max}; default {def}.",
     "conversations": "Assistant conversations",
     "conversationsSub": "View and manage household members’ conversations.",
     "viewingOther": "You are viewing another member’s conversation.",
@@ -308,7 +310,9 @@
     "ctaDelete": "Delete",
     "done": "Done",
     "confirmed": "Confirmed",
-    "addIncome": "Add income"
+    "addIncome": "Add income",
+    "editIncome": "Edit income",
+    "deleteIncome": "Delete income"
   },
   "cat": {
     "alimentacao": "Food",
