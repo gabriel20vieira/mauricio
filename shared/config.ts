@@ -8,6 +8,17 @@ const fmtEUR0 = new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'E
 export function euro(n: number) { return fmtEUR.format(n || 0) }
 export function euro0(n: number) { return fmtEUR0.format(n || 0) }
 
+// Max characters for one chat message. Bounded by the MySQL TEXT column that stores
+// it (65535 BYTES) — 16000 chars is safe even if every char is 4-byte UTF-8.
+export const CHAT_MAX_CHARS = 16000
+
+// Context window (tokens) for a SELF-HOSTED Ollama. Ollama's own default is 4096 —
+// too small for our system prompt + history + tool results, and it truncates in
+// silence. Not sent when the cloud toggle is on (that service sizes its own).
+export const NUM_CTX_DEFAULT = 16384
+export const NUM_CTX_MIN = 2048
+export const NUM_CTX_MAX = 131072
+
 export function parseDate(s: string) { const [y, m, d] = s.split('-').map(Number); return { y, m: m - 1, d } }
 export function monthKey(s: string) { const p = parseDate(s); return `${p.y}-${String(p.m + 1).padStart(2, '0')}` }
 // Step a 'yyyy-mm' month key by `delta` months, rolling the year over as needed.

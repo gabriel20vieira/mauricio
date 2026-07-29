@@ -4,10 +4,11 @@ import { z } from 'zod'
 import { db, schema } from '../../utils/db'
 import { ollamaChat, ollamaComplete, type OllamaMessage } from '../../utils/ollama'
 import { TOOLS, runTool, systemPrompt, type Card } from '../../utils/aiTools'
+import { CHAT_MAX_CHARS } from '../../../shared/config'
 
 const Body = z.object({
   conversationId: z.string().optional(),
-  message: z.string().min(1).max(4000),
+  message: z.string().min(1).max(CHAT_MAX_CHARS),
   locale: z.string().optional(), // active UI locale → assistant replies in it
 })
 
@@ -31,7 +32,19 @@ export default defineEventHandler(async (event) => {
   if (!(await getAssistantConfig()).enabled) throw createError({ statusCode: 403, statusMessage: 'O assistente está desativado.' })
   // Each message fans out to several Ollama calls — throttle to limit cost/abuse.
   rateLimit(event, { key: 'chat', limit: 20, windowMs: 60_000 })
-  const body = await readValidatedBody(event, Body.parse)
+  // Parsed by hand (not readValidatedBody) so an over-long message gets a reason the
+  // user can act on, instead of a bare "400 Bad Request".
+  const parsed = Body.safeParse(await readBody(event))
+  if (!parsed.success) {
+    const tooLong = parsed.error.issues.some(i => i.path[0] === 'message' && i.code === 'too_big')
+    throw createError({
+      statusCode: 400,
+      statusMessage: tooLong
+        ? `Mensagem demasiado longa (máx. ${CHAT_MAX_CHARS} caracteres). Divide-a em partes.`
+        : 'Mensagem inválida.',
+    })
+  }
+  const body = parsed.data
   const now = Date.now()
 
   // Ensure conversation (owned by user).
