@@ -142,8 +142,8 @@ function printReport() {
       <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap">
         <UiSectionTitle>{{ $t('reports.annualEvolution') }}</UiSectionTitle>
         <div v-if="hasAnnual" class="ann-legend">
-          <span><i style="background: var(--chart-income)" />{{ $t('movements.incomes') }}</span>
           <span><i style="background: var(--chart-expense)" />{{ $t('movements.expenses') }}</span>
+          <span><i style="background: var(--chart-income)" />{{ $t('movements.incomes') }}</span>
         </div>
       </div>
       <!-- Two bars per month on a shared scale. Exact figures are on hover; the
@@ -151,10 +151,10 @@ function printReport() {
       <div v-if="hasAnnual" class="ann-chart">
         <div v-for="a in annual" :key="a.mk" class="ann-col">
           <div class="ann-bars">
-            <div class="ann-bar ann-bar-inc" :style="barHeight(a.income)"
-              :title="`${$t('movements.incomes')}: ${$n(a.income / 100, 'currency')}`" />
             <div class="ann-bar ann-bar-exp" :style="barHeight(a.expense)"
               :title="`${$t('movements.expenses')}: ${$n(a.expense / 100, 'currency')}`" />
+            <div class="ann-bar ann-bar-inc" :style="barHeight(a.income)"
+              :title="`${$t('movements.incomes')}: ${$n(a.income / 100, 'currency')}`" />
           </div>
           <div class="ann-month">{{ a.label }}</div>
           <div class="tnum ann-saldo"
@@ -255,8 +255,8 @@ function printReport() {
   max-width: 17px;
   border-radius: 5px 5px 2px 2px;
 }
-.ann-bar-inc { background: var(--chart-income); }
 .ann-bar-exp { background: var(--chart-expense); }
+.ann-bar-inc { background: var(--chart-income); }
 .ann-month { font-size: 11px; color: var(--muted); font-weight: 500; text-transform: capitalize; }
 .ann-saldo { font-size: 10.5px; font-weight: 600; white-space: nowrap; }
 
