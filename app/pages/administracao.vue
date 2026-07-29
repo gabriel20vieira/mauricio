@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { catColor, deviceLabel, relativeTime, CATEGORY_PALETTE } from '~~/shared/config'
+import { catColor, deviceLabel, relativeTime, CATEGORY_PALETTE, NUM_CTX_DEFAULT, NUM_CTX_MIN, NUM_CTX_MAX } from '~~/shared/config'
 import type { SessionInfo } from '~/composables/useStore'
 
 definePageMeta({ titleKey: 'nav.admin', subtitleKey: 'pageSub.admin' })
@@ -95,13 +95,19 @@ async function translateNames(target: { names: { en: string, pt: string, es: str
 }
 
 // --- assistant config ---
-const asstCfg = reactive({ enabled: true, useCloud: false, baseUrl: '', model: '', token: '' })
+// numCtx is a string here because UiInput always emits strings; coerced on save.
+const asstCfg = reactive({ enabled: true, useCloud: false, baseUrl: '', model: '', token: '', numCtx: String(NUM_CTX_DEFAULT) })
 const savingCfg = ref(false)
-async function loadAsstCfg() { const c = await $fetch<typeof asstCfg>('/api/assistant/config').catch(() => null); if (c) Object.assign(asstCfg, c) }
+async function loadAsstCfg() {
+  const c = await $fetch<Record<string, any>>('/api/assistant/config').catch(() => null)
+  if (c) Object.assign(asstCfg, c, { numCtx: String(c.numCtx ?? NUM_CTX_DEFAULT) })
+}
 async function saveAsstCfg() {
   savingCfg.value = true
   try {
-    await $fetch('/api/assistant/config', { method: 'PUT', body: { ...asstCfg } })
+    const numCtx = Math.min(Math.max(Math.round(Number(asstCfg.numCtx) || NUM_CTX_DEFAULT), NUM_CTX_MIN), NUM_CTX_MAX)
+    asstCfg.numCtx = String(numCtx)
+    await $fetch('/api/assistant/config', { method: 'PUT', body: { ...asstCfg, numCtx } })
     assistantEnabled.value = asstCfg.enabled
     await loadAllConvs()
   } finally { savingCfg.value = false }
@@ -368,6 +374,10 @@ async function confirmImport() {
       <UiField :label="$t('admin.server')" style="margin-bottom: 12px"><UiInput v-model="asstCfg.baseUrl" placeholder="http://192.168.1.203:11434" /></UiField>
       <UiField :label="$t('admin.model')" style="margin-bottom: 12px"><UiInput v-model="asstCfg.model" placeholder="minimax-m3:cloud" /></UiField>
       <UiField v-if="asstCfg.useCloud" :label="$t('admin.token')" style="margin-bottom: 16px"><UiInput v-model="asstCfg.token" type="password" autocomplete="off" placeholder="••••••••" /></UiField>
+      <!-- Self-hosted only: the cloud service sizes its own context window. -->
+      <UiField v-else :label="$t('admin.numCtx')" :hint="$t('admin.numCtxHint', { min: NUM_CTX_MIN, max: NUM_CTX_MAX, def: NUM_CTX_DEFAULT })" style="margin-bottom: 16px">
+        <UiInput v-model="asstCfg.numCtx" type="number" step="1024" :placeholder="String(NUM_CTX_DEFAULT)" />
+      </UiField>
       <UiButton :icon="savingCfg ? undefined : 'check'" :disabled="savingCfg" @click="saveAsstCfg">{{ savingCfg ? $t('common.saving') : $t('common.save') }}</UiButton>
     </UiCard>
 

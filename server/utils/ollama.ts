@@ -38,7 +38,7 @@ export async function ollamaChat(
   const res = await fetch(`${cfg.baseUrl}/api/chat`, {
     method: 'POST',
     headers: ollamaHeaders(cfg),
-    body: JSON.stringify({ model: cfg.model, stream: true, messages, tools }),
+    body: JSON.stringify({ model: cfg.model, stream: true, messages, tools, ...ctxOptions(cfg) }),
     signal: opts.signal,
   })
   if (!res.ok || !res.body) {
@@ -84,6 +84,13 @@ function safeJson(s: string): Record<string, any> {
   try { return JSON.parse(s) } catch { return {} }
 }
 
+// Context window, only for a self-hosted Ollama: without it Ollama falls back to
+// num_ctx=4096 and silently drops the oldest messages. The cloud service sizes its
+// own context, so we send nothing there.
+function ctxOptions(cfg: { useCloud: boolean, numCtx: number }): { options?: { num_ctx: number } } {
+  return cfg.useCloud ? {} : { options: { num_ctx: cfg.numCtx } }
+}
+
 // Headers for an Ollama request — Bearer token only when the cloud toggle is on.
 function ollamaHeaders(cfg: { useCloud: boolean, token: string }): Record<string, string> {
   const h: Record<string, string> = { 'Content-Type': 'application/json' }
@@ -97,7 +104,7 @@ export async function ollamaComplete(messages: OllamaMessage[], opts: { signal?:
   const res = await fetch(`${cfg.baseUrl}/api/chat`, {
     method: 'POST',
     headers: ollamaHeaders(cfg),
-    body: JSON.stringify({ model: cfg.model, stream: false, messages }),
+    body: JSON.stringify({ model: cfg.model, stream: false, messages, ...ctxOptions(cfg) }),
     signal: opts.signal,
   })
   if (!res.ok) throw new Error(`Ollama ${res.status}`)
