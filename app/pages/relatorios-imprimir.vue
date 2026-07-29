@@ -44,19 +44,22 @@ const saldoCents = computed(() => incomeCents.value - expenseCents.value)
 const avgCents = computed(() => scopeExpenses.value.length ? expenseCents.value / scopeExpenses.value.length : 0)
 
 const byCat = computed(() => {
-  const acc: Record<string, { total: number, subs: Record<string, number> }> = {}
+  // Keyed by cats.subKey, matching the on-screen report: raw values that are labels
+  // rather than ids, or differ only in casing, must collapse into one line.
+  const acc: Record<string, { total: number, subs: Record<string, { label: string, cents: number }> }> = {}
   for (const e of scopeExpenses.value) {
     const a = acc[e.cat] || (acc[e.cat] = { total: 0, subs: {} })
     a.total += e.amountCents
-    const sk = e.sub || ''
-    a.subs[sk] = (a.subs[sk] || 0) + e.amountCents
+    const sk = cats.subKey(e.cat, e.sub)
+    const s = a.subs[sk] || (a.subs[sk] = { label: sk ? (cats.subLabel(e.cat, sk) === sk ? e.sub.trim() : cats.subLabel(e.cat, sk)) : '(—)', cents: 0 })
+    s.cents += e.amountCents
   }
   return Object.entries(acc).map(([cat, v]) => ({
     cat,
     label: cats.catLabel(cat),
     cents: v.total,
     subs: Object.entries(v.subs)
-      .map(([subId, cents]) => ({ subId, label: subId ? cats.subLabel(cat, subId) : '(—)', cents }))
+      .map(([subId, s]) => ({ subId, label: s.label, cents: s.cents }))
       .sort((a, b) => b.cents - a.cents),
   })).sort((a, b) => b.cents - a.cents)
 })
@@ -84,12 +87,14 @@ const annual = computed(() => {
       mk,
       label: new Intl.DateTimeFormat(locale.value, { month: 'short' }).format(new Date(2000, m, 1)),
       expense: exp[mk] || 0,
+      income: inc[mk] || 0,
       saldo: (inc[mk] || 0) - (exp[mk] || 0),
       current: !isAnnual.value && mk === mes.value,
     }
   })
 })
-const maxAnnual = computed(() => Math.max(...annual.value.map(a => a.expense), 1))
+// One scale for both series, otherwise the two bars in a month are not comparable.
+const maxAnnual = computed(() => Math.max(...annual.value.flatMap(a => [a.expense, a.income]), 1))
 
 function euro(cents: number) { return n(cents / 100, 'currency') }
 function day(date: string) { return d(new Date(date + 'T00:00:00'), 'short') }
@@ -169,11 +174,15 @@ onMounted(async () => {
       </div>
 
       <h2>{{ t('reports.annualEvolution') }} · {{ year }}</h2>
+      <div class="alegend">
+        <span><i class="sw-inc" />{{ t('movements.incomes') }}</span>
+        <span><i class="sw-exp" />{{ t('movements.expenses') }}</span>
+      </div>
       <div class="annual">
         <div v-for="a in annual" :key="a.mk" class="acol">
-          <div class="aval">{{ a.expense ? n(a.expense / 100, 'currency0') : '' }}</div>
           <div class="abarwrap">
-            <div class="abar" :class="{ cur: a.current }" :style="{ height: `${(a.expense / maxAnnual) * 100}%` }" />
+            <div class="abar abar-inc" :style="{ height: `${(a.income / maxAnnual) * 100}%` }" />
+            <div class="abar abar-exp" :class="{ cur: a.current }" :style="{ height: `${(a.expense / maxAnnual) * 100}%` }" />
           </div>
           <div class="alabel">{{ a.label }}</div>
           <div class="asaldo" :class="a.saldo > 0 ? 'pos' : a.saldo < 0 ? 'neg' : 'muted'">
@@ -283,12 +292,21 @@ h2 { font-size: 14px; font-weight: 700; margin-bottom: 8px; padding-bottom: 4px;
 .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .quota { font-size: 12px; color: #555; margin-top: 8px; }
 
-.annual { display: flex; align-items: flex-end; gap: 4px; height: 150px; margin-top: 8px; }
+.alegend { display: flex; gap: 12px; font-size: 9.5px; color: #777; margin-top: 6px; }
+.alegend span { display: inline-flex; align-items: center; gap: 4px; }
+.alegend i { width: 8px; height: 8px; border-radius: 2px; }
+.alegend .sw-inc { background: #15803d; }
+.alegend .sw-exp { background: #2563eb; }
+
+.annual { display: flex; align-items: flex-end; gap: 4px; height: 150px; margin-top: 4px; }
 .acol { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; height: 100%; justify-content: flex-end; min-width: 0; }
-.aval { font-size: 8.5px; font-weight: 600; color: #444; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.abarwrap { width: 100%; display: flex; justify-content: center; align-items: flex-end; flex: 1; }
-.abar { width: 100%; max-width: 26px; background: #2563eb; border-radius: 3px 3px 0 0; min-height: 1px; }
-.abar.cur { background: #111; }
+/* Income and expense side by side on one scale; no value labels — twelve pairs of
+   figures do not fit across the sheet. The balance stays under each month. */
+.abarwrap { width: 100%; display: flex; justify-content: center; align-items: flex-end; gap: 2px; flex: 1; }
+.abar { flex: 1; max-width: 12px; border-radius: 3px 3px 0 0; min-height: 1px; }
+.abar-inc { background: #15803d; }
+.abar-exp { background: #2563eb; }
+.abar-exp.cur { background: #111; }
 .alabel { font-size: 9.5px; color: #777; text-transform: capitalize; }
 .asaldo { font-size: 8px; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
 

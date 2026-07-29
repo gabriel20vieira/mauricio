@@ -59,17 +59,25 @@ const annual = computed(() => {
     }
   })
 })
-const maxExpense = computed(() => Math.max(...annual.value.map(a => a.expense), 1))
+// One scale for both series, otherwise the two bars in a month are not comparable.
+const maxAnnual = computed(() => Math.max(...annual.value.flatMap(a => [a.expense, a.income]), 1))
 const hasAnnual = computed(() => annual.value.some(a => a.expense || a.income))
+function barHeight(cents: number) {
+  return { height: `${(cents / maxAnnual.value) * 100}%`, minHeight: cents ? '4px' : '0' }
+}
 
 // ---- by category (scoped), with per-subcategory breakdown ----
 const byCat = computed(() => {
-  const acc: Record<string, { total: number, subs: Record<string, number> }> = {}
+  // Subs are keyed by cats.subKey, not by the raw stored value: rows holding a label
+  // instead of an id, or a different casing, must land on the same line and add up.
+  const acc: Record<string, { total: number, subs: Record<string, { label: string, cents: number }> }> = {}
   for (const e of scopeExpenses.value) {
     const a = acc[e.cat] || (acc[e.cat] = { total: 0, subs: {} })
     a.total += e.amountCents
-    const sk = e.sub || ''
-    a.subs[sk] = (a.subs[sk] || 0) + e.amountCents
+    const sk = cats.subKey(e.cat, e.sub)
+    // Unmatched keys are lowercase, so display the raw text as first seen instead.
+    const s = a.subs[sk] || (a.subs[sk] = { label: sk ? (cats.subLabel(e.cat, sk) === sk ? e.sub.trim() : cats.subLabel(e.cat, sk)) : '(—)', cents: 0 })
+    s.cents += e.amountCents
   }
   return Object.entries(acc).map(([catId, v]) => ({
     catId,
@@ -77,7 +85,7 @@ const byCat = computed(() => {
     label: cats.catLabel(catId),
     cents: v.total,
     subs: Object.entries(v.subs)
-      .map(([subId, cents]) => ({ subId, label: subId ? cats.subLabel(catId, subId) : '(—)', cents }))
+      .map(([subId, s]) => ({ subId, label: s.label, cents: s.cents }))
       .sort((a, b) => b.cents - a.cents),
   })).filter(x => x.cents > 0).sort((a, b) => b.cents - a.cents)
 })
@@ -131,15 +139,25 @@ function printReport() {
 
     <!-- Annual evolution (annual mode only) -->
     <UiCard v-if="mode === 'anual'" :pad="22">
-      <UiSectionTitle>{{ $t('reports.annualEvolution') }}</UiSectionTitle>
-      <div v-if="hasAnnual" style="display: flex; align-items: flex-end; gap: 6px; height: 210px; padding-top: 18px">
-        <div v-for="a in annual" :key="a.mk"
-          style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; min-width: 0">
-          <div class="tnum" style="font-size: 10.5px; font-weight: 600; color: var(--ink-2); white-space: nowrap">{{ a.expense ? $n(a.expense / 100, 'currency0') : '' }}</div>
-          <div :title="$n(a.expense / 100, 'currency')"
-            :style="{ width: '100%', maxWidth: '40px', height: `${(a.expense / maxExpense) * 100}%`, minHeight: a.expense ? '4px' : '0', background: 'var(--accent)', borderRadius: '6px 6px 3px 3px' }" />
-          <div style="font-size: 11px; color: var(--muted); font-weight: 500; text-transform: capitalize">{{ a.label }}</div>
-          <div class="tnum" style="font-size: 10.5px; font-weight: 600; white-space: nowrap"
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap">
+        <UiSectionTitle>{{ $t('reports.annualEvolution') }}</UiSectionTitle>
+        <div v-if="hasAnnual" class="ann-legend">
+          <span><i style="background: var(--pos)" />{{ $t('movements.incomes') }}</span>
+          <span><i style="background: var(--accent)" />{{ $t('movements.expenses') }}</span>
+        </div>
+      </div>
+      <!-- Two bars per month on a shared scale. Exact figures are on hover; the
+           month's balance stays underneath, where the single-series chart had it. -->
+      <div v-if="hasAnnual" class="ann-chart">
+        <div v-for="a in annual" :key="a.mk" class="ann-col">
+          <div class="ann-bars">
+            <div class="ann-bar ann-bar-inc" :style="barHeight(a.income)"
+              :title="`${$t('movements.incomes')}: ${$n(a.income / 100, 'currency')}`" />
+            <div class="ann-bar ann-bar-exp" :style="barHeight(a.expense)"
+              :title="`${$t('movements.expenses')}: ${$n(a.expense / 100, 'currency')}`" />
+          </div>
+          <div class="ann-month">{{ a.label }}</div>
+          <div class="tnum ann-saldo"
             :style="{ color: a.saldo > 0 ? 'var(--pos)' : a.saldo < 0 ? 'var(--neg)' : 'var(--faint)' }">
             {{ (a.income || a.expense) ? `${a.saldo >= 0 ? '+' : ''}${$n(a.saldo / 100, 'currency0')}` : '—' }}
           </div>
@@ -194,3 +212,58 @@ function printReport() {
     </div>
   </div>
 </template>
+
+<style scoped>
+.ann-legend {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.ann-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.ann-legend i { width: 9px; height: 9px; border-radius: 3px; }
+
+.ann-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 210px;
+  padding-top: 18px;
+}
+.ann-col {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+/* The pair of bars is what fills the column's height; the labels below sit outside it. */
+.ann-bars {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+}
+.ann-bar {
+  flex: 1;
+  max-width: 17px;
+  border-radius: 5px 5px 2px 2px;
+}
+.ann-bar-inc { background: var(--pos); }
+.ann-bar-exp { background: var(--accent); }
+.ann-month { font-size: 11px; color: var(--muted); font-weight: 500; text-transform: capitalize; }
+.ann-saldo { font-size: 10.5px; font-weight: 600; white-space: nowrap; }
+
+@media (max-width: 760px) {
+  .ann-chart { gap: 3px; }
+  .ann-bars { gap: 2px; }
+  .ann-bar { max-width: 11px; }
+  .ann-saldo { display: none; } /* no room for 12 currency figures on a phone */
+}
+</style>
