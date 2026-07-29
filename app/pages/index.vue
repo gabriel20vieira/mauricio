@@ -1,18 +1,17 @@
 <script setup lang="ts">
-import { catColor, monthKey, firstName } from '~~/shared/config'
+import { catColor, monthKey, stepMonth, firstName } from '~~/shared/config'
 
 definePageMeta({ titleKey: 'nav.summary', subtitleKey: 'pageSub.summary' })
 const store = useStore()
 const cats = useCategories()
-const selected = useMonth()
 const { isDark } = useTweaks()
 const { d } = useI18n()
+// Page-local month state (NOT the shared useMonth): same arrow stepper as
+// /gastos — navigates freely, defaults to the current month, and is never
+// coerced to the latest month that happens to have data.
+const selected = ref(monthKey(new Date().toISOString().slice(0, 10)))
 
-onMounted(async () => {
-  await store.ensure()
-  syncMonth(selected, store.expenses.value)
-})
-watch(() => store.expenses.value, (ex) => syncMonth(selected, ex))
+onMounted(() => store.ensure())
 
 const monthExpenses = computed(() => store.expenses.value.filter(e => monthKey(e.date) === selected.value))
 // Incomes feed the balance stat only — the listings live on /gastos.
@@ -42,6 +41,7 @@ const monthLabel = computed(() => {
   if (!y || !m) return ''
   return d(new Date(y, m - 1, 1), 'monthYear')
 })
+function stepMonthBy(delta: number) { selected.value = stepMonth(selected.value, delta) }
 
 // By category
 const byCat = computed(() => {
@@ -84,8 +84,11 @@ const transfers = computed(() => {
 
 <template>
   <div style="max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px">
-    <div style="display: flex; justify-content: flex-end">
-      <AppMonthPicker />
+    <!-- Month stepper (same control as /gastos) -->
+    <div style="display: flex; align-items: center; gap: 4px">
+      <UiIconButton name="chevLeft" :label="$t('movements.prevMonth')" @click="stepMonthBy(-1)" />
+      <div class="tnum" style="min-width: 150px; text-align: center; font-weight: 600; font-size: 15px; text-transform: capitalize">{{ monthLabel }}</div>
+      <UiIconButton name="chevRight" :label="$t('movements.nextMonth')" @click="stepMonthBy(1)" />
     </div>
 
     <!-- Stat grid -->
