@@ -1,3 +1,4 @@
+import { canonicalSubKey } from '~~/shared/config'
 import type { CategoryT, SubcategoryT } from '~/composables/useStore'
 
 // Client-side category/subcategory access with locale-aware names. Replaces the
@@ -27,9 +28,15 @@ export function useCategories() {
     const s = byId.value[catId]?.subs.find(x => x.id === subId)
     return s ? name(s.names, subId) : subId
   }
+  // Grouping key for an expense's raw `sub` — see canonicalSubKey. Group by this,
+  // never by the raw value, or the same subcategory shows up more than once.
+  function subKey(catId: string, raw: string): string {
+    const subs = (byId.value[catId]?.subs || []).map(s => ({ id: s.id, names: [s.names.en, s.names.pt, s.names.es] }))
+    return canonicalSubKey(raw, subs)
+  }
   function hue(catId: string): number {
     return byId.value[catId]?.hue ?? 200
   }
 
-  return { all, active, byId, key, catLabel, subLabel, activeSubs, hue }
+  return { all, active, byId, key, catLabel, subLabel, subKey, activeSubs, hue }
 }

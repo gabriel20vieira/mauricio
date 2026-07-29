@@ -63,3 +63,9 @@ export async function catNameMap(locale?: string): Promise<Record<string, string
 export async function subNameMap(locale?: string): Promise<Record<string, string>> {
   return Object.fromEntries((await loadSubcategories()).map(s => [s.id, subName(s, locale)]))
 }
+
+// Subcategory ids with every locale's name — the lookup table canonicalSubKey needs
+// to fold a stored label back onto its id.
+export async function subIndex(): Promise<{ id: string, names: string[] }[]> {
+  return (await loadSubcategories()).map(s => ({ id: s.id, names: [s.nameEn, s.namePt, s.nameEs] }))
+}

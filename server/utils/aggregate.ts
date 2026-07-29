@@ -4,8 +4,8 @@
 import { desc } from 'drizzle-orm'
 import { db, schema } from './db'
 import type { User } from '../db/schema'
-import { monthKey, parseDate, MONTHS_PT } from '../../shared/config'
-import { catNameMap, subNameMap } from './categories'
+import { monthKey, parseDate, MONTHS_PT, canonicalSubKey } from '../../shared/config'
+import { catNameMap, subNameMap, subIndex } from './categories'
 import { incomeCatNameMap } from './incomeCategories'
 
 export type Dimension = 'pessoa' | 'categoria' | 'subcategoria' | 'dia' | 'mes' | 'ano' | 'metodo' | 'fonte'
@@ -100,7 +100,7 @@ function applyFilters(rows: Row[], f: AggFilters | undefined, ms: User[], income
 }
 
 // Returns { key, label, sort } for a row on a given dimension.
-function dimOf(dim: Dimension, e: Row, ms: User[], catMap: Record<string, string>, subMap: Record<string, string>, incomeMap: Record<string, string>): { key: string, label: string, sort: string } {
+function dimOf(dim: Dimension, e: Row, ms: User[], catMap: Record<string, string>, subMap: Record<string, string>, incomeMap: Record<string, string>, subs: { id: string, names: string[] }[]): { key: string, label: string, sort: string } {
   switch (dim) {
     case 'pessoa': {
       const m = ms.find(x => x.id === e.userId)
@@ -111,8 +111,11 @@ function dimOf(dim: Dimension, e: Row, ms: User[], catMap: Record<string, string
       return { key: e.cat, label, sort: label }
     }
     case 'subcategoria': {
-      const label = e.sub ? (subMap[e.sub] || e.sub) : '(—)'
-      return { key: e.sub || '', label, sort: label }
+      // Key on the canonical id so rows storing a label, or a different casing, are
+      // one bucket — otherwise the same subcategory is reported twice, split.
+      const key = canonicalSubKey(e.sub, subs)
+      const label = key ? (subMap[key] || e.sub.trim() || key) : '(—)'
+      return { key, label, sort: label }
     }
     case 'dia': {
       const p = parseDate(e.date)
@@ -136,8 +139,8 @@ function dimOf(dim: Dimension, e: Row, ms: User[], catMap: Record<string, string
 }
 
 export async function aggregate(q: AggQuery, locale?: string): Promise<AggResult> {
-  const [ms, allRows, catMap, subMap, incomeMap] = await Promise.all([
-    members(), loadRows(q.dataset === 'rendimentos' ? 'rendimentos' : 'gastos'), catNameMap(locale), subNameMap(locale), incomeCatNameMap(locale),
+  const [ms, allRows, catMap, subMap, incomeMap, subs] = await Promise.all([
+    members(), loadRows(q.dataset === 'rendimentos' ? 'rendimentos' : 'gastos'), catNameMap(locale), subNameMap(locale), incomeCatNameMap(locale), subIndex(),
   ])
   const measure: Measure = q.measure || 'soma'
   const rows = applyFilters(allRows, q.filters, ms, incomeMap)
@@ -148,9 +151,9 @@ export async function aggregate(q: AggQuery, locale?: string): Promise<AggResult
   const cells = new Map<string, { sum: number, count: number }>() // `${pKey}|${sKey}`
 
   for (const e of rows) {
-    const p = dimOf(q.groupBy, e, ms, catMap, subMap, incomeMap)
+    const p = dimOf(q.groupBy, e, ms, catMap, subMap, incomeMap, subs)
     primaries.set(p.key, { label: p.label, sort: p.sort })
-    const s = q.series ? dimOf(q.series, e, ms, catMap, subMap, incomeMap) : { key: '_', label: measureLabelName(measure), sort: '_' }
+    const s = q.series ? dimOf(q.series, e, ms, catMap, subMap, incomeMap, subs) : { key: '_', label: measureLabelName(measure), sort: '_' }
     seriesKeys.set(s.key, { label: s.label, sort: s.sort })
     const ck = `${p.key}|${s.key}`
     const cell = cells.get(ck) || { sum: 0, count: 0 }

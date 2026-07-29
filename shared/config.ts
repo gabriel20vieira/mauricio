@@ -19,6 +19,21 @@ export const NUM_CTX_DEFAULT = 16384
 export const NUM_CTX_MIN = 2048
 export const NUM_CTX_MAX = 131072
 
+// An expense's `sub` is meant to hold a subcategory id, but rows written before ids
+// existed — and the chat assistant, whose tool takes free text — have also stored
+// display labels and mixed casing. Nothing on the write path enforces it. Fold any of
+// those onto the canonical id so a breakdown groups them into one row instead of
+// several that merely look alike. Unmatched values fall back to lowercase, which at
+// least merges "Casa" with "casa".
+export function canonicalSubKey(raw: string, subs: { id: string, names: string[] }[]): string {
+  const s = (raw || '').trim()
+  if (!s) return ''
+  const lower = s.toLowerCase()
+  const hit = subs.find(x => x.id.toLowerCase() === lower)
+    || subs.find(x => x.names.some(n => n && n.trim().toLowerCase() === lower))
+  return hit ? hit.id : lower
+}
+
 export function parseDate(s: string) { const [y, m, d] = s.split('-').map(Number); return { y, m: m - 1, d } }
 export function monthKey(s: string) { const p = parseDate(s); return `${p.y}-${String(p.m + 1).padStart(2, '0')}` }
 // Step a 'yyyy-mm' month key by `delta` months, rolling the year over as needed.
