@@ -10,10 +10,8 @@ const activeCats = cats.active
 const activeIncomeCats = incomeCats.active
 const { openNewExpense, openNewIncome } = useAppUi()
 const { d } = useI18n()
-// Page-local month state (NOT the shared useMonth): the arrow stepper navigates
-// freely, defaults to the current month, and never coerces or is coerced by the
-// dashboard/reports month picker.
-const selected = ref(monthKey(new Date().toISOString().slice(0, 10)))
+// Shared with the dashboard and reports (and mirrored into ?m=).
+const selected = useMonth()
 onMounted(() => store.ensure())
 
 const q = ref('')

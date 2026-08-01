@@ -6,10 +6,8 @@ const store = useStore()
 const cats = useCategories()
 const { isDark } = useTweaks()
 const { d } = useI18n()
-// Page-local month state (NOT the shared useMonth): same arrow stepper as
-// /gastos — navigates freely, defaults to the current month, and is never
-// coerced to the latest month that happens to have data.
-const selected = ref(monthKey(new Date().toISOString().slice(0, 10)))
+// Shared with /gastos and /relatorios (and mirrored into ?m=).
+const selected = useMonth()
 
 onMounted(() => store.ensure())
 

@@ -10,19 +10,23 @@ const { locale, d } = useI18n()
 
 const mode = ref<'anual' | 'mensal'>('anual')
 
-onMounted(async () => { await store.ensure(); syncMonth(selected, store.expenses.value) })
-watch(() => store.expenses.value, (ex) => syncMonth(selected, ex))
+onMounted(() => store.ensure())
 
 // ---- year selection (annual mode) ----
+// Year and month are one selection: both read from (and write to) the month
+// shared with the other pages, so switching year here carries over to them.
+const year = computed({
+  get: () => selected.value.slice(0, 4),
+  set: (y: string) => { selected.value = `${y}-${selected.value.slice(5, 7)}` },
+})
 const years = computed(() => {
   const set = new Set<string>()
   for (const e of store.expenses.value) set.add(e.date.slice(0, 4))
   for (const i of store.incomes.value) set.add(i.date.slice(0, 4))
   set.add(String(new Date().getFullYear()))
+  set.add(year.value)
   return [...set].sort().reverse()
 })
-const year = ref('')
-watch(years, (ys) => { if (!year.value || !ys.includes(year.value)) year.value = ys[0] }, { immediate: true })
 
 // ---- period scope: filter movements by the active mode (year vs month) ----
 function inScope(date: string) {
