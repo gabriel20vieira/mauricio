@@ -8,7 +8,6 @@ const cats = useCategories()
 const incomeCats = useIncomeCategories()
 const activeCats = cats.active
 const activeIncomeCats = incomeCats.active
-const { openNewExpense, openNewIncome } = useAppUi()
 const { user } = useUserSession()
 const { d } = useI18n()
 // Shared with the dashboard and reports (and mirrored into ?m=).
@@ -65,16 +64,11 @@ function clearFilters() { q.value = ''; fCat.value = ''; fWho.value = ''; sort.v
 
 <template>
   <div style="max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px">
-    <!-- Month stepper + add buttons -->
-    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
-      <div style="display: flex; align-items: center; gap: 4px">
-        <UiIconButton name="chevLeft" :label="$t('movements.prevMonth')" @click="stepMonthBy(-1)" />
-        <div class="tnum" style="min-width: 150px; text-align: center; font-weight: 600; font-size: 15px; text-transform: capitalize">{{ monthLabel }}</div>
-        <UiIconButton name="chevRight" :label="$t('movements.nextMonth')" @click="stepMonthBy(1)" />
-      </div>
-      <div style="flex: 1" />
-      <UiButton variant="outline" icon="trend" @click="openNewIncome">{{ $t('layout.newIncome') }}</UiButton>
-      <UiButton variant="primary" icon="plus" @click="openNewExpense">{{ $t('layout.newExpense') }}</UiButton>
+    <!-- Month stepper (add buttons live in the topbar) -->
+    <div style="display: flex; align-items: center; gap: 4px">
+      <UiIconButton name="chevLeft" :label="$t('movements.prevMonth')" @click="stepMonthBy(-1)" />
+      <div class="tnum" style="min-width: 150px; text-align: center; font-weight: 600; font-size: 15px; text-transform: capitalize">{{ monthLabel }}</div>
+      <UiIconButton name="chevRight" :label="$t('movements.nextMonth')" @click="stepMonthBy(1)" />
     </div>
 
     <!-- Filters -->
