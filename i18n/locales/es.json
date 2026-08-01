@@ -102,7 +102,7 @@
   "expenses": {
     "searchPlaceholder": "Buscar movimientos…",
     "category": "Categoría",
-    "person": "Persona",
+    "allPeople": "Todas las personas",
     "month": "Mes",
     "sortDate": "Fecha",
     "sortAmount": "Importe",

@@ -6,9 +6,13 @@ const store = useStore()
 const cats = useCategories()
 const selected = useMonth()
 const { isDark } = useTweaks()
+const { user } = useUserSession()
 const { locale, d } = useI18n()
 
 const mode = ref<'anual' | 'mensal'>('anual')
+// Opens on the signed-in person every time; '' means everyone.
+const fWho = ref(user.value?.id ?? '')
+const mine = (userId: string) => !fWho.value || userId === fWho.value
 
 onMounted(() => store.ensure())
 
@@ -32,8 +36,11 @@ const years = computed(() => {
 function inScope(date: string) {
   return mode.value === 'anual' ? date.slice(0, 4) === year.value : monthKey(date) === selected.value
 }
-const scopeExpenses = computed(() => store.expenses.value.filter(e => inScope(e.date)))
-const scopeIncomes = computed(() => store.incomes.value.filter(i => inScope(i.date)))
+// Period only — the person breakdown compares everyone, so it must not be
+// narrowed by the person filter.
+const periodExpenses = computed(() => store.expenses.value.filter(e => inScope(e.date)))
+const scopeExpenses = computed(() => periodExpenses.value.filter(e => mine(e.userId)))
+const scopeIncomes = computed(() => store.incomes.value.filter(i => inScope(i.date) && mine(i.userId)))
 const periodLabel = computed(() => {
   if (mode.value === 'anual') return year.value
   const [y, m] = (selected.value || '').split('-').map(Number)
@@ -48,8 +55,8 @@ const saldoCents = computed(() => incomeCents.value - expenseCents.value)
 const annual = computed(() => {
   const exp: Record<string, number> = {}
   const inc: Record<string, number> = {}
-  for (const e of store.expenses.value) if (e.date.slice(0, 4) === year.value) exp[monthKey(e.date)] = (exp[monthKey(e.date)] || 0) + e.amountCents
-  for (const i of store.incomes.value) if (i.date.slice(0, 4) === year.value) inc[monthKey(i.date)] = (inc[monthKey(i.date)] || 0) + i.amountCents
+  for (const e of store.expenses.value) if (e.date.slice(0, 4) === year.value && mine(e.userId)) exp[monthKey(e.date)] = (exp[monthKey(e.date)] || 0) + e.amountCents
+  for (const i of store.incomes.value) if (i.date.slice(0, 4) === year.value && mine(i.userId)) inc[monthKey(i.date)] = (inc[monthKey(i.date)] || 0) + i.amountCents
   return Array.from({ length: 12 }, (_, m) => {
     const mk = `${year.value}-${String(m + 1).padStart(2, '0')}`
     const expense = exp[mk] || 0
@@ -105,7 +112,7 @@ function toggleCat(catId: string) {
 
 const byPerson = computed(() => {
   const map: Record<string, number> = {}
-  for (const e of scopeExpenses.value) map[e.userId] = (map[e.userId] || 0) + e.amountCents
+  for (const e of periodExpenses.value) map[e.userId] = (map[e.userId] || 0) + e.amountCents
   return store.members.value.map(m => ({ member: m, cents: map[m.id] || 0 })).sort((a, b) => b.cents - a.cents)
 })
 const maxPerson = computed(() => Math.max(...byPerson.value.map(p => p.cents), 1))
@@ -113,7 +120,9 @@ const maxPerson = computed(() => Math.max(...byPerson.value.map(p => p.cents), 1
 function printReport() {
   const q = mode.value === 'anual' ? `ano=${year.value}` : `mes=${selected.value}`
   if (!q.split('=')[1]) return
-  window.open(`/relatorios-imprimir?${q}`, '_blank')
+  // Carry the person filter over so the sheet matches what is on screen.
+  const who = fWho.value ? `&pessoa=${encodeURIComponent(fWho.value)}` : ''
+  window.open(`/relatorios-imprimir?${q}${who}`, '_blank')
 }
 </script>
 
@@ -122,6 +131,12 @@ function printReport() {
     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
       <UiSegmented v-model="mode" :options="[{ value: 'anual', label: $t('reports.annual') }, { value: 'mensal', label: $t('reports.monthly') }]" />
       <div style="flex: 1" />
+      <div style="width: 150px">
+        <UiSelect v-model="fWho">
+          <option value="">{{ $t('expenses.allPeople') }}</option>
+          <option v-for="m in store.members.value" :key="m.id" :value="m.id">{{ m.name }}</option>
+        </UiSelect>
+      </div>
       <AppMonthPicker v-if="mode === 'mensal'" />
       <div v-else style="width: 120px">
         <UiSelect :model-value="year" @update:model-value="year = $event">

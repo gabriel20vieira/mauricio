@@ -9,6 +9,7 @@ const incomeCats = useIncomeCategories()
 const activeCats = cats.active
 const activeIncomeCats = incomeCats.active
 const { openNewExpense, openNewIncome } = useAppUi()
+const { user } = useUserSession()
 const { d } = useI18n()
 // Shared with the dashboard and reports (and mirrored into ?m=).
 const selected = useMonth()
@@ -16,7 +17,8 @@ onMounted(() => store.ensure())
 
 const q = ref('')
 const fCat = ref('') // a category id (expense or income namespace)
-const fWho = ref('')
+// Opens on the signed-in person every time; '' means everyone.
+const fWho = ref(user.value?.id ?? '')
 const sort = ref<'date' | 'amount'>('date')
 
 const monthLabel = computed(() => {
@@ -95,7 +97,7 @@ function clearFilters() { q.value = ''; fCat.value = ''; fWho.value = ''; sort.v
           </UiSelect>
         </div>
         <div style="width: 140px">
-          <UiSelect v-model="fWho"><option value="">{{ $t('expenses.person') }}</option><option v-for="m in store.members.value" :key="m.id" :value="m.id">{{ m.name }}</option></UiSelect>
+          <UiSelect v-model="fWho"><option value="">{{ $t('expenses.allPeople') }}</option><option v-for="m in store.members.value" :key="m.id" :value="m.id">{{ m.name }}</option></UiSelect>
         </div>
         <UiSegmented v-model="sort" size="sm" :options="[{ value: 'date', label: $t('expenses.sortDate') }, { value: 'amount', label: $t('expenses.sortAmount') }]" />
       </div>

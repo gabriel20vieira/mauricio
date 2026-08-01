@@ -102,7 +102,7 @@
   "expenses": {
     "searchPlaceholder": "Search movements…",
     "category": "Category",
-    "person": "Person",
+    "allPeople": "All people",
     "month": "Month",
     "sortDate": "Date",
     "sortAmount": "Amount",

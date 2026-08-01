@@ -33,12 +33,20 @@ const periodTitle = computed(() => {
 function inScope(date: string) {
   return isAnnual.value ? date.slice(0, 4) === year.value : monthKey(date) === mes.value
 }
-const scopeExpenses = computed(() =>
+// Optional ?pessoa=<userId>, mirroring the person filter on /relatorios.
+const pessoa = computed(() => String(route.query.pessoa || ''))
+const mine = (userId: string) => !pessoa.value || userId === pessoa.value
+
+// Period only: the household comparison (per-person table, average share) must
+// stay whole even when the sheet reports a single person.
+const periodExpenses = computed(() =>
   store.expenses.value.filter(e => inScope(e.date)).sort((a, b) => (a.date < b.date ? -1 : 1)))
+const scopeExpenses = computed(() => periodExpenses.value.filter(e => mine(e.userId)))
 const scopeIncomes = computed(() =>
-  store.incomes.value.filter(i => inScope(i.date)).sort((a, b) => (a.date < b.date ? -1 : 1)))
+  store.incomes.value.filter(i => inScope(i.date) && mine(i.userId)).sort((a, b) => (a.date < b.date ? -1 : 1)))
 
 const expenseCents = computed(() => scopeExpenses.value.reduce((a, e) => a + e.amountCents, 0))
+const periodExpenseCents = computed(() => periodExpenses.value.reduce((a, e) => a + e.amountCents, 0))
 const incomeCents = computed(() => scopeIncomes.value.reduce((a, i) => a + i.amountCents, 0))
 const saldoCents = computed(() => incomeCents.value - expenseCents.value)
 const avgCents = computed(() => scopeExpenses.value.length ? expenseCents.value / scopeExpenses.value.length : 0)
@@ -65,10 +73,10 @@ const byCat = computed(() => {
 })
 
 const members = computed(() => store.members.value)
-const quotaCents = computed(() => members.value.length ? expenseCents.value / members.value.length : 0)
+const quotaCents = computed(() => members.value.length ? periodExpenseCents.value / members.value.length : 0)
 const byPerson = computed(() => {
   const map: Record<string, number> = {}
-  for (const e of scopeExpenses.value) map[e.userId] = (map[e.userId] || 0) + e.amountCents
+  for (const e of periodExpenses.value) map[e.userId] = (map[e.userId] || 0) + e.amountCents
   return members.value.map(m => ({ member: m, paid: map[m.id] || 0, diff: (map[m.id] || 0) - quotaCents.value }))
     .sort((a, b) => b.paid - a.paid)
 })
@@ -79,8 +87,8 @@ const annual = computed(() => {
   const exp: Record<string, number> = {}
   const inc: Record<string, number> = {}
   const y = year.value
-  for (const e of store.expenses.value) if (e.date.slice(0, 4) === y) exp[monthKey(e.date)] = (exp[monthKey(e.date)] || 0) + e.amountCents
-  for (const i of store.incomes.value) if (i.date.slice(0, 4) === y) inc[monthKey(i.date)] = (inc[monthKey(i.date)] || 0) + i.amountCents
+  for (const e of store.expenses.value) if (e.date.slice(0, 4) === y && mine(e.userId)) exp[monthKey(e.date)] = (exp[monthKey(e.date)] || 0) + e.amountCents
+  for (const i of store.incomes.value) if (i.date.slice(0, 4) === y && mine(i.userId)) inc[monthKey(i.date)] = (inc[monthKey(i.date)] || 0) + i.amountCents
   return Array.from({ length: 12 }, (_, m) => {
     const mk = `${y}-${String(m + 1).padStart(2, '0')}`
     return {
@@ -125,6 +133,7 @@ onMounted(async () => {
         <div>
           <div class="brand">{{ appName }}</div>
           <h1>{{ t('reports.reportTitle', { month: periodTitle }) }}</h1>
+          <div v-if="pessoa" class="who">{{ memberName(pessoa) }}</div>
         </div>
         <div class="gen">{{ t('reports.generatedAt', { date: d(new Date(), 'long') }) }}</div>
       </header>
@@ -275,6 +284,7 @@ onMounted(async () => {
 .brand { font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #555; }
 .head h1 { font-size: 24px; font-weight: 700; margin-top: 2px; }
 .gen { font-size: 11px; color: #777; text-align: right; }
+.who { font-size: 13px; color: #555; margin-top: 3px; }
 
 .stats { display: flex; gap: 8px; margin-bottom: 22px; flex-wrap: wrap; }
 .stat { flex: 1; min-width: 110px; border: 1px solid #ddd; border-radius: 8px; padding: 10px 12px; }
