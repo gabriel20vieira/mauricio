@@ -51,7 +51,6 @@ const byCat = computed(() => {
     .filter(x => x.cents > 0).sort((a, b) => b.cents - a.cents)
 })
 const donutSegments = computed(() => byCat.value.map(x => ({ value: x.cents, color: catColor(x.cat.hue, isDark.value), label: cats.catLabel(x.cat.id) })))
-const topCats = computed(() => byCat.value.slice(0, 2))
 </script>
 
 <template>
@@ -63,37 +62,26 @@ const topCats = computed(() => byCat.value.slice(0, 2))
       <UiIconButton name="chevRight" :label="$t('movements.nextMonth')" @click="stepMonthBy(1)" />
     </div>
 
-    <!-- Stat grid -->
-    <div class="stat-grid" style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px">
-      <UiCard class="hero-stat" :pad="24">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start">
-          <div style="font-size: 13px; color: var(--muted)">{{ $t('summary.balance') }} · {{ monthLabel }}</div>
-          <UiTag v-if="hasPrev" :tone="saldoDelta >= 0 ? 'accent' : 'muted'">
-            {{ saldoDelta >= 0 ? '▲' : '▼' }} {{ $t('summary.vsPrevAmount', { amt: $n(Math.abs(saldoDelta), 'currency0') }) }}
-          </UiTag>
-        </div>
-        <div
-          class="tnum"
-          style="font-size: 42px; font-weight: 700; letter-spacing: -0.02em; margin: 8px 0 16px"
-          :style="{ color: saldo >= 0 ? 'var(--pos)' : 'var(--neg)' }"
-        >{{ saldo >= 0 ? '+' : '' }}{{ $n(saldo, 'currency') }}</div>
-        <div style="display: flex; gap: 26px; flex-wrap: wrap">
-          <div><div class="tnum" style="font-weight: 600; color: var(--pos)">{{ $n(monthIncome, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.income') }}</div></div>
-          <div><div class="tnum" style="font-weight: 600">{{ $n(total, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.spent') }}</div></div>
-          <div><div class="tnum" style="font-weight: 600; color: var(--accent)">{{ $n(quota, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('balance.avgQuota') }}</div></div>
-          <div><div class="tnum" style="font-weight: 600">{{ count }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.movements') }}</div></div>
-          <div><div class="tnum" style="font-weight: 600">{{ $n(avg, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.avgPerExpense') }}</div></div>
-        </div>
-      </UiCard>
-
-      <UiCard v-for="t in topCats" :key="t.cat.id" :pad="20" hover>
-        <div :style="{ width: '40px', height: '40px', borderRadius: '11px', display: 'grid', placeItems: 'center', marginBottom: '14px', background: `oklch(${isDark ? '0.34 0.045' : '0.94 0.035'} ${t.cat.hue})`, color: catColor(t.cat.hue, isDark) }">
-          <UiIcon name="receipt" :size="20" />
-        </div>
-        <div style="font-size: 13px; color: var(--muted)">{{ cats.catLabel(t.cat.id) }}</div>
-        <div class="tnum" style="font-size: 24px; font-weight: 700; margin-top: 2px">{{ $n(t.cents / 100, 'currency0') }}</div>
-      </UiCard>
-    </div>
+    <UiCard :pad="24">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start">
+        <div style="font-size: 13px; color: var(--muted)">{{ $t('summary.balance') }} · {{ monthLabel }}</div>
+        <UiTag v-if="hasPrev" :tone="saldoDelta >= 0 ? 'accent' : 'muted'">
+          {{ saldoDelta >= 0 ? '▲' : '▼' }} {{ $t('summary.vsPrevAmount', { amt: $n(Math.abs(saldoDelta), 'currency0') }) }}
+        </UiTag>
+      </div>
+      <div
+        class="tnum"
+        style="font-size: 42px; font-weight: 700; letter-spacing: -0.02em; margin: 8px 0 16px"
+        :style="{ color: saldo >= 0 ? 'var(--pos)' : 'var(--neg)' }"
+      >{{ saldo >= 0 ? '+' : '' }}{{ $n(saldo, 'currency') }}</div>
+      <div style="display: flex; gap: 26px; flex-wrap: wrap">
+        <div><div class="tnum" style="font-weight: 600; color: var(--pos)">{{ $n(monthIncome, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.income') }}</div></div>
+        <div><div class="tnum" style="font-weight: 600">{{ $n(total, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.spent') }}</div></div>
+        <div><div class="tnum" style="font-weight: 600; color: var(--accent)">{{ $n(quota, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('balance.avgQuota') }}</div></div>
+        <div><div class="tnum" style="font-weight: 600">{{ count }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.movements') }}</div></div>
+        <div><div class="tnum" style="font-weight: 600">{{ $n(avg, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.avgPerExpense') }}</div></div>
+      </div>
+    </UiCard>
 
     <UiCard :pad="22">
       <UiSectionTitle>

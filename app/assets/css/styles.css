@@ -100,8 +100,6 @@ a { color: inherit; text-decoration: none; }
 .login-wrap { display: grid; grid-template-columns: 1.05fr 1fr; min-height: 100vh; }
 
 @media (max-width: 980px) {
-  .stat-grid { grid-template-columns: 1fr 1fr !important; }
-  .hero-stat { grid-column: span 2 !important; }
   .dash-cols { grid-template-columns: 1fr !important; }
 }
 @media (max-width: 880px) {
@@ -120,8 +118,6 @@ a { color: inherit; text-decoration: none; }
   .topbar { padding: 13px 16px !important; }
 }
 @media (max-width: 560px) {
-  .stat-grid { grid-template-columns: 1fr !important; }
-  .hero-stat { grid-column: span 1 !important; }
   .hide-sm { display: none !important; }
   .exp-row { grid-template-columns: 34px 1fr auto !important; gap: 11px !important; }
   .exp-row-who { display: none !important; }
