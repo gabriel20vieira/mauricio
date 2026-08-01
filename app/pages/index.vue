@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { catColor, monthKey, stepMonth, firstName } from '~~/shared/config'
+import { catColor, monthKey, stepMonth } from '~~/shared/config'
 
 definePageMeta({ titleKey: 'nav.summary', subtitleKey: 'pageSub.summary' })
 const store = useStore()
@@ -52,34 +52,6 @@ const byCat = computed(() => {
 })
 const donutSegments = computed(() => byCat.value.map(x => ({ value: x.cents, color: catColor(x.cat.hue, isDark.value), label: cats.catLabel(x.cat.id) })))
 const topCats = computed(() => byCat.value.slice(0, 2))
-
-// Per-person contribution vs the average quota (from Balanço).
-const contrib = computed(() => {
-  const map: Record<string, number> = {}
-  for (const e of monthExpenses.value) map[e.userId] = (map[e.userId] || 0) + e.amountCents
-  return members.value.map(m => {
-    const paid = (map[m.id] || 0) / 100
-    return { member: m, paid, diff: paid - quota.value }
-  }).sort((a, b) => b.paid - a.paid)
-})
-const maxPaid = computed(() => Math.max(...contrib.value.map(c => c.paid), 1))
-
-// Minimal transfer suggestion: debtors pay creditors up to the average.
-const transfers = computed(() => {
-  const creditors = contrib.value.filter(c => c.diff > 0.005).map(c => ({ member: c.member, amt: c.diff }))
-  const debtors = contrib.value.filter(c => c.diff < -0.005).map(c => ({ member: c.member, amt: -c.diff }))
-  const out: { from: any; to: any; amt: number }[] = []
-  let ci = 0, di = 0
-  const cs = creditors.map(c => ({ ...c })); const ds = debtors.map(x => ({ ...x }))
-  while (ci < cs.length && di < ds.length) {
-    const amt = Math.min(cs[ci].amt, ds[di].amt)
-    if (amt > 0.005) out.push({ from: ds[di].member, to: cs[ci].member, amt })
-    cs[ci].amt -= amt; ds[di].amt -= amt
-    if (cs[ci].amt <= 0.005) ci++
-    if (ds[di].amt <= 0.005) di++
-  }
-  return out
-})
 </script>
 
 <template>
@@ -123,70 +95,30 @@ const transfers = computed(() => {
       </UiCard>
     </div>
 
-    <!-- Two columns: by category + contribution vs average -->
-    <div class="dash-cols" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
-      <UiCard :pad="22">
-        <UiSectionTitle>
-          {{ $t('summary.byCategory') }}
-          <template #action><NuxtLink to="/relatorios" style="font-size: 13px; color: var(--accent); font-weight: 600">{{ $t('summary.viewReports') }}</NuxtLink></template>
-        </UiSectionTitle>
-        <div v-if="byCat.length" class="donut-row" style="display: flex; align-items: center; gap: 24px">
-          <UiDonut :segments="donutSegments" :size="168">
-            <template #center>
-              <div>
-                <div style="font-size: 12px; color: var(--muted)">{{ $t('summary.total') }}</div>
-                <div class="tnum" style="font-size: 19px; font-weight: 700">{{ $n(total, 'currency0') }}</div>
-              </div>
-            </template>
-          </UiDonut>
-          <div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
-            <div v-for="x in byCat.slice(0, 5)" :key="x.cat.id" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px">
-              <UiCatDot :cat="x.cat" :size="9" />
-              <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ cats.catLabel(x.cat.id) }}</span>
-              <span class="tnum" style="font-weight: 600">{{ $n(x.cents / 100, 'currency0') }}</span>
-              <span class="tnum" style="color: var(--muted); width: 38px; text-align: right">{{ Math.round((x.cents / (total * 100 || 1)) * 100) }}%</span>
-            </div>
-          </div>
-        </div>
-        <UiEmptyState v-else :title="$t('summary.emptyTitle')" :sub="$t('summary.emptySub')" />
-      </UiCard>
-
-      <UiCard :pad="22">
-        <UiSectionTitle>{{ $t('balance.contribVsAvg') }}</UiSectionTitle>
-        <div style="display: flex; flex-direction: column; gap: 16px">
-          <div v-for="c in contrib" :key="c.member.id">
-            <div style="display: flex; align-items: center; gap: 11px; margin-bottom: 7px">
-              <UiAvatar :member="c.member" :size="30" />
-              <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 540; font-size: 14px">{{ firstName(c.member.name) }}</span>
-              <div style="text-align: right; white-space: nowrap">
-                <span class="tnum" style="font-weight: 600">{{ $n(c.paid, 'currency') }}</span>
-                <span class="tnum" style="font-size: 12px; margin-left: 8px" :style="{ color: c.diff >= 0 ? 'var(--pos)' : 'var(--neg)' }">
-                  {{ c.diff >= 0 ? '+' : '' }}{{ $n(c.diff, 'currency0') }}
-                </span>
-              </div>
-            </div>
-            <UiMiniBar :value="c.paid" :max="maxPaid" :color="catColor(c.member.hue, isDark)" />
-          </div>
-        </div>
-      </UiCard>
-    </div>
-
-    <!-- Settle-up transfers -->
     <UiCard :pad="22">
-      <UiSectionTitle>{{ $t('balance.toBalance') }}</UiSectionTitle>
-      <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px">{{ $t('balance.suggestion') }}</p>
-      <div v-if="transfers.length" style="display: flex; flex-direction: column; gap: 10px">
-        <div v-for="(t, i) in transfers" :key="i" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2)">
-          <UiAvatar :member="t.from" :size="30" />
-          <span style="font-weight: 600; font-size: 14px">{{ firstName(t.from.name) }}</span>
-          <div style="flex: 1; display: flex; align-items: center; justify-content: center; color: var(--muted)"><UiIcon name="arrowUR" :size="18" /></div>
-          <span style="font-weight: 600; font-size: 14px">{{ firstName(t.to.name) }}</span>
-          <UiAvatar :member="t.to" :size="30" />
-          <span class="tnum" style="font-weight: 700; min-width: 90px; text-align: right">{{ $n(t.amt, 'currency') }}</span>
+      <UiSectionTitle>
+        {{ $t('summary.byCategory') }}
+        <template #action><NuxtLink to="/relatorios" style="font-size: 13px; color: var(--accent); font-weight: 600">{{ $t('summary.viewReports') }}</NuxtLink></template>
+      </UiSectionTitle>
+      <div v-if="byCat.length" class="donut-row" style="display: flex; align-items: center; gap: 24px">
+        <UiDonut :segments="donutSegments" :size="168">
+          <template #center>
+            <div>
+              <div style="font-size: 12px; color: var(--muted)">{{ $t('summary.total') }}</div>
+              <div class="tnum" style="font-size: 19px; font-weight: 700">{{ $n(total, 'currency0') }}</div>
+            </div>
+          </template>
+        </UiDonut>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
+          <div v-for="x in byCat.slice(0, 5)" :key="x.cat.id" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px">
+            <UiCatDot :cat="x.cat" :size="9" />
+            <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ cats.catLabel(x.cat.id) }}</span>
+            <span class="tnum" style="font-weight: 600">{{ $n(x.cents / 100, 'currency0') }}</span>
+            <span class="tnum" style="color: var(--muted); width: 38px; text-align: right">{{ Math.round((x.cents / (total * 100 || 1)) * 100) }}%</span>
+          </div>
         </div>
       </div>
-      <div v-else style="font-size: 13.5px; color: var(--muted)">{{ $t('balance.balanced') }}</div>
-      <p style="font-size: 12px; color: var(--faint); margin-top: 16px">{{ $t('balance.note') }}</p>
+      <UiEmptyState v-else :title="$t('summary.emptyTitle')" :sub="$t('summary.emptySub')" />
     </UiCard>
 
   </div>

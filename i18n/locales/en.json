@@ -114,13 +114,6 @@
   "balance": {
     "totalHouse": "Household total",
     "avgQuota": "Average share per person",
-    "contribVsAvg": "Contribution vs. average",
-    "above": "above average",
-    "below": "below average",
-    "toBalance": "To settle up",
-    "suggestion": "Suggestion so everyone reaches the average share (minimal transfers):",
-    "balanced": "The accounts are already balanced. 🎉",
-    "note": "Only a suggestion — the household records expenses without automatic splitting.",
     "income": "Income",
     "monthBalance": "Month balance",
     "monthIncomes": "This month's income",

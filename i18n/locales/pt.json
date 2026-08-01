@@ -114,13 +114,6 @@
   "balance": {
     "totalHouse": "Total da casa",
     "avgQuota": "Quota média por pessoa",
-    "contribVsAvg": "Contribuição vs. média",
-    "above": "acima da média",
-    "below": "abaixo da média",
-    "toBalance": "Para equilibrar as contas",
-    "suggestion": "Sugestão para que todos fiquem na quota média (transferências mínimas):",
-    "balanced": "As contas já estão equilibradas. 🎉",
-    "note": "Apenas uma sugestão — a casa regista gastos sem divisão automática.",
     "income": "Rendimentos",
     "monthBalance": "Saldo do mês",
     "monthIncomes": "Rendimentos do mês",

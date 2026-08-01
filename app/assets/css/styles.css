@@ -115,8 +115,6 @@ a { color: inherit; text-decoration: none; }
   .nav-wrap .sidebar { position: relative; height: 100vh; box-shadow: var(--shadow); }
 
   .menu-btn { display: grid !important; }
-  .bottom-nav { display: flex !important; }
-  .add-btn-top { display: none !important; }
   .topbar-sub { display: none; }
   .main-scroll { padding: 18px 16px 30px !important; }
   .topbar { padding: 13px 16px !important; }

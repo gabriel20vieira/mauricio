@@ -34,9 +34,6 @@ const visibleNav = computed(() => nav.filter(n =>
 const navMain = computed(() => visibleNav.value.filter(n => n.group === 'nav'))
 const navMgmt = computed(() => visibleNav.value.filter(n => n.group === 'mgmt'))
 
-// Four nav links + two quick-add buttons (expense/income) fit the mobile bar.
-const bottomNav = computed(() => visibleNav.value.slice(0, 4))
-
 watch(() => route.path, () => { navOpen.value = false })
 
 function navLinkStyle(active: boolean) {
@@ -107,31 +104,21 @@ function navLinkStyle(active: boolean) {
           <div class="topbar-sub" style="font-size: 13px; color: var(--muted)">{{ header.sub }}</div>
         </div>
         <UiIconButton :name="isDark ? 'sun' : 'moon'" :label="$t('layout.toggleTheme')" @click="toggleTheme" />
+        <!-- Labels collapse on narrow screens: the sidebar is the only nav, so
+             these quick-add buttons must stay reachable at every width. -->
         <div class="add-btn-top" style="display: flex; gap: 8px">
-          <UiButton variant="outline" icon="trend" @click="openNewIncome">{{ $t('layout.newIncome') }}</UiButton>
-          <UiButton icon="plus" @click="openNewExpense">{{ $t('layout.newExpense') }}</UiButton>
+          <UiButton variant="outline" icon="trend" :aria-label="$t('layout.newIncome')" @click="openNewIncome">
+            <span class="hide-sm">{{ $t('layout.newIncome') }}</span>
+          </UiButton>
+          <UiButton icon="plus" :aria-label="$t('layout.newExpense')" @click="openNewExpense">
+            <span class="hide-sm">{{ $t('layout.newExpense') }}</span>
+          </UiButton>
         </div>
       </header>
 
       <main class="main-scroll" style="flex: 1; overflow-y: auto; padding: 26px 26px 40px">
         <slot />
       </main>
-
-      <!-- Mobile bottom nav -->
-      <nav class="bottom-nav" style="display: none; position: sticky; bottom: 0; border-top: 1px solid var(--border); background: var(--surface); padding: 8px 6px; gap: 2px; z-index: 60">
-        <NuxtLink v-for="n in bottomNav" :key="n.to" :to="n.to"
-          :style="{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', padding: '6px 2px', fontSize: '10.5px', fontWeight: 600, color: route.path === n.to ? 'var(--accent)' : 'var(--muted)' }">
-          <UiIcon :name="n.icon" :size="20" />{{ $t(n.labelKey) }}
-        </NuxtLink>
-        <button style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px; font-size: 10.5px; font-weight: 600; color: var(--accent); background: none; border: none"
-          @click="openNewExpense">
-          <UiIcon name="plus" :size="20" />{{ $t('nav.expenses') }}
-        </button>
-        <button style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px; font-size: 10.5px; font-weight: 600; color: var(--pos); background: none; border: none"
-          @click="openNewIncome">
-          <UiIcon name="trend" :size="20" />{{ $t('balance.income') }}
-        </button>
-      </nav>
     </div>
 
     <AppExpenseModal />
