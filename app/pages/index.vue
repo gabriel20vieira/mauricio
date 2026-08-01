@@ -5,30 +5,38 @@ definePageMeta({ titleKey: 'nav.summary', subtitleKey: 'pageSub.summary' })
 const store = useStore()
 const cats = useCategories()
 const { isDark } = useTweaks()
+const { user } = useUserSession()
 const { d } = useI18n()
 // Shared with /gastos and /relatorios (and mirrored into ?m=).
 const selected = useMonth()
+// Opens on the signed-in person every time; '' means everyone.
+const fWho = ref(user.value?.id ?? '')
+const mine = (userId: string) => !fWho.value || userId === fWho.value
 
 onMounted(() => store.ensure())
 
-const monthExpenses = computed(() => store.expenses.value.filter(e => monthKey(e.date) === selected.value))
+// Month only: the average share is a household figure and must not shrink with
+// the person filter.
+const houseExpenses = computed(() => store.expenses.value.filter(e => monthKey(e.date) === selected.value))
+const monthExpenses = computed(() => houseExpenses.value.filter(e => mine(e.userId)))
 // Incomes feed the balance stat only — the listings live on /gastos.
-const monthIncomes = computed(() => store.incomes.value.filter(i => monthKey(i.date) === selected.value))
+const monthIncomes = computed(() => store.incomes.value.filter(i => monthKey(i.date) === selected.value && mine(i.userId)))
 const total = computed(() => monthExpenses.value.reduce((a, e) => a + e.amountCents, 0) / 100)
 const count = computed(() => monthExpenses.value.length)
 const avg = computed(() => count.value ? total.value / count.value : 0)
 const monthIncome = computed(() => monthIncomes.value.reduce((a, i) => a + i.amountCents, 0) / 100)
 const saldo = computed(() => monthIncome.value - total.value)
 const members = computed(() => store.members.value)
-const quota = computed(() => members.value.length ? total.value / members.value.length : 0)
+const houseTotal = computed(() => houseExpenses.value.reduce((a, e) => a + e.amountCents, 0) / 100)
+const quota = computed(() => members.value.length ? houseTotal.value / members.value.length : 0)
 
 const prevKey = computed(() => {
   const [y, m] = selected.value.split('-').map(Number)
   const d = m === 1 ? { y: y - 1, m: 12 } : { y, m: m - 1 }
   return `${d.y}-${String(d.m).padStart(2, '0')}`
 })
-const prevTotal = computed(() => store.expenses.value.filter(e => monthKey(e.date) === prevKey.value).reduce((a, e) => a + e.amountCents, 0) / 100)
-const prevIncome = computed(() => store.incomes.value.filter(i => monthKey(i.date) === prevKey.value).reduce((a, i) => a + i.amountCents, 0) / 100)
+const prevTotal = computed(() => store.expenses.value.filter(e => monthKey(e.date) === prevKey.value && mine(e.userId)).reduce((a, e) => a + e.amountCents, 0) / 100)
+const prevIncome = computed(() => store.incomes.value.filter(i => monthKey(i.date) === prevKey.value && mine(i.userId)).reduce((a, i) => a + i.amountCents, 0) / 100)
 // Compared in euros, not percent: a percentage against a zero or negative
 // previous balance says nothing useful.
 const saldoDelta = computed(() => saldo.value - (prevIncome.value - prevTotal.value))
@@ -53,11 +61,20 @@ const donutSegments = computed(() => byCat.value.map(x => ({ value: x.cents, col
 
 <template>
   <div style="max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px">
-    <!-- Month stepper (same control as /gastos) -->
-    <div style="display: flex; align-items: center; gap: 4px">
-      <UiIconButton name="chevLeft" :label="$t('movements.prevMonth')" @click="stepMonthBy(-1)" />
-      <div class="tnum" style="min-width: 150px; text-align: center; font-weight: 600; font-size: 15px; text-transform: capitalize">{{ monthLabel }}</div>
-      <UiIconButton name="chevRight" :label="$t('movements.nextMonth')" @click="stepMonthBy(1)" />
+    <!-- Month stepper (same control as /gastos) + person filter -->
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+      <div style="display: flex; align-items: center; gap: 4px">
+        <UiIconButton name="chevLeft" :label="$t('movements.prevMonth')" @click="stepMonthBy(-1)" />
+        <div class="tnum" style="min-width: 150px; text-align: center; font-weight: 600; font-size: 15px; text-transform: capitalize">{{ monthLabel }}</div>
+        <UiIconButton name="chevRight" :label="$t('movements.nextMonth')" @click="stepMonthBy(1)" />
+      </div>
+      <div style="flex: 1" />
+      <div style="width: 150px">
+        <UiSelect v-model="fWho">
+          <option value="">{{ $t('expenses.allPeople') }}</option>
+          <option v-for="m in store.members.value" :key="m.id" :value="m.id">{{ m.name }}</option>
+        </UiSelect>
+      </div>
     </div>
 
     <UiCard :pad="24">
