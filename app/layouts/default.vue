@@ -60,9 +60,6 @@ function navLinkStyle(active: boolean) {
           <span style="font-size: 18px; font-weight: 700; letter-spacing: -0.02em">{{ appName }}</span>
         </div>
 
-        <UiButton icon="plus" full @click="openNewExpense">{{ $t('layout.newExpense') }}</UiButton>
-        <UiButton variant="outline" icon="trend" full @click="openNewIncome">{{ $t('layout.newIncome') }}</UiButton>
-
         <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: var(--faint); padding: 16px 8px 6px">{{ $t('layout.navigation') }}</div>
         <NuxtLink v-for="n in navMain" :key="n.to" :to="n.to" :style="navLinkStyle(route.path === n.to)">
           <UiIcon :name="n.icon" :size="19" />{{ $t(n.labelKey) }}
@@ -104,8 +101,8 @@ function navLinkStyle(active: boolean) {
           <div class="topbar-sub" style="font-size: 13px; color: var(--muted)">{{ header.sub }}</div>
         </div>
         <UiIconButton :name="isDark ? 'sun' : 'moon'" :label="$t('layout.toggleTheme')" @click="toggleTheme" />
-        <!-- Labels collapse on narrow screens: the sidebar is the only nav, so
-             these quick-add buttons must stay reachable at every width. -->
+        <!-- Only quick-add entry point in the app: sits beside the theme toggle
+             at every width, collapsing to icon-only on narrow screens. -->
         <div class="add-btn-top" style="display: flex; gap: 8px">
           <UiButton variant="outline" icon="trend" :aria-label="$t('layout.newIncome')" @click="openNewIncome">
             <span class="hide-sm">{{ $t('layout.newIncome') }}</span>
