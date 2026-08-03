@@ -345,6 +345,7 @@
     "srcOther": "Other",
     "category": "Category",
     "errCat": "Pick a category.",
+    "searchCategory": "Search category…",
     "noCategory": "No categories."
   },
   "movements": {

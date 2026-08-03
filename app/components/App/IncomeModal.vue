@@ -24,6 +24,7 @@ const saving = ref(false)
 watch(open, (o) => {
   if (!o) return
   error.value = ''
+  catQuery.value = ''
   const e = editing.value
   if (e) {
     form.amount = (e.amountCents / 100).toFixed(2)
@@ -33,6 +34,20 @@ watch(open, (o) => {
     form.amount = ''; form.cat = defaultCat(); form.date = today
     form.who = user.value?.id ?? ''; form.note = ''
   }
+})
+
+// Same flat list as the expense modal — income categories have no subcategories,
+// so the label is just the category name.
+const catOptions = computed(() => activeCats.value.map(c => ({
+  key: c.id, cat: c.id, hue: c.hue, label: incomeCats.catLabel(c.id),
+})))
+
+// Search matches the label string.
+const catQuery = ref('')
+const filteredCats = computed(() => {
+  const q = catQuery.value.trim().toLowerCase()
+  if (!q) return catOptions.value
+  return catOptions.value.filter(o => o.label.toLowerCase().includes(q))
 })
 
 // A normal user can only edit/create their own incomes.
@@ -102,12 +117,14 @@ async function remove() {
       </div>
 
       <UiField :label="$t('incomeModal.category')" style="margin-bottom: 14px">
-        <div style="display: flex; flex-wrap: wrap; gap: 8px">
-          <button v-for="c in activeCats" :key="c.id" type="button" :disabled="lockedOther"
-            :style="chipStyle(form.cat === c.id, c.hue)" @click="form.cat = c.id">
-            <span :style="{ width: '8px', height: '8px', borderRadius: '50%', background: catColor(c.hue, isDark) }" />{{ incomeCats.catLabel(c.id) }}
+        <UiInput v-model="catQuery" :disabled="lockedOther"
+          :placeholder="$t('incomeModal.searchCategory')" style="margin-bottom: 8px" />
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; max-height: 168px; overflow-y: auto">
+          <button v-for="o in filteredCats" :key="o.key" type="button" :disabled="lockedOther"
+            :style="chipStyle(form.cat === o.cat, o.hue)" @click="form.cat = o.cat">
+            <span :style="{ width: '8px', height: '8px', borderRadius: '50%', background: catColor(o.hue, isDark) }" />{{ o.label }}
           </button>
-          <span v-if="!activeCats.length" style="font-size: 13px; color: var(--muted); padding: 6px 2px">{{ $t('incomeModal.noCategory') }}</span>
+          <span v-if="!filteredCats.length" style="font-size: 13px; color: var(--muted); padding: 6px 2px">{{ $t('incomeModal.noCategory') }}</span>
         </div>
       </UiField>
 

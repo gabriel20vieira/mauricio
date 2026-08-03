@@ -38,19 +38,25 @@ watch(open, (o) => {
   }
 })
 
-// Category search — filter the chips by localized name (helps when there are many).
+// One flat list: the category on its own, then each subcategory as
+// "Category - Subcategory". Picking an option sets both fields at once.
+const catOptions = computed(() => activeCats.value.flatMap((c) => {
+  const label = cats.catLabel(c.id)
+  return [
+    { key: c.id, cat: c.id, sub: '', hue: c.hue, label },
+    ...cats.activeSubs(c.id).map(s => ({
+      key: `${c.id}/${s.id}`, cat: c.id, sub: s.id, hue: c.hue,
+      label: `${label} - ${cats.subLabel(c.id, s.id)}`,
+    })),
+  ]
+}))
+
+// Search matches the full "Category - Subcategory" string.
 const catQuery = ref('')
 const filteredCats = computed(() => {
   const q = catQuery.value.trim().toLowerCase()
-  const list = activeCats.value
-  if (!q) return list
-  return list.filter(c => cats.catLabel(c.id).toLowerCase().includes(q))
-})
-
-const subs = computed(() => cats.activeSubs(form.cat))
-watch(() => form.cat, () => {
-  // Reset sub if it no longer belongs to the selected category.
-  if (form.sub && !subs.value.some(s => s.id === form.sub)) form.sub = ''
+  if (!q) return catOptions.value
+  return catOptions.value.filter(o => o.label.toLowerCase().includes(q))
 })
 
 // A normal user can only edit/create their own expenses.
@@ -119,25 +125,16 @@ async function remove() {
       </div>
 
       <UiField :label="$t('expenseModal.category')" style="margin-bottom: 14px">
-        <UiInput v-if="activeCats.length > 6" v-model="catQuery" :disabled="lockedOther"
+        <UiInput v-if="catOptions.length > 6" v-model="catQuery" :disabled="lockedOther"
           :placeholder="$t('expenseModal.searchCategory')" style="margin-bottom: 8px" />
         <div style="display: flex; flex-wrap: wrap; gap: 8px; max-height: 168px; overflow-y: auto">
-          <button v-for="c in filteredCats" :key="c.id" type="button" :disabled="lockedOther"
-            :style="chipStyle(form.cat === c.id, c.hue)" @click="form.cat = c.id">
-            <span :style="{ width: '8px', height: '8px', borderRadius: '50%', background: catColor(c.hue, isDark) }" />{{ cats.catLabel(c.id) }}
+          <button v-for="o in filteredCats" :key="o.key" type="button" :disabled="lockedOther"
+            :style="chipStyle(form.cat === o.cat && form.sub === o.sub, o.hue)" @click="form.cat = o.cat; form.sub = o.sub">
+            <span :style="{ width: '8px', height: '8px', borderRadius: '50%', background: catColor(o.hue, isDark) }" />{{ o.label }}
           </button>
           <span v-if="!filteredCats.length" style="font-size: 13px; color: var(--muted); padding: 6px 2px">{{ $t('expenseModal.noCategory') }}</span>
         </div>
       </UiField>
-
-      <div v-if="subs.length" style="margin-bottom: 14px">
-        <UiField :label="$t('expenseModal.subcategory')">
-          <div style="display: flex; flex-wrap: wrap; gap: 8px">
-            <button type="button" :disabled="lockedOther" :style="chipStyle(form.sub === '', cats.hue(form.cat))" @click="form.sub = ''">—</button>
-            <button v-for="s in subs" :key="s.id" type="button" :disabled="lockedOther" :style="chipStyle(form.sub === s.id, cats.hue(form.cat))" @click="form.sub = s.id">{{ cats.subLabel(form.cat, s.id) }}</button>
-          </div>
-        </UiField>
-      </div>
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px">
         <UiField :label="$t('expenseModal.date')">
