@@ -15,20 +15,13 @@ const mine = (userId: string) => !fWho.value || userId === fWho.value
 
 onMounted(() => store.ensure())
 
-// Month only: the average share is a household figure and must not shrink with
-// the person filter.
-const houseExpenses = computed(() => store.expenses.value.filter(e => monthKey(e.date) === selected.value))
-const monthExpenses = computed(() => houseExpenses.value.filter(e => mine(e.userId)))
+const monthExpenses = computed(() => store.expenses.value.filter(e => monthKey(e.date) === selected.value && mine(e.userId)))
 // Incomes feed the balance stat only — the listings live on /gastos.
 const monthIncomes = computed(() => store.incomes.value.filter(i => monthKey(i.date) === selected.value && mine(i.userId)))
 const total = computed(() => monthExpenses.value.reduce((a, e) => a + e.amountCents, 0) / 100)
 const count = computed(() => monthExpenses.value.length)
-const avg = computed(() => count.value ? total.value / count.value : 0)
 const monthIncome = computed(() => monthIncomes.value.reduce((a, i) => a + i.amountCents, 0) / 100)
 const saldo = computed(() => monthIncome.value - total.value)
-const members = computed(() => store.members.value)
-const houseTotal = computed(() => houseExpenses.value.reduce((a, e) => a + e.amountCents, 0) / 100)
-const quota = computed(() => members.value.length ? houseTotal.value / members.value.length : 0)
 
 const prevKey = computed(() => {
   const [y, m] = selected.value.split('-').map(Number)
@@ -92,9 +85,7 @@ const donutSegments = computed(() => byCat.value.map(x => ({ value: x.cents, col
       <div style="display: flex; gap: 26px; flex-wrap: wrap">
         <div><div class="tnum" style="font-weight: 600; color: var(--pos)">{{ $n(monthIncome, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.income') }}</div></div>
         <div><div class="tnum" style="font-weight: 600">{{ $n(total, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.spent') }}</div></div>
-        <div><div class="tnum" style="font-weight: 600; color: var(--accent)">{{ $n(quota, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('balance.avgQuota') }}</div></div>
         <div><div class="tnum" style="font-weight: 600">{{ count }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.movements') }}</div></div>
-        <div><div class="tnum" style="font-weight: 600">{{ $n(avg, 'currency0') }}</div><div style="font-size: 12.5px; color: var(--muted)">{{ $t('summary.avgPerExpense') }}</div></div>
       </div>
     </UiCard>
 
