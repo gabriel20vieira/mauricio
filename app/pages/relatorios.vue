@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { catColor, monthKey, firstName } from '~~/shared/config'
+import { catColor, monthKey } from '~~/shared/config'
 
 definePageMeta({ titleKey: 'nav.reports', subtitleKey: 'pageSub.reports' })
 const store = useStore()
@@ -110,13 +110,6 @@ function toggleCat(catId: string) {
   expanded.value = s
 }
 
-const byPerson = computed(() => {
-  const map: Record<string, number> = {}
-  for (const e of periodExpenses.value) map[e.userId] = (map[e.userId] || 0) + e.amountCents
-  return store.members.value.map(m => ({ member: m, cents: map[m.id] || 0 })).sort((a, b) => b.cents - a.cents)
-})
-const maxPerson = computed(() => Math.max(...byPerson.value.map(p => p.cents), 1))
-
 function printReport() {
   const q = mode.value === 'anual' ? `ano=${year.value}` : `mes=${selected.value}`
   if (!q.split('=')[1]) return
@@ -185,50 +178,34 @@ function printReport() {
       <UiEmptyState v-else icon="chart" :title="$t('reports.noData')" :sub="$t('reports.noDataSub')" />
     </UiCard>
 
-    <div class="dash-cols" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
-      <UiCard :pad="22">
-        <UiSectionTitle>{{ $t('reports.byCategory') }}</UiSectionTitle>
-        <div v-if="byCat.length" style="display: flex; flex-direction: column; gap: 14px">
-          <div v-for="x in byCat" :key="x.catId">
-            <div style="display: flex; align-items: center; gap: 9px; margin-bottom: 6px; font-size: 13.5px; cursor: pointer" role="button"
-              :aria-expanded="expanded.has(x.catId)" @click="toggleCat(x.catId)">
-              <UiIcon :name="expanded.has(x.catId) ? 'chevDown' : 'chevRight'" :size="14" style="color: var(--muted); flex-shrink: 0" />
-              <span :style="{ width: '9px', height: '9px', borderRadius: '50%', background: catColor(x.hue, isDark), flexShrink: 0 }" />
-              <span style="flex: 1">{{ x.label }}</span>
-              <span class="tnum" style="font-weight: 600">{{ $n(x.cents / 100, 'currency0') }}</span>
-              <span class="tnum" style="color: var(--muted); width: 38px; text-align: right">{{ Math.round((x.cents / (expenseCents || 1)) * 100) }}%</span>
-            </div>
-            <UiMiniBar :value="x.cents" :max="maxCat" :color="catColor(x.hue, isDark)" />
-            <!-- Subcategory breakdown -->
-            <div v-if="expanded.has(x.catId) && x.subs.length" style="display: flex; flex-direction: column; gap: 8px; margin: 10px 0 2px 23px">
-              <div v-for="s in x.subs" :key="s.subId">
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 12.5px; color: var(--ink-2)">
-                  <span style="flex: 1">{{ s.label }}</span>
-                  <span class="tnum">{{ $n(s.cents / 100, 'currency0') }}</span>
-                  <span class="tnum" style="color: var(--muted); width: 34px; text-align: right">{{ Math.round((s.cents / (x.cents || 1)) * 100) }}%</span>
-                </div>
-                <UiMiniBar :value="s.cents" :max="x.cents" :color="catColor(x.hue, isDark)" />
+    <UiCard :pad="22">
+      <UiSectionTitle>{{ $t('reports.byCategory') }}</UiSectionTitle>
+      <div v-if="byCat.length" style="display: flex; flex-direction: column; gap: 14px">
+        <div v-for="x in byCat" :key="x.catId">
+          <div style="display: flex; align-items: center; gap: 9px; margin-bottom: 6px; font-size: 13.5px; cursor: pointer" role="button"
+            :aria-expanded="expanded.has(x.catId)" @click="toggleCat(x.catId)">
+            <UiIcon :name="expanded.has(x.catId) ? 'chevDown' : 'chevRight'" :size="14" style="color: var(--muted); flex-shrink: 0" />
+            <span :style="{ width: '9px', height: '9px', borderRadius: '50%', background: catColor(x.hue, isDark), flexShrink: 0 }" />
+            <span style="flex: 1">{{ x.label }}</span>
+            <span class="tnum" style="font-weight: 600">{{ $n(x.cents / 100, 'currency0') }}</span>
+            <span class="tnum" style="color: var(--muted); width: 38px; text-align: right">{{ Math.round((x.cents / (expenseCents || 1)) * 100) }}%</span>
+          </div>
+          <UiMiniBar :value="x.cents" :max="maxCat" :color="catColor(x.hue, isDark)" />
+          <!-- Subcategory breakdown -->
+          <div v-if="expanded.has(x.catId) && x.subs.length" style="display: flex; flex-direction: column; gap: 8px; margin: 10px 0 2px 23px">
+            <div v-for="s in x.subs" :key="s.subId">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 12.5px; color: var(--ink-2)">
+                <span style="flex: 1">{{ s.label }}</span>
+                <span class="tnum">{{ $n(s.cents / 100, 'currency0') }}</span>
+                <span class="tnum" style="color: var(--muted); width: 34px; text-align: right">{{ Math.round((s.cents / (x.cents || 1)) * 100) }}%</span>
               </div>
+              <UiMiniBar :value="s.cents" :max="x.cents" :color="catColor(x.hue, isDark)" />
             </div>
           </div>
         </div>
-        <UiEmptyState v-else icon="chart" :title="$t('reports.noData')" :sub="$t('reports.noDataSub')" />
-      </UiCard>
-
-      <UiCard :pad="22">
-        <UiSectionTitle>{{ $t('reports.byPerson') }}</UiSectionTitle>
-        <div style="display: flex; flex-direction: column; gap: 16px">
-          <div v-for="p in byPerson" :key="p.member.id">
-            <div style="display: flex; align-items: center; gap: 11px; margin-bottom: 7px">
-              <UiAvatar :member="p.member" :size="30" />
-              <span style="flex: 1; font-weight: 540; font-size: 14px">{{ firstName(p.member.name) }}</span>
-              <span class="tnum" style="font-weight: 600">{{ $n(p.cents / 100, 'currency') }}</span>
-            </div>
-            <UiMiniBar :value="p.cents" :max="maxPerson" :color="catColor(p.member.hue, isDark)" />
-          </div>
-        </div>
-      </UiCard>
-    </div>
+      </div>
+      <UiEmptyState v-else icon="chart" :title="$t('reports.noData')" :sub="$t('reports.noDataSub')" />
+    </UiCard>
   </div>
 </template>
 
