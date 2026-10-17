@@ -54,9 +54,7 @@ function navLinkStyle(active: boolean) {
       <aside class="sidebar" style="width: 250px; flex-shrink: 0; height: 100dvh; overflow-y: auto; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 16px 14px; gap: 6px">
         <!-- Brand -->
         <div style="display: flex; align-items: center; gap: 11px; padding: 6px 8px 14px">
-          <div style="width: 36px; height: 36px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center">
-            <UiIcon name="home" :size="20" />
-          </div>
+          <img src="/favicon.svg" alt="" width="36" height="36" style="display: block; flex-shrink: 0">
           <span style="font-size: 18px; font-weight: 700; letter-spacing: -0.02em">{{ appName }}</span>
         </div>
 

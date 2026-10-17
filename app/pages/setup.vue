@@ -40,10 +40,7 @@ async function submit() {
         style="position: absolute; width: 360px; height: 360px; border: 1px solid oklch(0.5 0.05 var(--accent-h) / 0.2); border-radius: 50%; bottom: -140px; left: 80px" />
 
       <div style="display: flex; align-items: center; gap: 12px; position: relative">
-        <div
-          style="width: 40px; height: 40px; border-radius: 11px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center">
-          <UiIcon name="home" :size="22" />
-        </div>
+        <img src="/favicon.svg" alt="" width="40" height="40" style="display: block; flex-shrink: 0">
         <span style="font-size: 20px; font-weight: 700; letter-spacing: -0.02em">{{ appName }}</span>
       </div>
 
