@@ -2,7 +2,8 @@ import { randomUUID } from 'node:crypto'
 import { asc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { db, schema } from '../../utils/db'
-import { ollamaChat, ollamaComplete, type OllamaMessage } from '../../utils/ollama'
+import type { OllamaMessage } from '../../utils/ollama'
+import { llmChat, llmComplete } from '../../utils/llm'
 import { TOOLS, runTool, systemPrompt, type Card } from '../../utils/aiTools'
 import { CHAT_MAX_CHARS } from '../../../shared/config'
 
@@ -20,7 +21,7 @@ const TITLE_LANG: Record<string, string> = { 'pt-PT': 'português', 'es-ES': 'es
 // truncated-message fallback already stored.
 async function generateTitle(message: string, reply: string, locale?: string): Promise<string> {
   const lang = TITLE_LANG[locale || ''] || 'English'
-  const raw = await ollamaComplete([
+  const raw = await llmComplete([
     { role: 'system', content: `Generate a very short conversation title (max 5 words) in ${lang}. Reply with ONLY the title — no quotes, no trailing punctuation, no explanation.` },
     { role: 'user', content: `${message}\n\n${(reply || '').slice(0, 400)}` },
   ], { signal: AbortSignal.timeout(15_000) })
@@ -30,7 +31,7 @@ async function generateTitle(message: string, reply: string, locale?: string): P
 export default defineEventHandler(async (event) => {
   const user = await requireDbUser(event)
   if (!(await getAssistantConfig()).enabled) throw createError({ statusCode: 403, statusMessage: 'O assistente está desativado.' })
-  // Each message fans out to several Ollama calls — throttle to limit cost/abuse.
+  // Each message fans out to several model calls — throttle to limit cost/abuse.
   rateLimit(event, { key: 'chat', limit: 20, windowMs: 60_000 })
   // Parsed by hand (not readValidatedBody) so an over-long message gets a reason the
   // user can act on, instead of a bare "400 Bad Request".
@@ -102,7 +103,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     for (let iter = 0; iter < MAX_ITERS; iter++) {
-      const { content, toolCalls } = await ollamaChat(messages, TOOLS, t => send({ type: 'token', text: t }))
+      const { content, toolCalls, raw } = await llmChat(messages, TOOLS, t => send({ type: 'token', text: t }))
 
       // Persist + echo the assistant turn.
       const aId = randomUUID()
@@ -111,7 +112,7 @@ export default defineEventHandler(async (event) => {
         id: aId, conversationId: convId, role: 'assistant', content,
         toolCalls: toolCalls.length ? JSON.stringify(toolCalls) : null, createdAt: Date.now(),
       })
-      messages.push({ role: 'assistant', content, tool_calls: toolCalls.length ? toolCalls : undefined })
+      messages.push({ role: 'assistant', content, tool_calls: toolCalls.length ? toolCalls : undefined, raw })
       if (content) segments.push({ type: 'text', text: content })
 
       if (!toolCalls.length) { finalContent = content; break }

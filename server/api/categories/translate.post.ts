@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { ollamaComplete } from '../../utils/ollama'
+import { llmComplete } from '../../utils/llm'
 import { getAssistantConfig } from '../../utils/settings'
 
 const Body = z.object({
@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   const source = names.en || names.pt || names.es
   if (!source) throw createError({ statusCode: 400, statusMessage: 'Indique pelo menos um nome.' })
 
-  const raw = await ollamaComplete([
+  const raw = await llmComplete([
     { role: 'system', content: 'You translate a short household expense category name. Reply with ONLY a JSON object {"en":"...","pt":"...","es":"..."} — American English, European Portuguese, European Spanish. Keep each 1-3 words, no explanation, no code fences.' },
     { role: 'user', content: source },
   ], { signal: AbortSignal.timeout(20_000) }).catch(() => '')

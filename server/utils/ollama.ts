@@ -9,6 +9,9 @@ export interface OllamaMessage {
   content: string
   tool_calls?: OllamaToolCall[]
   tool_name?: string
+  // Provider-native content of a turn produced in this request (Anthropic blocks),
+  // replayed as-is by that provider; never persisted, stripped before Ollama.
+  raw?: unknown[]
 }
 export interface OllamaTool {
   type: 'function'
@@ -38,7 +41,7 @@ export async function ollamaChat(
   const res = await fetch(`${cfg.baseUrl}/api/chat`, {
     method: 'POST',
     headers: ollamaHeaders(cfg),
-    body: JSON.stringify({ model: cfg.model, stream: true, messages, tools, ...ctxOptions(cfg) }),
+    body: JSON.stringify({ model: cfg.model, stream: true, messages: plain(messages), tools, ...ctxOptions(cfg) }),
     signal: opts.signal,
   })
   if (!res.ok || !res.body) {
@@ -80,6 +83,10 @@ export async function ollamaChat(
   return { content, toolCalls }
 }
 
+function plain(messages: OllamaMessage[]) {
+  return messages.map(({ raw: _raw, ...m }) => m)
+}
+
 function safeJson(s: string): Record<string, any> {
   try { return JSON.parse(s) } catch { return {} }
 }
@@ -104,7 +111,7 @@ export async function ollamaComplete(messages: OllamaMessage[], opts: { signal?:
   const res = await fetch(`${cfg.baseUrl}/api/chat`, {
     method: 'POST',
     headers: ollamaHeaders(cfg),
-    body: JSON.stringify({ model: cfg.model, stream: false, messages, ...ctxOptions(cfg) }),
+    body: JSON.stringify({ model: cfg.model, stream: false, messages: plain(messages), ...ctxOptions(cfg) }),
     signal: opts.signal,
   })
   if (!res.ok) throw new Error(`Ollama ${res.status}`)

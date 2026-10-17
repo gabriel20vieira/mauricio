@@ -9,6 +9,22 @@ const { isDark } = useTweaks()
 const { t, locale, locales, setLocale } = useI18n()
 onMounted(() => { store.ensure(); loadSessions(); loadForced() })
 
+// --- tabs (kept in ?tab= so a reload / shared link opens the same section) ---
+const TABS = ['members', 'categories', 'assistant', 'general'] as const
+type Tab = typeof TABS[number]
+const route = useRoute()
+const router = useRouter()
+const tab = computed<Tab>({
+  get: () => (TABS as readonly string[]).includes(String(route.query.tab)) ? route.query.tab as Tab : 'members',
+  set: v => { router.replace({ query: { ...route.query, tab: v === 'members' ? undefined : v } }) },
+})
+const tabOptions = computed(() => [
+  { value: 'members', label: t('admin.tabMembers') },
+  { value: 'categories', label: t('admin.tabCategories') },
+  { value: 'assistant', label: t('admin.tabAssistant') },
+  { value: 'general', label: t('admin.tabGeneral') },
+])
+
 // --- forced language (admin, global) ---
 const forced = ref<string>('auto')
 const langOptions = computed(() => [
@@ -96,12 +112,40 @@ async function translateNames(target: { names: { en: string, pt: string, es: str
 
 // --- assistant config ---
 // numCtx is a string here because UiInput always emits strings; coerced on save.
-const asstCfg = reactive({ enabled: true, useCloud: false, baseUrl: '', model: '', token: '', numCtx: String(NUM_CTX_DEFAULT) })
+const asstCfg = reactive({
+  enabled: true, provider: 'ollama' as 'ollama' | 'anthropic',
+  useCloud: false, baseUrl: '', model: '', token: '', numCtx: String(NUM_CTX_DEFAULT),
+  anthropicKey: '', anthropicModel: '',
+})
 const savingCfg = ref(false)
 async function loadAsstCfg() {
   const c = await $fetch<Record<string, any>>('/api/assistant/config').catch(() => null)
   if (c) Object.assign(asstCfg, c, { numCtx: String(c.numCtx ?? NUM_CTX_DEFAULT) })
+  if (asstCfg.provider === 'anthropic' && asstCfg.anthropicKey) loadModels()
 }
+
+// Anthropic models for the key in the form (not necessarily saved yet).
+const anthropicModels = ref<{ id: string, name: string }[]>([])
+const loadingModels = ref(false)
+const modelsError = ref('')
+async function loadModels() {
+  loadingModels.value = true
+  modelsError.value = ''
+  try {
+    anthropicModels.value = await $fetch<{ id: string, name: string }[]>('/api/assistant/models', { method: 'POST', body: { apiKey: asstCfg.anthropicKey } })
+    if (!anthropicModels.value.some(m => m.id === asstCfg.anthropicModel) && anthropicModels.value[0]) asstCfg.anthropicModel = anthropicModels.value[0].id
+  } catch (e: any) {
+    anthropicModels.value = []
+    modelsError.value = e?.data?.statusMessage || e?.statusMessage || t('admin.modelsError')
+  } finally { loadingModels.value = false }
+}
+// The saved model stays selectable before the list loads (or if the key lost access).
+const modelOptions = computed(() => {
+  const list = anthropicModels.value
+  return asstCfg.anthropicModel && !list.some(m => m.id === asstCfg.anthropicModel)
+    ? [{ id: asstCfg.anthropicModel, name: asstCfg.anthropicModel }, ...list]
+    : list
+})
 async function saveAsstCfg() {
   savingCfg.value = true
   try {
@@ -254,6 +298,11 @@ async function confirmImport() {
 
 <template>
   <div style="max-width: 920px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px">
+    <div class="tabs">
+      <UiSegmented v-model="tab" :options="tabOptions" />
+    </div>
+
+    <template v-if="tab === 'members'">
     <UiCard :pad="22">
       <UiSectionTitle>
         {{ $t('admin.members') }}
@@ -304,7 +353,9 @@ async function confirmImport() {
         <div v-if="!sessions.length" style="font-size: 13px; color: var(--muted); padding: 8px 2px">{{ $t('admin.noSessions') }}</div>
       </div>
     </UiCard>
+    </template>
 
+    <template v-if="tab === 'categories'">
     <UiCard :pad="22">
       <UiSectionTitle>
         {{ $t('admin.categories') }}
@@ -358,7 +409,9 @@ async function confirmImport() {
         </div>
       </div>
     </UiCard>
+    </template>
 
+    <template v-if="tab === 'assistant'">
     <!-- Assistant configuration -->
     <UiCard :pad="22">
       <UiSectionTitle>{{ $t('admin.assistant') }}</UiSectionTitle>
@@ -367,17 +420,37 @@ async function confirmImport() {
         <span style="font-size: 14px; font-weight: 540">{{ $t('admin.enabled') }}</span>
         <UiToggle v-model="asstCfg.enabled" />
       </div>
-      <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--border); margin-bottom: 12px">
-        <span style="font-size: 14px; font-weight: 540">{{ $t('admin.useCloud') }}</span>
-        <UiToggle v-model="asstCfg.useCloud" />
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--border); margin-bottom: 12px">
+        <span style="font-size: 14px; font-weight: 540">{{ $t('admin.provider') }}</span>
+        <UiSegmented v-model="asstCfg.provider" size="sm" :options="[{ value: 'ollama', label: 'Ollama' }, { value: 'anthropic', label: 'Anthropic' }]" />
       </div>
-      <UiField :label="$t('admin.server')" style="margin-bottom: 12px"><UiInput v-model="asstCfg.baseUrl" placeholder="http://192.168.1.203:11434" /></UiField>
-      <UiField :label="$t('admin.model')" style="margin-bottom: 12px"><UiInput v-model="asstCfg.model" placeholder="minimax-m3:cloud" /></UiField>
-      <UiField v-if="asstCfg.useCloud" :label="$t('admin.token')" style="margin-bottom: 16px"><UiInput v-model="asstCfg.token" type="password" autocomplete="off" placeholder="••••••••" /></UiField>
-      <!-- Self-hosted only: the cloud service sizes its own context window. -->
-      <UiField v-else :label="$t('admin.numCtx')" :hint="$t('admin.numCtxHint', { min: NUM_CTX_MIN, max: NUM_CTX_MAX, def: NUM_CTX_DEFAULT })" style="margin-bottom: 16px">
-        <UiInput v-model="asstCfg.numCtx" type="number" step="1024" :placeholder="String(NUM_CTX_DEFAULT)" />
-      </UiField>
+      <template v-if="asstCfg.provider === 'anthropic'">
+        <UiField :label="$t('admin.apiKey')" style="margin-bottom: 12px"><UiInput v-model="asstCfg.anthropicKey" type="password" autocomplete="off" placeholder="sk-ant-…" /></UiField>
+        <UiField :label="$t('admin.model')" :hint="modelsError || undefined" style="margin-bottom: 16px">
+          <div style="display: flex; gap: 8px; align-items: center">
+            <div style="flex: 1; min-width: 0">
+              <UiSelect v-model="asstCfg.anthropicModel">
+                <option v-if="!modelOptions.length" value="" disabled>{{ $t('admin.noModels') }}</option>
+                <option v-for="m in modelOptions" :key="m.id" :value="m.id">{{ m.name }}</option>
+              </UiSelect>
+            </div>
+            <UiButton variant="outline" :disabled="loadingModels || !asstCfg.anthropicKey" @click="loadModels">{{ loadingModels ? $t('admin.loadingModels') : $t('admin.loadModels') }}</UiButton>
+          </div>
+        </UiField>
+      </template>
+      <template v-else>
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--border); margin-bottom: 12px">
+          <span style="font-size: 14px; font-weight: 540">{{ $t('admin.useCloud') }}</span>
+          <UiToggle v-model="asstCfg.useCloud" />
+        </div>
+        <UiField :label="$t('admin.server')" style="margin-bottom: 12px"><UiInput v-model="asstCfg.baseUrl" placeholder="http://192.168.1.203:11434" /></UiField>
+        <UiField :label="$t('admin.model')" style="margin-bottom: 12px"><UiInput v-model="asstCfg.model" placeholder="minimax-m3:cloud" /></UiField>
+        <UiField v-if="asstCfg.useCloud" :label="$t('admin.token')" style="margin-bottom: 16px"><UiInput v-model="asstCfg.token" type="password" autocomplete="off" placeholder="••••••••" /></UiField>
+        <!-- Self-hosted only: the cloud service sizes its own context window. -->
+        <UiField v-else :label="$t('admin.numCtx')" :hint="$t('admin.numCtxHint', { min: NUM_CTX_MIN, max: NUM_CTX_MAX, def: NUM_CTX_DEFAULT })" style="margin-bottom: 16px">
+          <UiInput v-model="asstCfg.numCtx" type="number" step="1024" :placeholder="String(NUM_CTX_DEFAULT)" />
+        </UiField>
+      </template>
       <UiButton :icon="savingCfg ? undefined : 'check'" :disabled="savingCfg" @click="saveAsstCfg">{{ savingCfg ? $t('common.saving') : $t('common.save') }}</UiButton>
     </UiCard>
 
@@ -398,6 +471,7 @@ async function confirmImport() {
         <div v-if="!allConvs.length" style="font-size: 13px; color: var(--muted); padding: 8px 2px">{{ $t('admin.noConversations') }}</div>
       </div>
     </UiCard>
+    </template>
 
     <!-- Read-only conversation viewer -->
     <UiModal :open="convView.open" :title="convView.title" :width="640" @close="convView.open = false">
@@ -498,6 +572,7 @@ async function confirmImport() {
       </form>
     </UiModal>
 
+    <template v-if="tab === 'general'">
     <UiCard :pad="22">
       <UiSectionTitle>{{ $t('admin.forcedLanguage') }}</UiSectionTitle>
       <p style="font-size: 13px; color: var(--muted); margin-bottom: 14px">{{ $t('admin.forcedLanguageHint') }}</p>
@@ -534,6 +609,7 @@ async function confirmImport() {
       <p style="font-size: 12px; color: var(--faint); margin-top: 12px">{{ $t('admin.dataSensitive') }}</p>
       <input ref="importInput" type="file" accept="application/json,.json" style="display: none" @change="onImportFile" />
     </UiCard>
+    </template>
 
     <!-- Import confirm modal -->
     <UiModal :open="imp.open" :title="imp.kind === 'total' ? $t('admin.importTotalTitle') : $t('admin.importPartialTitle')" :width="480" @close="imp.open = false">
@@ -618,4 +694,7 @@ async function confirmImport() {
   padding: 2px 4px;
 }
 .lk:hover { text-decoration: underline; }
+/* Section tabs: scroll sideways on narrow phones instead of wrapping. */
+.tabs { overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
 </style>

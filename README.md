@@ -79,14 +79,16 @@ read and delete any member's conversations from *Administration*.
 
 ### Configuration
 
-The assistant is configurable in *Administration* (enable/disable, server, model, and
-— when "use cloud server" is on — a bearer token). Config is stored in the settings
-table with `.env` fallback:
+The assistant is configurable in *Administration*: enable/disable and the provider.
+With **Ollama** you set the server, model and — when "use cloud server" is on — a bearer
+token. With **Anthropic** you set an API key and pick the model from a list loaded from
+the API. Config is stored in the settings table with `.env` fallback:
 
 ```bash
 OLLAMA_BASE_URL=http://192.168.1.203:11434   # machine running Ollama
 OLLAMA_MODEL=minimax-m3:cloud                # a model with tool support
 OLLAMA_TOKEN=                                # only used when "use cloud server" is on
+ANTHROPIC_API_KEY=                           # used when the provider is Anthropic and no key is saved
 ```
 
 ## Demo data (optional)
