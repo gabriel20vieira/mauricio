@@ -22,28 +22,43 @@ export interface OllamaTool {
   }
 }
 
+// Models that rejected `think: true` (no reasoning support) — asked without it from then on.
+const noThink = new Set<string>()
+
 interface ChatResult {
   content: string
   toolCalls: OllamaToolCall[]
 }
 
 /**
- * One assistant turn. Streams content tokens via onToken; returns the full
- * content plus any tool calls the model emitted.
+ * One assistant turn. Streams content tokens via onToken (and reasoning via
+ * opts.onThinking, for models that support it); returns the full content plus any
+ * tool calls the model emitted.
  */
 export async function ollamaChat(
   messages: OllamaMessage[],
   tools: OllamaTool[],
   onToken: (t: string) => void,
-  opts: { signal?: AbortSignal } = {},
+  opts: { signal?: AbortSignal, onThinking?: (t: string) => void } = {},
 ): Promise<ChatResult> {
   const cfg = await getAssistantConfig()
-  const res = await fetch(`${cfg.baseUrl}/api/chat`, {
+  const request = (think: boolean) => fetch(`${cfg.baseUrl}/api/chat`, {
     method: 'POST',
     headers: ollamaHeaders(cfg),
-    body: JSON.stringify({ model: cfg.model, stream: true, messages: plain(messages), tools, ...ctxOptions(cfg) }),
+    body: JSON.stringify({ model: cfg.model, stream: true, messages: plain(messages), tools, ...(think ? { think: true } : {}), ...ctxOptions(cfg) }),
     signal: opts.signal,
   })
+  const think = !!opts.onThinking && !noThink.has(cfg.model)
+  let res = await request(think)
+  if (!res.ok || !res.body) {
+    const txt = await res.text().catch(() => '')
+    if (think && res.status === 400 && /think/i.test(txt)) {
+      noThink.add(cfg.model)
+      res = await request(false)
+    } else {
+      throw createError({ statusCode: 502, statusMessage: `Ollama indisponível (${res.status}). ${txt.slice(0, 200)}` })
+    }
+  }
   if (!res.ok || !res.body) {
     const txt = await res.text().catch(() => '')
     throw createError({ statusCode: 502, statusMessage: `Ollama indisponível (${res.status}). ${txt.slice(0, 200)}` })
@@ -69,6 +84,7 @@ export async function ollamaChat(
       try { obj = JSON.parse(line) } catch { continue }
       if (obj.error) throw createError({ statusCode: 502, statusMessage: `Ollama: ${obj.error}` })
       const msg = obj.message
+      if (msg?.thinking) opts.onThinking?.(msg.thinking)
       if (msg?.content) { content += msg.content; onToken(msg.content) }
       if (msg?.tool_calls?.length) {
         for (const tc of msg.tool_calls) {

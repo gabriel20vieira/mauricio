@@ -8,14 +8,16 @@ const { t, locale } = useI18n()
 const assistantEnabled = useAssistantEnabled()
 if (import.meta.client && !assistantEnabled.value) navigateTo('/')
 
-// A response is an ordered list of segments so text / tool calls / cards interleave
-// in reasoning order, both live and on history reload.
+// A response is an ordered list of segments so text / thinking / tool calls / cards
+// interleave in reasoning order, both live and on history reload.
 interface UiSegment {
-  type: 'text' | 'tool' | 'card'
-  text?: string // text
+  type: 'text' | 'thinking' | 'tool' | 'card'
+  text?: string // text, thinking
   name?: string // tool
   label?: string // tool
   done?: boolean // tool
+  start?: number // thinking, tool — ms since the request started
+  end?: number // thinking, tool
   card?: Card // card
   status?: 'pending' | 'done' | 'error' // card (confirm)
   error?: string // card (confirm)
@@ -26,6 +28,24 @@ interface UiMessage {
   content?: string // user text
   segments: UiSegment[]
   streaming?: boolean
+  t0?: number // live only: wall-clock ms when the request was sent
+}
+
+// Consecutive thinking + tool segments render as one collapsible thinking block;
+// text and cards stand on their own between blocks.
+type UiGroup = { kind: 'think', items: UiSegment[] } | { kind: 'seg', seg: UiSegment }
+function groupsOf(m: UiMessage): UiGroup[] {
+  const out: UiGroup[] = []
+  for (const s of m.segments) {
+    const last = out[out.length - 1]
+    if (s.type === 'thinking' || s.type === 'tool') {
+      if (last?.kind === 'think') last.items.push(s)
+      else out.push({ kind: 'think', items: [s] })
+    } else if (s.type !== 'text' || s.text) {
+      out.push({ kind: 'seg', seg: s })
+    }
+  }
+  return out
 }
 
 const store = useStore()
@@ -102,7 +122,8 @@ async function send(text?: string) {
   input.value = ''
   sending.value = true
   messages.value.push({ id: 'u' + Date.now(), role: 'user', content: msg, segments: [] })
-  const assistant = reactive<UiMessage>({ id: 'a' + Date.now(), role: 'assistant', segments: [], streaming: true })
+  const assistant = reactive<UiMessage>({ id: 'a' + Date.now(), role: 'assistant', segments: [], streaming: true, t0: Date.now() })
+  const rel = () => Date.now() - assistant.t0!
   messages.value.push(assistant)
   scrollDown()
 
@@ -110,6 +131,12 @@ async function send(text?: string) {
 
   await streamChat({ conversationId: activeId.value || undefined, message: msg, locale: locale.value }, {
     onStart: (cid) => { activeId.value = cid },
+    onThinking: (t) => {
+      const last = assistant.segments[assistant.segments.length - 1]
+      if (last && last.type === 'thinking') { last.text += t; last.end = rel() }
+      else assistant.segments.push({ type: 'thinking', text: t, start: rel(), end: rel() })
+      scrollDown()
+    },
     onToken: (t) => {
       const last = assistant.segments[assistant.segments.length - 1]
       if (last && last.type === 'text') last.text += t
@@ -117,11 +144,11 @@ async function send(text?: string) {
       scrollDown()
     },
     onTool: (name, status, label) => {
-      if (status === 'running') assistant.segments.push({ type: 'tool', name, label: label || '', done: false })
+      if (status === 'running') assistant.segments.push({ type: 'tool', name, label: label || '', done: false, start: rel() })
       else {
         for (let i = assistant.segments.length - 1; i >= 0; i--) {
           const s = assistant.segments[i]
-          if (s.type === 'tool' && !s.done) { s.done = true; if (label) s.label = label; break }
+          if (s.type === 'tool' && !s.done) { s.done = true; s.end = rel(); if (label) s.label = label; break }
         }
       }
       scrollDown()
@@ -225,21 +252,20 @@ async function confirmCard(cs: UiSegment) {
               <UiIcon name="sparkles" :size="17" />
             </div>
             <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px">
-              <!-- ordered segments: text / tool / card, interleaved -->
-              <template v-for="(seg, i) in m.segments" :key="i">
+              <!-- ordered groups: thinking block (reasoning + tools) / text / card -->
+              <template v-for="(g, gi) in groupsOf(m)" :key="gi">
+                <!-- thinking: live while it's the newest group of a streaming reply -->
+                <ChatThinkingBlock v-if="g.kind === 'think'" :items="g.items"
+                  :active="!!m.streaming && gi === groupsOf(m).length - 1"
+                  :since="m.t0 !== undefined ? m.t0 + (g.items[0]?.start ?? 0) : undefined" />
                 <!-- text (markdown) -->
-                <div v-if="seg.type === 'text' && seg.text" class="md" v-html="renderMarkdown(seg.text)" />
-                <!-- tool chip (its own line) -->
-                <div v-else-if="seg.type === 'tool'">
-                  <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; padding: 3px 9px; border-radius: 99px; background: var(--surface-2); color: var(--ink-2)">
-                    <UiIcon :name="seg.done ? 'check' : 'search'" :size="12" :style="{ color: seg.done ? 'var(--pos)' : 'var(--muted)' }" />{{ seg.label || $t('assistant.working') }}
-                  </span>
-                </div>
+                <div v-else-if="g.seg.type === 'text'" class="md" v-html="renderMarkdown(g.seg.text!)" />
                 <!-- card -->
-                <ChatChartCard v-else-if="seg.type === 'card' && seg.card!.kind === 'chart'" :card="seg.card" />
-                <ChatConfirmCard v-else-if="seg.type === 'card'" :card="seg.card" :status="seg.status" :error="seg.error" @confirm="confirmCard(seg)" />
+                <ChatChartCard v-else-if="g.seg.card!.kind === 'chart'" :card="g.seg.card" />
+                <ChatConfirmCard v-else :card="g.seg.card" :status="g.seg.status" :error="g.seg.error" @confirm="confirmCard(g.seg)" />
               </template>
-              <div v-if="m.streaming && !m.segments.length" style="font-size: 14px; color: var(--muted)">{{ $t('assistant.thinking') }}</div>
+              <!-- before the first token: an empty, animated thinking header -->
+              <ChatThinkingBlock v-if="m.streaming && !m.segments.length" :items="[]" active :since="m.t0" />
             </div>
           </div>
         </div>

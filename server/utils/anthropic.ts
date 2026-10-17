@@ -11,6 +11,10 @@ const FALLBACK_BETA = 'server-side-fallback-2026-07-01'
 
 export const ANTHROPIC_DEFAULT_MODEL = 'claude-opus-5-5'
 
+// Models that rejected adaptive thinking (older ones take a token budget instead) —
+// asked without a thinking config from then on, so they still work, minus the summary.
+const noAdaptive = new Set<string>()
+
 export function anthropicClient(apiKey: string) {
   if (!apiKey) throw createError({ statusCode: 400, statusMessage: 'Falta a API key da Anthropic.' })
   return new Anthropic({ apiKey })
@@ -120,28 +124,43 @@ function checkStop(msg: Anthropic.Beta.BetaMessage) {
   }
 }
 
-/** One assistant turn with tools, streaming text via onToken. */
+/** One assistant turn with tools, streaming text via onToken and a summary of the
+ *  model's reasoning via opts.onThinking. */
 export async function anthropicChat(
   cfg: { anthropicKey: string, anthropicModel: string },
   messages: OllamaMessage[],
   tools: OllamaTool[],
   onToken: (t: string) => void,
-  opts: { signal?: AbortSignal } = {},
+  opts: { signal?: AbortSignal, onThinking?: (t: string) => void } = {},
 ): Promise<{ content: string, toolCalls: OllamaToolCall[], raw: unknown[] }> {
   const { system, messages: msgs } = toAnthropic(messages)
-  let final: Anthropic.Beta.BetaMessage
-  try {
+  const run = async (thinking: boolean) => {
     const stream = anthropicClient(cfg.anthropicKey).beta.messages.stream({
       model: cfg.anthropicModel,
       max_tokens: 16000,
       system,
       messages: msgs,
       tools: toTools(tools),
+      // "summarized" streams a readable summary of the reasoning (the default omits it).
+      ...(thinking ? { thinking: { type: 'adaptive' as const, display: 'summarized' as const } } : {}),
       betas: [FALLBACK_BETA],
       fallbacks: 'default',
     }, { signal: opts.signal })
     stream.on('text', onToken)
-    final = await stream.finalMessage()
+    if (opts.onThinking) stream.on('thinking', opts.onThinking)
+    return await stream.finalMessage()
+  }
+  let final: Anthropic.Beta.BetaMessage
+  try {
+    const thinking = !noAdaptive.has(cfg.anthropicModel)
+    try {
+      final = await run(thinking)
+    } catch (err) {
+      // Rejected before streaming anything, so retrying can't duplicate output.
+      if (!thinking || !(err instanceof Anthropic.BadRequestError) || !/thinking/i.test(err.message)) throw err
+      noAdaptive.add(cfg.anthropicModel)
+      final = await run(false)
+    }
   } catch (err) {
     throw toHttpError(err)
   }

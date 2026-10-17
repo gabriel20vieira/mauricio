@@ -283,6 +283,9 @@
     "placeholder": "Escribe un mensaje…",
     "send": "Enviar",
     "thinking": "Pensando…",
+    "thinkingNow": "Pensando",
+    "thoughtFor": "Pensó durante {s} s",
+    "steps": "{n} pasos",
     "working": "Trabajando…"
   },
   "expenseModal": {

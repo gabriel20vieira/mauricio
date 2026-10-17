@@ -14,6 +14,9 @@ const Body = z.object({
 })
 
 const MAX_ITERS = 6
+// Reasoning kept per thinking segment in the stored render record (segments is a
+// TEXT column, and a self-hosted model's raw reasoning can run long).
+const THINKING_MAX_CHARS = 4000
 
 const TITLE_LANG: Record<string, string> = { 'pt-PT': 'português', 'es-ES': 'español', 'en-US': 'English' }
 
@@ -100,10 +103,27 @@ export default defineEventHandler(async (event) => {
   const segments: any[] = []
   let finalContent = ''
   let lastAssistantId = ''
+  // Segment timings are ms since the request started, so the UI can say how long
+  // the model thought, live and on reload.
+  const t0 = Date.now()
+  const rel = () => Date.now() - t0
 
   try {
     for (let iter = 0; iter < MAX_ITERS; iter++) {
-      const { content, toolCalls, raw } = await llmChat(messages, TOOLS, t => send({ type: 'token', text: t }))
+      let thinking: { type: 'thinking', text: string, start: number, end: number } | null = null
+      const { content, toolCalls, raw } = await llmChat(messages, TOOLS, t => send({ type: 'token', text: t }), {
+        onThinking: (t) => {
+          thinking ??= { type: 'thinking', text: '', start: rel(), end: rel() }
+          thinking.text += t
+          thinking.end = rel()
+          send({ type: 'thinking', text: t })
+        },
+      })
+      if (thinking) {
+        const th = thinking as { text: string }
+        if (th.text.length > THINKING_MAX_CHARS) th.text = `${th.text.slice(0, THINKING_MAX_CHARS)}…`
+        segments.push(thinking)
+      }
 
       // Persist + echo the assistant turn.
       const aId = randomUUID()
@@ -120,9 +140,10 @@ export default defineEventHandler(async (event) => {
       // Execute each tool; feed results back.
       for (const tc of toolCalls) {
         send({ type: 'tool', name: tc.function.name, status: 'running' })
+        const start = rel()
         const outcome = await runTool(tc.function.name, tc.function.arguments, user as any, event, body.locale)
         send({ type: 'tool', name: tc.function.name, status: 'done', label: outcome.label })
-        segments.push({ type: 'tool', name: tc.function.name, label: outcome.label })
+        segments.push({ type: 'tool', name: tc.function.name, label: outcome.label, start, end: rel() })
         if (outcome.card) { cards.push(outcome.card); segments.push({ type: 'card', card: outcome.card }); send({ type: 'card', card: outcome.card }) }
         const toolContent = JSON.stringify(outcome.result)
         await db.insert(schema.chatMessages).values({

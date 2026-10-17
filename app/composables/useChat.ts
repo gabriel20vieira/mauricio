@@ -34,6 +34,7 @@ export interface ConversationMeta {
 export interface ChatHandlers {
   onStart?: (conversationId: string) => void
   onToken?: (text: string) => void
+  onThinking?: (text: string) => void
   onTool?: (name: string, status: 'running' | 'done', label?: string) => void
   onCard?: (card: Card) => void
   onDone?: (data: { conversationId: string, content: string, cards: Card[] }) => void
@@ -76,6 +77,7 @@ export async function streamChat(
       switch (ev.type) {
         case 'start': handlers.onStart?.(ev.conversationId); break
         case 'token': handlers.onToken?.(ev.text); break
+        case 'thinking': handlers.onThinking?.(ev.text); break
         case 'tool': handlers.onTool?.(ev.name, ev.status, ev.label); break
         case 'card': handlers.onCard?.(ev.card); break
         case 'done': handlers.onDone?.(ev); break

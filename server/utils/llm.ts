@@ -8,7 +8,7 @@ export async function llmChat(
   messages: OllamaMessage[],
   tools: OllamaTool[],
   onToken: (t: string) => void,
-  opts: { signal?: AbortSignal } = {},
+  opts: { signal?: AbortSignal, onThinking?: (t: string) => void } = {},
 ): Promise<{ content: string, toolCalls: OllamaToolCall[], raw?: unknown[] }> {
   const cfg = await getAssistantConfig()
   return cfg.provider === 'anthropic'
