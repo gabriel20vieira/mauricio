@@ -1,8 +1,8 @@
 // Minimal service worker — enables installability + light offline resilience.
 // Bump this on every change to the caching rules: `activate` deletes every cache
 // whose name differs, which is what evicts entries a previous version wrongly kept.
-const CACHE = 'mauricio-v3';
-const ASSETS = ['/', '/manifest.webmanifest', '/favicon.ico', '/icon-192.png', '/icon-512.png', '/icon-192-maskable.png', '/icon-512-maskable.png', '/apple-touch-icon.png'];
+const CACHE = 'mauricio-v4';
+const ASSETS = ['/', '/manifest.webmanifest', '/favicon.ico', '/favicon.svg', '/icon-192.png', '/icon-512.png', '/icon-192-maskable.png', '/icon-512-maskable.png', '/apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
